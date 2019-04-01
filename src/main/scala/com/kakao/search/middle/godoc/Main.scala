@@ -26,10 +26,11 @@ object Main {
       def parseComment(str: Iterator[String], acc: Map[String, ArrayElem]): Map[String, ArrayElem] = {
         if (str.hasNext) {
           val kv = str.next
-          val nameRegex = "([a-zA-Z0-9_]+): "
-          val MacroParser = s"$nameRegex*<([^>]+)>".r
-          val ArgParser = s"$nameRegex*\\[([^\\]]+)\\]".r
-          val LineParser = s"$nameRegex*(.*)".r
+          val nameRegex = "([a-zA-Z0-9_]+): *"
+          val MacroParser = s"$nameRegex<([^>]+)>".r
+          val ArgParser = s"$nameRegex\\[([^\\]]+)\\]".r
+          val LineParser = s"$nameRegex(.*)".r
+          val BlockParser = s"$nameRegex\n* *\\{([^\\}]+)\\}".r
           kv match {
             case MacroParser(name, value) =>
               parseComment(str, acc + (name -> MacroName(value)))
@@ -37,8 +38,7 @@ object Main {
               val cleanedValue = value.replaceAll("\n// *", "")
               val values: ArgList = parseArgValue(cleanedValue)
               parseComment(str, acc + (name -> values))
-
-
+            case BlockParser(name, body) => parseComment(str, acc + (name -> Text(body.split("\n").map(_.replaceFirst("//", "")).mkString("\n"))))
             case LineParser(name, value) => parseComment(str, acc + (name -> Text(value)))
             case _ => parseComment(str, acc)
           }
@@ -55,7 +55,7 @@ object Main {
         override def next(): String = {
           val nextStr = s.drop(3)
           val nextStop = nextStr.indexOf("//=")
-          val nextTake = if (nextStop == -1) s.length else nextStop
+          val nextTake = if (nextStop == -1) nextStr.length else nextStop
           val ret = nextStr.take(nextTake)
 
           s = nextStr.drop(nextTake)
@@ -110,10 +110,19 @@ object Main {
     }
 
     implicit val golangWriter: FunctionWriter = new FunctionWriter {
+      def repEx(exBlock: Option[String]): String = exBlock match {
+        case Some(x) => s"<pre>$x</pre>"
+        case None => ""
+      }
+
+
       override def show(fd: FunctionDefinition): String = fd match {
-        case Constructor(typeName, desc, argList) => s"func New$typeName(${argList.map(showArgs).mkString(", ")}) *${typeName}Builder\n$desc"
-        case Member(typeName, method, desc, argList) => s"func (*${typeName}Builder) $method(${argList.map(showArgs).mkString(", ")}) *${typeName}Builder\n$desc"
-        case Setter(typeName, memberName, memberType, desc) => s"func (*${typeName}Builder) ${memberName.updated(0, memberName(0).toUpper)}($memberName $memberType) *${typeName}Builder\n$desc"
+        case Constructor(typeName, argList, desc, ex) =>
+          s"func New$typeName(${argList.map(showArgs).mkString(", ")}) *${typeName}Builder\n$desc\n\n${repEx(ex)}"
+        case Member(typeName, method, argList, desc, ex) =>
+          s"func (*${typeName}Builder) $method(${argList.map(showArgs).mkString(", ")}) *${typeName}Builder\n$desc\n\n${repEx(ex)}"
+        case Setter(typeName, memberName, memberType, desc, ex) =>
+          s"func (*${typeName}Builder) ${memberName.updated(0, memberName(0).toUpper)}($memberName $memberType) *${typeName}Builder\n$desc\n\n${repEx(ex)}"
       }
 
       override def showArgs(x: Argument): String = s"${x.name} ${x.t}"

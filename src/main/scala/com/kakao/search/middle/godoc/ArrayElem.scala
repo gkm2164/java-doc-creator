@@ -12,4 +12,3 @@ case class Text(txt: String) extends ArrayElem
 case class ArgList(args: List[Argument]) extends ArrayElem
 
 case class Argument(name: String, t: String, desc: String) extends ArrayElem
-

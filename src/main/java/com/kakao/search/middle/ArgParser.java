@@ -1,14 +1,13 @@
 package com.kakao.search.middle;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class ArgParser {
     public static class ParseAfter {
-        public String typeName;
-        public String desc;
-        public String after;
+        String typeName;
+        String desc;
+        String after;
     }
 
     public static class Argument {
@@ -48,9 +47,10 @@ public class ArgParser {
     }
 
     public static List<Argument> parseArgList(String str) {
-        int sPtr = 0;
         ArrayList<Argument> ret = new ArrayList<>();
         StringBuffer sb = new StringBuffer();
+
+        int sPtr = 0;
         while(sPtr < str.length()) {
             if (str.charAt(sPtr) == ':') {
                 ParseAfter remains = parseAfter(str, ++sPtr);

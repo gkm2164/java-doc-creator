@@ -6,12 +6,16 @@ trait FunctionWriter {
 }
 
 sealed trait FunctionDefinition {
+  def typeName: String
+  def desc: String
+  def ex: Option[String]
+
   def show(implicit functionWriter: FunctionWriter): String = functionWriter.show(this)
 }
 
-case class Constructor(typeName: String, desc: String, argList: List[Argument]) extends FunctionDefinition
-case class Member(typeName: String, method: String, desc: String, argList: List[Argument]) extends FunctionDefinition
-case class Setter(typeName: String, memberName: String, memberType: String, desc: String) extends FunctionDefinition
+case class Constructor(typeName: String, argList: List[Argument], desc: String, ex: Option[String]) extends FunctionDefinition
+case class Member(typeName: String, method: String, argList: List[Argument], desc: String, ex: Option[String]) extends FunctionDefinition
+case class Setter(typeName: String, memberName: String, memberType: String, desc: String, ex: Option[String]) extends FunctionDefinition
 
 object FunctionDefinition {
   def create(maps: Seq[Map[String, ArrayElem]]): Seq[FunctionDefinition] = {
@@ -30,8 +34,11 @@ object FunctionDefinition {
             case Some(ArgList(list)) => list
             case _ => Nil
           }
-
-          Some(Constructor(typeName, desc, argList))
+          val ex = map.get("ex") match {
+            case Some(Text(x)) => Some(x)
+            case _ => None
+          }
+          Some(Constructor(typeName, argList, desc, ex))
         case MacroName("member") =>
           val typeName = map.get("type") match {
             case Some(Text(x)) => x
@@ -50,7 +57,11 @@ object FunctionDefinition {
             case Some(ArgList(list)) => list
             case _ => Nil
           }
-          Some(Member(typeName, method, desc, args))
+          val ex = map.get("ex") match {
+            case Some(Text(x)) => Some(x)
+            case _ => None
+          }
+          Some(Member(typeName, method, args, desc, ex))
         case MacroName("setter") =>
           val typeName = map.get("type") match {
             case Some(Text(x)) => x
@@ -70,7 +81,11 @@ object FunctionDefinition {
             case Some(Text(x)) => x
             case _ => ""
           }
-          Some(Setter(typeName, memberName, memberType, desc))
+          val ex = map.get("ex") match {
+            case Some(Text(x)) => Some(x)
+            case _ => None
+          }
+          Some(Setter(typeName, memberName, memberType, desc, ex))
         case _ =>
           None
       }
