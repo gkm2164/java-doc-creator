@@ -3,16 +3,14 @@ package com.kakao.search.middle;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArgParser {
+public class MacroArgParser {
     public static class ParseAfter {
-        String typeName;
         String desc;
         String after;
     }
 
     public static class Argument {
         public String name;
-        public String typeName;
         public String desc;
 
     }
@@ -23,10 +21,8 @@ public class ArgParser {
 
         for (int i = ptr; i < str.length(); i++) {
             if (str.charAt(i) == '{') {
-                ret.typeName = sb.toString();
                 sb = new StringBuffer();
-                int j = i + 1;
-                for (; j < str.length(); j++) {
+                for (int j = i + 1; j < str.length(); j++) {
                     if (str.charAt(j) == '}') {
                         break;
                     }
@@ -51,12 +47,11 @@ public class ArgParser {
         StringBuffer sb = new StringBuffer();
 
         int sPtr = 0;
-        while(sPtr < str.length()) {
+        while (sPtr < str.length()) {
             if (str.charAt(sPtr) == ':') {
                 ParseAfter remains = parseAfter(str, ++sPtr);
                 Argument arg = new Argument();
-                arg.name = sb.toString();
-                arg.typeName = remains.typeName;
+                arg.name = sb.toString().trim();
                 arg.desc = remains.desc;
                 ret.add(arg);
 
