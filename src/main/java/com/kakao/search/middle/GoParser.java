@@ -1,10 +1,7 @@
 package com.kakao.search.middle;
 
 import com.kakao.search.middle.exceptions.TokenNotAcceptedException;
-import com.kakao.search.middle.syntax.FunctionDef;
-import com.kakao.search.middle.syntax.GoFuncArg;
-import com.kakao.search.middle.syntax.SomeDef;
-import com.kakao.search.middle.syntax.TypeDef;
+import com.kakao.search.middle.syntax.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -152,20 +149,22 @@ public class GoParser {
         }
     }
 
-    public static SomeDef parse(String def) throws TokenNotAcceptedException {
+    public static GoSomeDef parse(String def) throws TokenNotAcceptedException {
         GoToken[] tokens = tokenize(def);
 //        debugToken(tokens);
 
+        // should start with "func" or "type"
         assertTokenOr(tokens[0], new GoTokenEnum[]{GoTokenEnum.FUNC, GoTokenEnum.TYPE});
-        if (tokens[0].e == GoTokenEnum.FUNC) {
-            FunctionDef fd = new FunctionDef();
+        if (tokens[0].e == GoTokenEnum.FUNC) { // if it starts with "func",
+            GoFunctionDef fd = new GoFunctionDef();
+            // then next token should be "(" for receiver, or string for function name
             assertTokenOr(tokens[1], new GoTokenEnum[]{GoTokenEnum.LBRACKET, GoTokenEnum.STRING});
             int fnStart = 1;
-            if (tokens[1].e == GoTokenEnum.LBRACKET) {
+            if (tokens[1].e == GoTokenEnum.LBRACKET) { // if it starts with "(",
                 fnStart = 5;
-                assertToken(tokens[2], GoTokenEnum.STRING);
-                assertToken(tokens[3], GoTokenEnum.STRING);
-                assertToken(tokens[4], GoTokenEnum.RBRACKET);
+                assertToken(tokens[2], GoTokenEnum.STRING); // it should start with receiver name
+                assertToken(tokens[3], GoTokenEnum.STRING); // and the type name should be followed
+                assertToken(tokens[4], GoTokenEnum.RBRACKET); // also, ")" required to enclose the receiver type definition.
 
                 fd.receiverName = tokens[2].value;
                 fd.receiverType = tokens[3].value;
@@ -193,6 +192,9 @@ public class GoParser {
                     untilIdx++;
                 }
 
+                // in case of multiple parameter definition over 1 type, like
+                // func x(a, b, c int) int ...
+                // definition should be in incomplete state
                 pendingVar.add(tokens[idx]);
 
                 if (untilIdx - idx > 1) {
@@ -264,7 +266,7 @@ public class GoParser {
 
         // type Something struct...
         assertToken(tokens[0], GoTokenEnum.TYPE);
-        TypeDef ret = new TypeDef();
+        GoTypeDef ret = new GoTypeDef();
         assertToken(tokens[1], GoTokenEnum.STRING);
         ret.typeName = tokens[1].value;
 
@@ -273,7 +275,7 @@ public class GoParser {
 
     public static int findDefStop(String code) {
         int start = 0;
-        while (start < code.length() && code.charAt(start++) != '\n') ;
+        while (start < code.length() && code.charAt(start++) != '\n');
 
         final String avoidWord = "interface";
 

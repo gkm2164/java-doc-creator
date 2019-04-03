@@ -3,19 +3,24 @@ package com.kakao.search.middle.syntax;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionDef extends SomeDef {
+public class GoFunctionDef implements GoSomeDef {
     public String receiverName; // 리시버 명
     public String receiverType; //리시버 타입 명
     public String funcName; // 함수 명
     public String returnType;
     public List<GoFuncArg> args;
 
-    public FunctionDef() {
+    public GoFunctionDef() {
         receiverName = "";
         receiverType = "";
         funcName = "";
         returnType = "";
         args = new ArrayList<>();
+    }
+
+    @Override
+    public String getIdenticalName() {
+        return funcName;
     }
 
     public String printAsGoStyle() {
