@@ -39,26 +39,64 @@ object Main {
     pw.write("""<!DOCTYPE html><html><head><title>Hello</title><link type="text/css" rel="stylesheet" href="doc.css"/></head><body>""")
 
     ret.foreach { case (filename, functionDefs) =>
-      pw.write(s"<h2>=== at file $filename ===</h2>")
+      //      pw.write(s"<h2>=== at file $filename ===</h2>")
       functionDefs.map(_.show).foreach(println)
       pw.write(functionDefs.map(_.show).map(x => s"<div>$x</div>").mkString("<hr/>"))
     }
 
     pw.write("</body></html>")
     pw.close()
-    //    println("!!!! only builder types !!!!")
 
     val graph = constructGraph(ret)
-
-    //    println("====")
-
     val orders = orderTypes(graph)
+    val allDefs = ret.flatMap(_._2).toList
+    val bgs: List[BuilderGroup] = asBuilderGroups(orders, allDefs)
+
+    //      .foreach(x => x.constructor.foreach(println))
+
+    println(allDefs)
+
+    for (bg <- bgs) {
+
+      println(s"for ${bg.typeName},")
+      bg.constructor.foreach(println)
+      println()
+      println(s"== setters for ${bg.typeName} ==")
+      println()
+      bg.setters.foreach(println)
+      println()
+      println(s"== methods for ${bg.typeName} ==")
+      println()
+      bg.methods.foreach(println)
+      println()
+    }
   }
 
+  def asBuilderGroups(elems: List[TypeDefBlock], allDefs: List[DefBlock]): List[BuilderGroup] = {
+    def recur(elems: List[TypeDefBlock], acc: List[BuilderGroup]): List[BuilderGroup] = elems match {
+      case Nil => acc
+      case h :: tail if h.builder =>
+        val allMembers: List[BuilderGroupElem] = allDefs.flatMap {
+          case FuncDefBlock(name, argList, retType, desc, ex) if name.startsWith("New") && retType.contains(h.name) => Some(Constructor(h.name, name, argList, desc, ex))
+          case ReceiverFuncDefBlock(_, rt, FuncDefBlock(name, argList, frt, desc, ex)) if rt.contains(h.name) =>
+            Some(if (rt == frt && argList.length == 1 && name.updated(0, name(0).toLower) == argList.head.name) {
+              Setter(rt, name, argList.head.typeName, desc, ex)
+            } else {
+              Method(rt, name, argList, desc, ex)
+            })
+          case _ => None
+        }
 
-  //    println()
-  //    orders.foreach(println)
+        val constructors = allMembers.collect { case x: Constructor => x }
+        val setters = allMembers.collect { case x: Setter => x }
+        val methods = allMembers.collect { case x: Method => x }
 
+        recur(tail, acc :+ BuilderGroup(h.name, constructors, setters, methods))
+      case _ :: tail => recur(tail, acc) // ignore if it is not builder type
+    }
+
+    recur(elems, Nil)
+  }
 
   implicit val goWriter: FunctionWriter = new FunctionWriter {
     def encapsulateWithTag(str: String): String = {
@@ -86,22 +124,14 @@ object Main {
       case Argument(name, typeName, _) => s"""$name ${colorType(typeName)}"""
     }
 
-    def functionDef(fd: DefBlock): String = fd match {
-      case FuncDefBlock(name, argList, returnType, _, _) =>
-        s"""<span class="reserved-keyword">func</span> $name(${argList.map(showArgument)}) ${colorType(returnType)}"""
-      case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, _, _)) =>
-        s"""<span class="reserved-keyword">func</span> ($rName, ${colorType(rType)}) $name(${argList.map(showArgument)}) ${colorType(returnType)}"""
-      case _ => ""
-    }
+    def showDesc(desc: Option[String], ex: Option[String]): String = desc.map(x => s"""<p>$x</p>""").getOrElse("") + ex.map(x => s"""<pre class="code">$x</pre>""").getOrElse("")
 
-    override def show(defBlock: DefBlock): String = defBlock match {
-      case TypeDefBlock(tn, _, _, builder) => (if (builder) "*" else "") + s"""<span class="reserved-keyword">type</span> $tn"""
-      case FuncDefBlock(name, argList, returnType, desc, _) =>
-        s"""<p><span class="reserved-keyword">func</span> $name(${argList.map(x => s"""${x.name} ${colorType(x.typeName)}""").mkString(", ")}) ${colorType(returnType.trim)}</p>""" +
-          desc.map(x => s"\n<p>$x</p>").getOrElse("") +
-          (if (argList.exists(_.desc != "")) argList.map(x => s"""<li>${x.name} ${colorType(x.typeName)} :: ${x.desc}</li>""").mkString("\nhello<ul>", "", "</ul>") else "")
-      case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, _, _)) =>
-        s"""<span class="reserved-keyword">func</span> ($rName ${colorType(rType)}) $name(${argList.map(x => s"""${x.name} ${colorType(x.typeName)}""").mkString(", ")}) ${colorType(returnType.trim)}"""
+    override def show(fd: DefBlock): String = fd match {
+      case FuncDefBlock(name, argList, returnType, desc, ex) =>
+        s"""<p><span class="reserved-keyword">func</span> $name(${argList.map(showArgument).mkString(", ")}) ${colorType(returnType)}</p>""" + showDesc(desc, ex)
+      case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, desc, ex)) =>
+        s"""<span class="reserved-keyword">func</span> ($rName ${colorType(rType)}) $name(${argList.map(showArgument).mkString(", ")}) ${colorType(returnType)}""" + showDesc(desc, ex)
+      case TypeDefBlock(name, desc, ex, _) => s"""<span class="reserved-keyword">type</span> $name""" + showDesc(desc, ex)
     }
   }
 

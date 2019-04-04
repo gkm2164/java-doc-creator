@@ -11,21 +11,18 @@ trait BuildGroupWriter {
 sealed trait BuilderGroupElem {
   def typeName: String
 
-  def desc: String
+  def desc: Option[String]
 
   def ex: Option[String]
 
   def show(implicit functionWriter: BuildGroupWriter): String = functionWriter.show(this)
 }
 
-case class Constructor(typeName: String, argList: List[Argument], desc: String, ex: Option[String]) extends BuilderGroupElem
+case class Constructor(typeName: String, name: String, argList: List[Argument], desc: Option[String], ex: Option[String]) extends BuilderGroupElem
 
-case class Method(typeName: String, method: String, argList: List[Argument], desc: String, ex: Option[String]) extends BuilderGroupElem
+case class Method(typeName: String, method: String, argList: List[Argument], desc: Option[String], ex: Option[String]) extends BuilderGroupElem
 
-case class Setter(typeName: String, memberName: String, memberType: String, desc: String, ex: Option[String]) extends BuilderGroupElem
-
-
-//case class DefBlock(name: String, args: Seq[Argument], desc: String, ex: String, builder: Boolean)
+case class Setter(typeName: String, memberName: String, memberType: String, desc: Option[String], ex: Option[String]) extends BuilderGroupElem
 
 sealed trait DefBlock {
   def name: String
@@ -36,7 +33,9 @@ trait FDefBlock {
 }
 
 case class TypeDefBlock(name: String, desc: Option[String], ex: Option[String], builder: Boolean) extends DefBlock
+
 case class FuncDefBlock(name: String, argList: List[Argument], returnType: String, desc: Option[String], ex: Option[String]) extends DefBlock
+
 case class ReceiverFuncDefBlock(recvName: String, recvType: String, func: FuncDefBlock) extends DefBlock {
   def name: String = func.name
 }
@@ -50,6 +49,9 @@ object DocType {
 }
 
 trait DocType
-case class BuilderGroup(typeName: String, constructor: Constructor, methods: Seq[Method], setters: Seq[Method]) extends DocType
+
+case class BuilderGroup(typeName: String, constructor: List[Constructor], setters: Seq[Setter], methods: Seq[Method]) extends DocType
+
 case class GeneralGroup(methods: Seq[Method]) extends DocType
+
 case object NoneType extends DocType
