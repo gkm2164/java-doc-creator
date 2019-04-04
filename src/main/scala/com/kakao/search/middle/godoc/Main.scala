@@ -2,6 +2,8 @@ package com.kakao.search.middle.godoc
 
 import java.io.{File, PrintWriter}
 
+import com.kakao.search.middle.godoc.doc.elements.Argument
+
 import scala.language.{higherKinds, postfixOps}
 
 object Main {
@@ -31,20 +33,6 @@ object Main {
       }
     }
 
-    implicit val goWriter: FunctionWriter = new FunctionWriter {
-      def colorType(t: String) = t.replace("([\\.\\*\\[\\]]+)([a-zA-Z0-9_]+)(.*)", """$1<span class="type-def">$2</span>$3""")
-
-      override def show(defBlock: DefBlock): String = defBlock match {
-        case TypeDefBlock(tn, _, _, builder) => (if (builder) "*" else "") + s"""<span class="reserved-keyword">type</span> $tn"""
-        case FuncDefBlock(name, argList, returnType, desc, _) =>
-          s"""<p><span class="reserved-keyword">func</span> $name(${argList.map(x => s"""${x.name} <span class="type-def">${x.typeName}</span>""").mkString(", ")}) <span class="type-def">${returnType.trim}</span></p>""" +
-            desc.map(x => s"\n-- $x").getOrElse("") +
-            (if (argList.exists(_.desc != "")) argList.map(x => s"""<li>${x.name} <span class="type-def">${x.typeName}</span> :: ${x.desc}</li>""").mkString("\nhello<ul>", "", "</ul>") else "")
-        case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, _, _)) =>
-          s"""<span class="reserved-keyword">func</span> ($rName <span class="type-def">$rType</span>) $name(${argList.map(x => s"""${x.name} <span class="type-def">${x.typeName}</span>""").mkString(", ")}) <span class="type-def">${returnType.trim}</span>"""
-      }
-    }
-
     val ret = showFolder(orgDirName)
 
     val pw = new PrintWriter(s"doc.html")
@@ -57,16 +45,64 @@ object Main {
     }
 
     pw.write("</body></html>")
-    pw.close
-//    println("!!!! only builder types !!!!")
+    pw.close()
+    //    println("!!!! only builder types !!!!")
 
     val graph = constructGraph(ret)
 
-//    println("====")
+    //    println("====")
 
     val orders = orderTypes(graph)
-//    println()
-//    orders.foreach(println)
+  }
+
+
+  //    println()
+  //    orders.foreach(println)
+
+
+  implicit val goWriter: FunctionWriter = new FunctionWriter {
+    def encapsulateWithTag(str: String): String = {
+      if (str != "")
+        s"""<span class="type-def">$str</span>"""
+      else ""
+    }
+
+    def colorType(t: String): String = {
+      def recur(rem: String, buf: String, acc: String): String = {
+        if (rem == "") {
+          if (buf != "") acc + s"""<span class="type-def">$buf</span>"""
+          else acc
+        }
+        else {
+          if ("().*[],".indexOf(rem.head) >= 0) recur(rem.tail, "", acc + encapsulateWithTag(buf) + rem.head)
+          else recur(rem.tail, buf + rem.head, acc)
+        }
+      }
+
+      recur(t, "", "")
+    }
+
+    def showArgument(arg: Argument): String = arg match {
+      case Argument(name, typeName, _) => s"""$name ${colorType(typeName)}"""
+    }
+
+    def functionDef(fd: DefBlock): String = fd match {
+      case FuncDefBlock(name, argList, returnType, _, _) =>
+        s"""<span class="reserved-keyword">func</span> $name(${argList.map(showArgument)}) ${colorType(returnType)}"""
+      case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, _, _)) =>
+        s"""<span class="reserved-keyword">func</span> ($rName, ${colorType(rType)}) $name(${argList.map(showArgument)}) ${colorType(returnType)}"""
+      case _ => ""
+    }
+
+    override def show(defBlock: DefBlock): String = defBlock match {
+      case TypeDefBlock(tn, _, _, builder) => (if (builder) "*" else "") + s"""<span class="reserved-keyword">type</span> $tn"""
+      case FuncDefBlock(name, argList, returnType, desc, _) =>
+        s"""<p><span class="reserved-keyword">func</span> $name(${argList.map(x => s"""${x.name} ${colorType(x.typeName)}""").mkString(", ")}) ${colorType(returnType.trim)}</p>""" +
+          desc.map(x => s"\n<p>$x</p>").getOrElse("") +
+          (if (argList.exists(_.desc != "")) argList.map(x => s"""<li>${x.name} ${colorType(x.typeName)} :: ${x.desc}</li>""").mkString("\nhello<ul>", "", "</ul>") else "")
+      case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, _, _)) =>
+        s"""<span class="reserved-keyword">func</span> ($rName ${colorType(rType)}) $name(${argList.map(x => s"""${x.name} ${colorType(x.typeName)}""").mkString(", ")}) ${colorType(returnType.trim)}"""
+    }
   }
 
   def orderTypes(graph: Map[TypeDefBlock, List[TypeDefBlock]]): List[TypeDefBlock] = {
@@ -85,6 +121,22 @@ object Main {
     val roots = degrees.toList.filter(_._2 == 0).sortBy(_._1.name).map(_._1)
 
     recur(roots, graph.keys.map(x => x -> false).toMap, Nil)
+  }
+
+  def calculateDegrees(typeMap: Map[TypeDefBlock, List[TypeDefBlock]]): Map[TypeDefBlock, Int] = {
+    typeMap.keys.foldLeft(typeMap.mapValues(_ => 0)) { (acc, tb) =>
+      merge(acc, typeMap(tb).foldLeft(Map.empty[TypeDefBlock, Int].withDefault(_ => 0)) { (a, t) =>
+        a.updated(t, a(t) + 1)
+      })
+    }
+  }
+
+  def merge[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] = {
+    val aKey = a.keys.toSet
+    val bKey = b.keys.toSet
+
+    val keys = aKey ++ bKey
+    keys.foldLeft(Map.empty[T, Int]) { (acc, elem) => acc.updated(elem, a.getOrElse(elem, 0) + b.getOrElse(elem, 0)) }
   }
 
   def constructGraph(ret: Seq[(String, Seq[DefBlock])]): Map[TypeDefBlock, List[TypeDefBlock]] = {
@@ -112,29 +164,13 @@ object Main {
           case _ => Nil
         }.map(_.replaceAllLiterally("*", "").replaceAllLiterally("...", "")).distinct.filter(x => typeNames.contains(x))
 
-//        println(s"type ${h.name} depends on => $allDependent")
+        //        println(s"type ${h.name} depends on => $allDependent")
 
         val t = h -> allDependent.map(x => typeMap(x)).toList
         recur(tail, acc + t)
     }
 
     recur(builderTypes, Map.empty)
-  }
-
-  def merge[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] = {
-    val aKey = a.keys.toSet
-    val bKey = b.keys.toSet
-
-    val keys = aKey ++ bKey
-    keys.foldLeft(Map.empty[T, Int]) { (acc, elem) => acc.updated(elem, a.getOrElse(elem, 0) + b.getOrElse(elem, 0)) }
-  }
-
-  def calculateDegrees(typeMap: Map[TypeDefBlock, List[TypeDefBlock]]): Map[TypeDefBlock, Int] = {
-    typeMap.keys.foldLeft(typeMap.mapValues(_ => 0)) { (acc, tb) =>
-      merge(acc, typeMap(tb).foldLeft(Map.empty[TypeDefBlock, Int].withDefault(_ => 0)) { (a, t) =>
-        a.updated(t, a(t) + 1)
-      })
-    }
   }
 }
 

@@ -27,9 +27,14 @@ case class Setter(typeName: String, memberName: String, memberType: String, desc
 
 //case class DefBlock(name: String, args: Seq[Argument], desc: String, ex: String, builder: Boolean)
 
-trait DefBlock {
+sealed trait DefBlock {
   def name: String
 }
+
+trait FDefBlock {
+  def show: String
+}
+
 case class TypeDefBlock(name: String, desc: Option[String], ex: Option[String], builder: Boolean) extends DefBlock
 case class FuncDefBlock(name: String, argList: List[Argument], returnType: String, desc: Option[String], ex: Option[String]) extends DefBlock
 case class ReceiverFuncDefBlock(recvName: String, recvType: String, func: FuncDefBlock) extends DefBlock {
