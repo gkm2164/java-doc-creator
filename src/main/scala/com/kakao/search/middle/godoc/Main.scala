@@ -38,9 +38,7 @@ object Main {
     val pw = new PrintWriter(s"doc.html")
     pw.write("""<!DOCTYPE html><html><head><title>Hello</title><link type="text/css" rel="stylesheet" href="doc.css"/></head><body>""")
 
-    ret.foreach { case (filename, functionDefs) =>
-      //      pw.write(s"<h2>=== at file $filename ===</h2>")
-//      functionDefs.map(_.show).foreach(println)
+    ret.foreach { case (_, functionDefs) =>
       pw.write(functionDefs.map(_.show).map(x => s"<div>$x</div>").mkString("<hr/>"))
     }
 
@@ -48,13 +46,9 @@ object Main {
     pw.close()
 
     val graph = constructGraph(ret)
-    val orders = orderTypes(graph)
+    val orders = orderTypesBFS(graph)
     val allDefs = ret.flatMap(_._2).toList
     val bgs: List[BuilderGroup] = asBuilderGroups(orders, allDefs)
-
-    //      .foreach(x => x.constructor.foreach(println))
-
-//    println(allDefs)
 
     val pw2 = new PrintWriter(s"dependencies.html")
     pw2.write("""<!DOCTYPE html><html><head><title>Hello</title><link type="text/css" rel="stylesheet" href="doc.css"/></head><body>""")
@@ -160,6 +154,25 @@ object Main {
     recur(roots, graph.keys.map(x => x -> false).toMap, Nil)
   }
 
+
+  def orderTypesBFS(graph: Map[TypeDefBlock, List[TypeDefBlock]]): List[TypeDefBlock] = {
+    def recur(queue: List[TypeDefBlock], visited: Map[TypeDefBlock, Boolean], acc: List[TypeDefBlock]): List[TypeDefBlock] = {
+      queue match {
+        case Nil => acc.reverse
+        case h :: tail if !visited(h) =>
+          val nextQueue = graph(h).filter(x => !visited(x))
+          if (nextQueue.isEmpty) recur(tail, visited.updated(h, true), h :: acc)
+          else recur(tail ++ nextQueue, visited.updated(h, true), h :: acc)
+        case h :: tail if visited(h) => recur(tail, visited, acc)
+      }
+    }
+
+    val degrees = calculateDegrees(graph)
+    val roots = degrees.toList.filter(_._2 == 0).sortBy(_._1.name).map(_._1)
+
+    recur(roots, graph.keys.map(x => x -> false).toMap, Nil)
+  }
+
   def calculateDegrees(typeMap: Map[TypeDefBlock, List[TypeDefBlock]]): Map[TypeDefBlock, Int] = {
     typeMap.keys.foldLeft(typeMap.mapValues(_ => 0)) { (acc, tb) =>
       merge(acc, typeMap(tb).foldLeft(Map.empty[TypeDefBlock, Int].withDefault(_ => 0)) { (a, t) =>
@@ -189,7 +202,7 @@ object Main {
       case h :: tail =>
         val allDefs = ret.flatMap(_._2)
         val allMembers = allDefs.flatMap {
-          case f@FuncDefBlock(fname, _, retType, _, _) if fname.startsWith("New") && retType.contains(h.name) => Some(f)
+          case f@FuncDefBlock(functionName, _, retType, _, _) if functionName.startsWith("New") && retType.contains(h.name) => Some(f)
           case r@ReceiverFuncDefBlock(_, rt, _) if rt.contains(h.name) => Some(r)
           case _ => None
         }
