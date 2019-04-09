@@ -43,6 +43,14 @@ public class GoParser {
 
             return new GoToken(GoTokenEnum.STRING, str, charAt, lineAt);
         }
+
+        boolean is(GoTokenEnum en) {
+            return e == en;
+        }
+
+        boolean isOneOf(GoTokenEnum... enums) {
+            return e.isOneOf(enums);
+        }
     }
 
 
@@ -229,13 +237,13 @@ public class GoParser {
             while (it.hasNext()) {
                 // may ')' for stop, WORD for continue
                 GoToken mayFinish = it.assertTokenOr(GoTokenEnum.RBRACKET, GoTokenEnum.STRING);
-                if (mayFinish.e == GoTokenEnum.RBRACKET) {
+                if (mayFinish.is(GoTokenEnum.RBRACKET)) {
                     break;
                 }
                 pendingVar.add(mayFinish);
 
                 GoToken mayComma = it.next();
-                if (mayComma.e == GoTokenEnum.COMMA) {
+                if (mayComma.is(GoTokenEnum.COMMA)) {
                     pendingVar.add(mayComma);
                     continue;
                 }
@@ -247,7 +255,7 @@ public class GoParser {
                 int pars = 0;
                 // Comma(',') 혹은 Rbracket(')')을 기준으로 argument list 생성
                 GoToken argCtx = it.next();
-                while (!(pars == 0 && argCtx.e.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET))) {
+                while (!(pars == 0 && argCtx.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET))) {
                     log.fine("parse arg: " + argCtx.value);
                     // in this context, RBRACKET does not always mean end of arg definition
                     switch (argCtx.e) {
@@ -274,10 +282,8 @@ public class GoParser {
                 ArrayList<String> tnList = new ArrayList<>();
                 int until = typeNameTokens.size();
                 for (int i = 0; i < until; i++) {
-                    if (typeNameTokens.get(i).e == GoTokenEnum.LBRACKET
-                        || (i + 1 < until
-                            && (typeNameTokens.get(i + 1).e == GoTokenEnum.RBRACKET
-                                || typeNameTokens.get(i + 1).e == GoTokenEnum.COMMA))) {
+                    if (typeNameTokens.get(i).is(GoTokenEnum.LBRACKET)
+                        || (i + 1 < until && typeNameTokens.get(i + 1).isOneOf(GoTokenEnum.RBRACKET, GoTokenEnum.COMMA))) {
                         tnList.add(typeNameTokens.get(i).value + typeNameTokens.get(i + 1).value);
                         i += 1;
                     } else {
@@ -297,7 +303,7 @@ public class GoParser {
 
                 fd.args.addAll(args);
 
-                if (argCtx.e == GoTokenEnum.RBRACKET) {
+                if (argCtx.is(GoTokenEnum.RBRACKET)) {
                     break;
                 }
             }
@@ -318,9 +324,9 @@ public class GoParser {
                             break;
                         default:
                             sb.append(token.value);
-                            GoToken glance = it.glanceNext();
-                            if (it.hasNext() && glance != null) {
-                                if (glance.e != GoTokenEnum.COMMA && glance.e != GoTokenEnum.RBRACKET) {
+                            GoToken glanced = it.glanceNext();
+                            if (it.hasNext() && glanced != null) {
+                                if (!glanced.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET)) {
                                     sb.append(" ");
                                 }
                             }
