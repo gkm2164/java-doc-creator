@@ -154,6 +154,7 @@ public class GoParser {
 //        debugToken(tokens);
 
         // should start with "func" or "type"
+
         assertTokenOr(tokens[0], new GoTokenEnum[]{GoTokenEnum.FUNC, GoTokenEnum.TYPE});
         if (tokens[0].e == GoTokenEnum.FUNC) { // if it starts with "func",
             GoFunctionDef fd = new GoFunctionDef();
@@ -269,6 +270,9 @@ public class GoParser {
         GoTypeDef ret = new GoTypeDef();
         assertToken(tokens[1], GoTokenEnum.STRING);
         ret.typeName = tokens[1].value;
+        if (tokens[2].value.startsWith("interface")) {
+            ret.isInterface = true;
+        }
 
         return ret;
     }
