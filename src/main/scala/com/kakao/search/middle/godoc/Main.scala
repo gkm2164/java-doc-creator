@@ -40,7 +40,7 @@ object Main {
 
     ret.foreach { case (filename, functionDefs) =>
       //      pw.write(s"<h2>=== at file $filename ===</h2>")
-      functionDefs.map(_.show).foreach(println)
+//      functionDefs.map(_.show).foreach(println)
       pw.write(functionDefs.map(_.show).map(x => s"<div>$x</div>").mkString("<hr/>"))
     }
 
@@ -54,22 +54,29 @@ object Main {
 
     //      .foreach(x => x.constructor.foreach(println))
 
-    println(allDefs)
+//    println(allDefs)
+
+    val pw2 = new PrintWriter(s"dependencies.html")
+    pw2.write("""<!DOCTYPE html><html><head><title>Hello</title><link type="text/css" rel="stylesheet" href="doc.css"/></head><body>""")
 
     for (bg <- bgs) {
 
-      println(s"for ${bg.typeName},")
-      bg.constructor.foreach(println)
-      println()
-      println(s"== setters for ${bg.typeName} ==")
-      println()
-      bg.setters.foreach(println)
-      println()
-      println(s"== methods for ${bg.typeName} ==")
-      println()
-      bg.methods.foreach(println)
-      println()
+      pw2.write(s"<h1>for ${bg.typeName}</h1>")
+      bg.constructor.foreach(x => pw2.write(s"""<p>$x</p>"""))
+      pw2.write("<br/>")
+      pw2.write(s"== setters for ${bg.typeName} ==")
+      pw2.write("<br/>")
+      bg.setters.foreach(x => pw2.write(s"""<p>$x</p>"""))
+      pw2.write("<br/>")
+      pw2.write(s"== methods for ${bg.typeName} ==")
+      pw2.write("<br/>")
+      bg.methods.foreach(x => pw2.write(s"""<p>$x</p>"""))
+
+      pw2.write("<br/>")
     }
+
+    pw2.write("</body></html>")
+    pw2.close()
   }
 
   def asBuilderGroups(elems: List[TypeDefBlock], allDefs: List[DefBlock]): List[BuilderGroup] = {
@@ -131,7 +138,7 @@ object Main {
         s"""<p><span class="reserved-keyword">func</span> $name(${argList.map(showArgument).mkString(", ")}) ${colorType(returnType)}</p>""" + showDesc(desc, ex)
       case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, desc, ex)) =>
         s"""<span class="reserved-keyword">func</span> ($rName ${colorType(rType)}) $name(${argList.map(showArgument).mkString(", ")}) ${colorType(returnType)}""" + showDesc(desc, ex)
-      case TypeDefBlock(name, desc, ex, _) => s"""<span class="reserved-keyword">type</span> $name""" + showDesc(desc, ex)
+      case TypeDefBlock(name, _, implements, desc, ex, _) => s"""<span class="reserved-keyword">type</span> $name ${implements.map(x => s":implements => $x").getOrElse("")}""" + showDesc(desc, ex)
     }
   }
 
@@ -157,21 +164,21 @@ object Main {
     typeMap.keys.foldLeft(typeMap.mapValues(_ => 0)) { (acc, tb) =>
       merge(acc, typeMap(tb).foldLeft(Map.empty[TypeDefBlock, Int].withDefault(_ => 0)) { (a, t) =>
         a.updated(t, a(t) + 1)
-      })
+      }, 0, (a: Int, b: Int) => a + b)
     }
   }
 
-  def merge[T](a: Map[T, Int], b: Map[T, Int]): Map[T, Int] = {
+  def merge[K, V](a: Map[K, V], b: Map[K, V], zero: V, add: (V, V) => V): Map[K, V] = {
     val aKey = a.keys.toSet
     val bKey = b.keys.toSet
 
     val keys = aKey ++ bKey
-    keys.foldLeft(Map.empty[T, Int]) { (acc, elem) => acc.updated(elem, a.getOrElse(elem, 0) + b.getOrElse(elem, 0)) }
+    keys.foldLeft(Map.empty[K, V]) { (acc, elem) => acc.updated(elem, add(a.getOrElse(elem, zero), b.getOrElse(elem, zero))) }
   }
 
   def constructGraph(ret: Seq[(String, Seq[DefBlock])]): Map[TypeDefBlock, List[TypeDefBlock]] = {
     val builderTypes = ret.flatMap(_._2).flatMap {
-      case x@TypeDefBlock(_, _, _, true) => Some(x)
+      case x@TypeDefBlock(_, _, _, _, _, true) => Some(x)
       case _ => None
     }.toList
 
@@ -194,13 +201,23 @@ object Main {
           case _ => Nil
         }.map(_.replaceAllLiterally("*", "").replaceAllLiterally("...", "")).distinct.filter(x => typeNames.contains(x))
 
-        //        println(s"type ${h.name} depends on => $allDependent")
 
         val t = h -> allDependent.map(x => typeMap(x)).toList
         recur(tail, acc + t)
     }
 
-    recur(builderTypes, Map.empty)
+    val res1 = recur(builderTypes, Map.empty)
+
+    val dependTypes = builderTypes.filter(x => x.implements.isDefined)
+
+    val implementRelation: Map[TypeDefBlock, List[TypeDefBlock]] =
+      dependTypes.map(x => typeMap(x.implements.get) -> x)
+        .foldLeft(Map.empty[TypeDefBlock, List[TypeDefBlock]]) { (acc, pair) =>
+          val (key, value) = pair
+          acc.updated(key, acc.getOrElse(key, List()) :+ value)
+        }.mapValues(_.distinct)
+
+    merge(res1, implementRelation, List(), (x: List[TypeDefBlock], y: List[TypeDefBlock]) => x ++ y)
   }
 }
 

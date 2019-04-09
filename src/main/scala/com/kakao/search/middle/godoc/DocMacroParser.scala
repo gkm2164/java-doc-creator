@@ -19,7 +19,7 @@ object DocMacroParser {
           case "desc" => acc.copy(desc = Text.parse(value.dropWhile(_ == ':').trim).txt)
           case "ex" => acc.copy(ex = Text.parse(value.dropWhile(_ == ':').trim).txt)
           case "builder" => acc.copy(builder = true)
-          case "implements" => acc.copy(interface = Text.parse(value.dropWhile(_ == ' ').takeWhile(_ != '\n')).txt)
+          case "implements" => acc.copy(interface = Text.parse(value.dropWhile(_ == ':').trim).txt)
           case k => throw new Exception(s"unknown command $k")
         })
       }
@@ -54,7 +54,6 @@ object DocMacroParser {
         val comment = code.slice(start, end)
           .replace(startOfDoc, "")
         val startOfDef = code.drop(end)
-
         val codeDefUntil = GoParser.findDefStop(startOfDef)
         val fDefLine = startOfDef.slice(endOfDoc.length, codeDefUntil)
         val someDefObj = GoParser.parse(fDefLine)
@@ -94,7 +93,7 @@ object DocMacroParser {
       case x: GoFunctionDef =>
         if (x.receiverType != "") ReceiverFuncDefBlock(x.receiverName, x.receiverType, x.toFuncDefBlock)
         else x.toFuncDefBlock
-      case x: GoTypeDef => TypeDefBlock(x.typeName, interface.toOption, desc.toOption, ex.toOption, builder)
+      case x: GoTypeDef => TypeDefBlock(x.typeName, x.isInterface, interface.toOption, desc.toOption, ex.toOption, builder)
     }
   }
 

@@ -32,7 +32,7 @@ trait FDefBlock {
   def show: String
 }
 
-case class TypeDefBlock(name: String, interface: Option[String], desc: Option[String], ex: Option[String], builder: Boolean) extends DefBlock
+case class TypeDefBlock(name: String, interface: Boolean, implements: Option[String], desc: Option[String], ex: Option[String], builder: Boolean) extends DefBlock
 
 case class FuncDefBlock(name: String, argList: List[Argument], returnType: String, desc: Option[String], ex: Option[String]) extends DefBlock
 

@@ -1,11 +1,18 @@
 package com.kakao.search.middle;
 
+import com.kakao.search.middle.exceptions.TokenNoMoreToConsumeException;
 import com.kakao.search.middle.exceptions.TokenNotAcceptedException;
-import com.kakao.search.middle.syntax.*;
+import com.kakao.search.middle.syntax.GoFuncArg;
+import com.kakao.search.middle.syntax.GoFunctionDef;
+import com.kakao.search.middle.syntax.GoSomeDef;
+import com.kakao.search.middle.syntax.GoTypeDef;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.function.Predicate;
+import java.util.logging.Logger;
 
 public class GoParser {
 
@@ -115,29 +122,6 @@ public class GoParser {
         return r;
     }
 
-    private static void assertToken(GoToken token, GoTokenEnum should) throws TokenNotAcceptedException {
-        if (token.e != should) {
-            throw new TokenNotAcceptedException(String.format("line: %d, char: %d token not accepted", token.lineAt, token.charAt));
-        }
-    }
-
-    private static void assertTokenNot(GoToken token, GoTokenEnum shouldNot) throws TokenNotAcceptedException {
-        if (token.e == shouldNot) {
-            throw new TokenNotAcceptedException(String.format("line: %d, char: %d token not accepted", token.lineAt, token.charAt));
-        }
-    }
-
-    private static void assertTokenOr(GoToken token, GoTokenEnum[] shoulds) throws TokenNotAcceptedException {
-        boolean ret = false;
-        for (GoTokenEnum en : shoulds) {
-            ret = ret || token.e == en;
-        }
-
-        if (!ret) {
-            throw new TokenNotAcceptedException(String.format("line: %d, char: %d token not accepted", token.lineAt, token.charAt));
-        }
-    }
-
     public static void debugToken(GoToken[] tokens) {
         int num = 0;
         for (GoToken e : tokens) {
@@ -149,98 +133,169 @@ public class GoParser {
         }
     }
 
-    public static GoSomeDef parse(String def) throws TokenNotAcceptedException {
-        GoToken[] tokens = tokenize(def);
+    public static class GoTokenIterator implements Iterator<GoToken> {
+        private int idx = 0;
+        private GoToken[] tokens = null;
+
+        private Logger log = Logger.getLogger("GoTokenIterator");
+
+        public GoTokenIterator(GoToken[] tokens) {
+            this.tokens = tokens;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return idx < tokens.length;
+        }
+
+        public GoToken glanceNext() {
+            if (idx < tokens.length) {
+                return tokens[idx];
+            }
+            return null;
+        }
+
+        @Override
+        public GoToken next() {
+            GoToken ret = tokens[idx++];
+            log.finest(ret.e + ", " + ret.value);
+            return ret;
+        }
+
+        GoToken assertToken(Predicate<GoToken> validator) throws TokenNotAcceptedException, TokenNoMoreToConsumeException {
+            if (!hasNext()) {
+                throw new TokenNoMoreToConsumeException("");
+            }
+
+            GoToken token = next();
+            if (!validator.test(token)) {
+                throw new TokenNotAcceptedException(String.format("line: %d, char: %d token not accepted", token.lineAt, token.charAt));
+            }
+
+            return token;
+        }
+
+        GoToken assertTokenOr(GoTokenEnum[] shoulds) throws TokenNotAcceptedException, TokenNoMoreToConsumeException {
+            return assertToken((token) -> {
+                for (GoTokenEnum should : shoulds) {
+                    if (token.e == should) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+    }
+
+    public static GoSomeDef parse(String def) throws TokenNotAcceptedException, TokenNoMoreToConsumeException {
+        GoTokenIterator it = new GoTokenIterator(tokenize(def));
+        Logger log = Logger.getLogger("GoParser.parse");
+
+        log.fine(def);
 //        debugToken(tokens);
 
         // should start with "func" or "type"
-
-        assertTokenOr(tokens[0], new GoTokenEnum[]{GoTokenEnum.FUNC, GoTokenEnum.TYPE});
-        if (tokens[0].e == GoTokenEnum.FUNC) { // if it starts with "func",
+        GoToken defType = it.assertTokenOr(new GoTokenEnum[]{GoTokenEnum.FUNC, GoTokenEnum.TYPE});
+        if (defType.e == GoTokenEnum.FUNC) { // if it starts with "func",
             GoFunctionDef fd = new GoFunctionDef();
             // then next token should be "(" for receiver, or string for function name
-            assertTokenOr(tokens[1], new GoTokenEnum[]{GoTokenEnum.LBRACKET, GoTokenEnum.STRING});
-            int fnStart = 1;
-            if (tokens[1].e == GoTokenEnum.LBRACKET) { // if it starts with "(",
-                fnStart = 5;
-                assertToken(tokens[2], GoTokenEnum.STRING); // it should start with receiver name
-                assertToken(tokens[3], GoTokenEnum.STRING); // and the type name should be followed
-                assertToken(tokens[4], GoTokenEnum.RBRACKET); // also, ")" required to enclose the receiver type definition.
+            GoToken mayFuncName = it.assertTokenOr(new GoTokenEnum[]{GoTokenEnum.LBRACKET, GoTokenEnum.STRING});
+            if (mayFuncName.e == GoTokenEnum.LBRACKET) { // if it starts with "(",
+                GoToken receiverName = it.assertToken((x) -> x.e == GoTokenEnum.STRING); // it should start with receiver name
+                GoToken receiverType = it.assertToken((x) -> x.e == GoTokenEnum.STRING); // and the type name should be followed
+                it.assertToken((x) -> x.e == GoTokenEnum.RBRACKET); // also, ")" required to enclose the receiver type definition.
 
-                fd.receiverName = tokens[2].value;
-                fd.receiverType = tokens[3].value;
+                fd.receiverName = receiverName.value;
+                fd.receiverType = receiverType.value;
+                mayFuncName = it.next();
             }
 
-            assertToken(tokens[fnStart], GoTokenEnum.STRING);
-            fd.funcName = tokens[fnStart].value;
-
-            assertToken(tokens[fnStart + 1], GoTokenEnum.LBRACKET);
-            int idx = fnStart + 2;
+            fd.funcName = mayFuncName.value;
+            it.assertToken((x) -> x.e == GoTokenEnum.LBRACKET);
             Queue<GoToken> pendingVar = new LinkedList<>();
-            while (idx < tokens.length && tokens[idx].e != GoTokenEnum.RBRACKET) {
-                assertToken(tokens[idx], GoTokenEnum.STRING);
-                int untilIdx = idx + 1;
+
+            while (it.hasNext()) {
+                GoToken mayFinish = it.assertTokenOr(new GoTokenEnum[]{GoTokenEnum.RBRACKET, GoTokenEnum.COMMA, GoTokenEnum.STRING});
+                if (mayFinish.e == GoTokenEnum.RBRACKET) {
+                    break;
+                }
+                pendingVar.add(mayFinish);
+                GoToken mayComma = it.next();
+                if (mayComma.e == GoTokenEnum.COMMA) {
+                    pendingVar.add(mayComma);
+                    continue;
+                }
+
+                log.fine("suspect to be a argument's typename: " + mayComma.value);
+
+                ArrayList<GoToken> typeNameTokens = new ArrayList<>();
+                typeNameTokens.add(mayComma);
                 int pars = 0;
                 // Comma(',') 혹은 Rbracket(')')을 기준으로 argument list 생성
-                while (untilIdx < tokens.length && !(pars == 0 && tokens[untilIdx].e == GoTokenEnum.COMMA)
-                        && !(pars == 0 && tokens[untilIdx].e == GoTokenEnum.RBRACKET)) {
-                    if (tokens[untilIdx].e == GoTokenEnum.LBRACKET) {
-                        pars++;
-                    } else if (tokens[untilIdx].e == GoTokenEnum.RBRACKET) {
-                        pars--;
+                GoToken argCtx = it.next();
+                while (!((pars == 0 && argCtx.e == GoTokenEnum.COMMA) || (pars == 0 && argCtx.e == GoTokenEnum.RBRACKET))) {
+                    log.fine("parse arg: " + argCtx.value);
+                    switch (argCtx.e) {
+                        case LBRACKET:
+                            pars++;
+                            break;
+                        case RBRACKET:
+                            pars--;
+                            break;
+                        default:
+                            break;
                     }
+                    typeNameTokens.add(argCtx);
 
-                    untilIdx++;
+                    if (!it.hasNext()) break;
+                    argCtx = it.next();
                 }
 
                 // in case of multiple parameter definition over 1 type, like
                 // func x(a, b, c int) int ...
                 // definition should be in incomplete state
-                pendingVar.add(tokens[idx]);
 
-                if (untilIdx - idx > 1) {
-                    int pendingVarCount = pendingVar.size();
-                    ArrayList<GoFuncArg> args = new ArrayList<>(pendingVarCount);
-                    ArrayList<String> tnList = new ArrayList<>();
 
-                    for (int i = idx + 1; i < untilIdx; i++) {
-                        if (tokens[i].e == GoTokenEnum.LBRACKET) {
-                            tnList.add(tokens[i].value + tokens[i + 1].value);
-                            i += 1;
-                        } else if (i + 1 < untilIdx && tokens[i + 1].e == GoTokenEnum.RBRACKET) {
-                            tnList.add(tokens[i].value + tokens[i + 1].value);
-                        } else {
-                            tnList.add(tokens[i].value);
-                        }
+                int pendingVarCount = pendingVar.size();
+                ArrayList<GoFuncArg> args = new ArrayList<>(pendingVarCount);
+                ArrayList<String> tnList = new ArrayList<>();
+                int until = typeNameTokens.size();
+                for (int i = 0; i < until; i++) {
+                    if (typeNameTokens.get(i).e == GoTokenEnum.LBRACKET) {
+                        tnList.add(typeNameTokens.get(i).value + typeNameTokens.get(i + 1).value);
+                        i += 1;
+                    } else if (i + 1 < until && typeNameTokens.get(i + 1).e == GoTokenEnum.RBRACKET) {
+                        tnList.add(typeNameTokens.get(i).value + typeNameTokens.get(i + 1).value);
+                        i += 1;
+                    } else if (i + 1 < until && typeNameTokens.get(i + 1).e == GoTokenEnum.COMMA) {
+                        tnList.add(typeNameTokens.get(i).value + typeNameTokens.get(i + 1).value);
+                        i += 1;
+                    } else {
+                        tnList.add(typeNameTokens.get(i).value);
                     }
-                    String typeName = String.join(" ", tnList);
+                }
+                String typeName = String.join(" ", tnList);
 
-                    while (!pendingVar.isEmpty()) {
-                        GoToken tk = pendingVar.remove();
-                        GoFuncArg item = new GoFuncArg();
-                        item.typeName = typeName;
-                        item.name = tk.value;
-                        args.add(item);
-                    }
-
-                    fd.args.addAll(args);
+                while (!pendingVar.isEmpty()) {
+                    GoToken tk = pendingVar.remove();
+                    GoFuncArg item = new GoFuncArg();
+                    item.typeName = typeName;
+                    item.name = tk.value;
+                    args.add(item);
                 }
 
-                idx = untilIdx;
+                fd.args.addAll(args);
 
-
-                if (tokens[untilIdx].e == GoTokenEnum.COMMA) {
-                    idx += 1;
+                if (argCtx.e == GoTokenEnum.RBRACKET) {
+                    break;
                 }
             }
 
-            assertToken(tokens[idx], GoTokenEnum.RBRACKET);
-            idx++;
-
-            if (idx < tokens.length) { // return type
+            if (it.hasNext()) { // return type
                 StringBuilder sb = new StringBuilder();
-                for (int i = idx; i < tokens.length; i++) {
-                    switch (tokens[i].e) {
+                while (it.hasNext()) {
+                    GoToken token = it.next();
+                    switch (token.e) {
                         case LBRACKET: // => doesn't require next space
                             sb.append("(");
                             break;
@@ -251,26 +306,30 @@ public class GoParser {
                             sb.append(", ");
                             break;
                         default:
-                            sb.append(tokens[i].value);
-                            if (i + 1 < tokens.length && (tokens[i + 1].e != GoTokenEnum.COMMA && tokens[i + 1].e != GoTokenEnum.RBRACKET)) {
-                                sb.append(" ");
+                            sb.append(token.value);
+                            GoToken glance = it.glanceNext();
+                            if (it.hasNext() && glance != null) {
+                                if (glance.e != GoTokenEnum.COMMA && glance.e != GoTokenEnum.RBRACKET) {
+                                    sb.append(" ");
+                                }
                             }
                     }
 
                     fd.returnType = sb.toString();
                 }
             }
-//            if (fd.funcName.equals("DefineError")) throw new TokenNotAcceptedException("debug");
 
             return fd;
         }
 
         // type Something struct...
-        assertToken(tokens[0], GoTokenEnum.TYPE);
+
         GoTypeDef ret = new GoTypeDef();
-        assertToken(tokens[1], GoTokenEnum.STRING);
-        ret.typeName = tokens[1].value;
-        if (tokens[2].value.startsWith("interface")) {
+        GoToken typeName = it.assertToken((x) -> x.e == GoTokenEnum.STRING);
+        ret.typeName = typeName.value;
+        GoToken aliasType = it.next();
+        if (aliasType.value.startsWith("interface")) {
+            log.fine("it is interface!: " + ret.typeName);
             ret.isInterface = true;
         }
 
@@ -279,13 +338,14 @@ public class GoParser {
 
     public static int findDefStop(String code) {
         int start = 0;
-        while (start < code.length() && code.charAt(start++) != '\n');
+        while (start < code.length() && code.charAt(start++) != '\n') ;
 
         final String avoidWord = "interface";
 
         if (code.substring(start).startsWith("type")) {
             int r = start + 5;
             while (code.charAt(r) != ' ' && code.charAt(r) != '\n') r++;
+            while (code.charAt(r) != '\n') r++;
             return r;
         } else if (code.substring(start).startsWith("func")) {
             for (int i = start + 5; i < code.length(); i++) {
