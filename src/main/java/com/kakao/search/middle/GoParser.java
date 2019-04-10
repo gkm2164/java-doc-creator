@@ -69,7 +69,7 @@ public class GoParser {
         String value;
 
         public boolean isOneOf(GoTokenEnum... arr) {
-            for (GoTokenEnum e: arr) {
+            for (GoTokenEnum e : arr) {
                 if (this == e) {
                     return true;
                 }
@@ -211,7 +211,6 @@ public class GoParser {
         Logger log = Logger.getLogger("GoParser.parse");
 
         log.fine(def);
-//        debugToken(tokens);
 
         // should start with "func" or "type"
         GoToken defType = it.assertTokenOr(GoTokenEnum.FUNC, GoTokenEnum.TYPE);
@@ -233,6 +232,8 @@ public class GoParser {
             it.assertTokenEq(GoTokenEnum.LBRACKET); // after the function name, no matter arguments exist or not, '(' should come.
             Queue<GoToken> pendingVar = new LinkedList<>();
 
+            // until now... "func x(" or "func (r *SomeType) x("
+
             // argument parse
             while (it.hasNext()) {
                 // may ')' for stop, WORD for continue
@@ -242,22 +243,20 @@ public class GoParser {
                 }
                 pendingVar.add(mayFinish);
 
-                GoToken mayComma = it.next();
-                if (mayComma.is(GoTokenEnum.COMMA)) {
-                    pendingVar.add(mayComma);
+                if (it.glanceNext().is(GoTokenEnum.COMMA)) {
+                    GoToken comma = it.next();
+                    pendingVar.add(comma);
                     continue;
                 }
 
-                log.fine("suspect to be a argument's typename: " + mayComma.value);
-
                 ArrayList<GoToken> typeNameTokens = new ArrayList<>();
-                typeNameTokens.add(mayComma);
                 int pars = 0;
-                // Comma(',') 혹은 Rbracket(')')을 기준으로 argument list 생성
+                if (!it.hasNext()) break;
                 GoToken argCtx = it.next();
-                while (!(pars == 0 && argCtx.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET))) {
+                for (; it.hasNext() && !(pars == 0 && argCtx.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET));
+                     argCtx = it.next()) {
+
                     log.fine("parse arg: " + argCtx.value);
-                    // in this context, RBRACKET does not always mean end of arg definition
                     switch (argCtx.e) {
                         case LBRACKET:
                             pars++;
@@ -270,8 +269,6 @@ public class GoParser {
                     }
                     typeNameTokens.add(argCtx);
 
-                    if (!it.hasNext()) break;
-                    argCtx = it.next();
                 }
 
                 // in case of multiple parameter definition over 1 type, like
@@ -283,7 +280,7 @@ public class GoParser {
                 int until = typeNameTokens.size();
                 for (int i = 0; i < until; i++) {
                     if (typeNameTokens.get(i).is(GoTokenEnum.LBRACKET)
-                        || (i + 1 < until && typeNameTokens.get(i + 1).isOneOf(GoTokenEnum.RBRACKET, GoTokenEnum.COMMA))) {
+                            || (i + 1 < until && typeNameTokens.get(i + 1).isOneOf(GoTokenEnum.RBRACKET, GoTokenEnum.COMMA))) {
                         tnList.add(typeNameTokens.get(i).value + typeNameTokens.get(i + 1).value);
                         i += 1;
                     } else {
