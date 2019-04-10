@@ -173,20 +173,31 @@ object Main {
     recur(roots, graph.keys.map(x => x -> false).toMap, Nil)
   }
 
+  implicit val intMergeMonoid: Monoid[Int] = new Monoid[Int] {
+    override def zero: Int = 0
+    override def op(a: Int, b: Int): Int = a + b
+  }
+
   def calculateDegrees(typeMap: Map[TypeDefBlock, List[TypeDefBlock]]): Map[TypeDefBlock, Int] = {
     typeMap.keys.foldLeft(typeMap.mapValues(_ => 0)) { (acc, tb) =>
       merge(acc, typeMap(tb).foldLeft(Map.empty[TypeDefBlock, Int].withDefault(_ => 0)) { (a, t) =>
         a.updated(t, a(t) + 1)
-      }, 0, (a: Int, b: Int) => a + b)
+      })
     }
   }
 
-  def merge[K, V](a: Map[K, V], b: Map[K, V], zero: V, add: (V, V) => V): Map[K, V] = {
+  trait Monoid[V] {
+    def op(a: V, b: V): V
+    def zero: V
+  }
+
+  def merge[K, V: Monoid](a: Map[K, V], b: Map[K, V]): Map[K, V] = {
+    val mn = implicitly[Monoid[V]]
     val aKey = a.keys.toSet
     val bKey = b.keys.toSet
 
     val keys = aKey ++ bKey
-    keys.foldLeft(Map.empty[K, V]) { (acc, elem) => acc.updated(elem, add(a.getOrElse(elem, zero), b.getOrElse(elem, zero))) }
+    keys.foldLeft(Map.empty[K, V]) { (acc, elem) => acc.updated(elem, mn.op(a.getOrElse(elem, mn.zero), b.getOrElse(elem, mn.zero))) }
   }
 
   def constructGraph(ret: Seq[(String, Seq[DefBlock])]): Map[TypeDefBlock, List[TypeDefBlock]] = {
@@ -230,7 +241,12 @@ object Main {
           acc.updated(key, acc.getOrElse(key, List()) :+ value)
         }.mapValues(_.distinct)
 
-    merge(res1, implementRelation, List(), (x: List[TypeDefBlock], y: List[TypeDefBlock]) => x ++ y)
+    implicit def listMergeWithDistinctMonoid[T]: Monoid[List[T]] = new Monoid[List[T]] {
+      override def op(a: List[T], b: List[T]): List[T] = (a ++ b).distinct
+      override def zero: List[T] = List()
+    }
+
+    merge(res1, implementRelation)
   }
 }
 
