@@ -79,48 +79,44 @@ public class GoParser {
         }
     }
 
+    private static HashMap<Character, GoTokenEnum> charTokenMap = new HashMap<>();
+    private static HashSet<Character> specialChars = new HashSet<>();
+
+    static {
+        charTokenMap.put('(', GoTokenEnum.LBRACKET);
+        charTokenMap.put(')', GoTokenEnum.RBRACKET);
+        charTokenMap.put(',', GoTokenEnum.COMMA);
+
+        String s = "(),\n ";
+        for (int i = 0; i < s.length(); i++) {
+            specialChars.add(s.charAt(i));
+        }
+    }
+
     private static GoToken[] tokenize(String def) {
         ArrayList<GoToken> ret = new ArrayList<>();
+
         StringBuffer sb = new StringBuffer();
         int charNum = 0;
         int lineNum = 0;
+
+
         for (int i = 0; i < def.length(); i++) {
             char ch = def.charAt(i);
+            if (specialChars.contains(ch) && sb.length() > 0) {
+                ret.add(GoToken.create(sb.toString(), charNum, lineNum));
+                sb = new StringBuffer();
+            }
+
             switch (ch) {
-                case '(': {
-                    if (sb.length() > 0) {
-                        ret.add(GoToken.create(sb.toString(), charNum, lineNum));
-                        sb = new StringBuffer();
-                    }
-                    ret.add(new GoToken(GoTokenEnum.LBRACKET, charNum, lineNum));
+                case '(': case ')': case ',':
+                    ret.add(new GoToken(charTokenMap.get(ch), charNum, lineNum));
                     break;
-                }
-                case ')': {
-                    if (sb.length() > 0) {
-                        ret.add(GoToken.create(sb.toString(), charNum, lineNum));
-                        sb = new StringBuffer();
-                    }
-                    ret.add(new GoToken(GoTokenEnum.RBRACKET, charNum, lineNum));
-                    break;
-                }
-                case ',': {
-                    if (sb.length() > 0) {
-                        ret.add(GoToken.create(sb.toString(), charNum, lineNum));
-                        sb = new StringBuffer();
-                    }
-                    ret.add(new GoToken(GoTokenEnum.COMMA, charNum, lineNum));
-                    break;
-                }
                 case '\n':
                     lineNum += 1;
                     charNum = 0;
-                case ' ': {
-                    if (sb.length() > 0) {
-                        ret.add(GoToken.create(sb.toString(), charNum, lineNum));
-                        sb = new StringBuffer();
-                    }
+                case ' ':
                     break;
-                }
                 default:
                     sb.append(ch);
                     break;
@@ -154,7 +150,7 @@ public class GoParser {
 
         private Logger log = Logger.getLogger("GoTokenIterator");
 
-        public GoTokenIterator(GoToken[] tokens) {
+        GoTokenIterator(GoToken[] tokens) {
             this.tokens = tokens;
         }
 
@@ -163,7 +159,7 @@ public class GoParser {
             return idx < tokens.length;
         }
 
-        public GoToken glanceNext() {
+        GoToken glanceNext() {
             if (idx < tokens.length) {
                 return tokens[idx];
             }
