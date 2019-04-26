@@ -1,8 +1,8 @@
 package com.kakao.search.middle.godoc
 
-import com.kakao.search.middle.GoParser
 import com.kakao.search.middle.godoc.doc.elements._
-import com.kakao.search.middle.syntax.{GoFunctionDef, GoSomeDef, GoTypeDef}
+import com.kakao.search.middle.golang.GoParser
+import com.kakao.search.middle.golang.syntax.{GoFunctionDef, GoSomeDef, GoTypeDef}
 
 import scala.io.Source
 
@@ -87,7 +87,6 @@ object DocMacroParser {
           x.returnType, desc.toOption, ex.toOption)
       }
     }
-
 
     def resolveType: PartialFunction[GoSomeDef, DefBlock] = {
       case x: GoFunctionDef =>

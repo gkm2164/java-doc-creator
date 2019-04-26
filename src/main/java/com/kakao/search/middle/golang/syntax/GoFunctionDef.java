@@ -1,4 +1,4 @@
-package com.kakao.search.middle.syntax;
+package com.kakao.search.middle.golang.syntax;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ public class GoFunctionDef implements GoSomeDef {
     public String receiverType; //리시버 타입 명
     public String funcName; // 함수 명
     public String returnType;
-    public List<GoFuncArg> args;
+    public List<com.kakao.search.middle.golang.syntax.GoFuncArg> args;
 
     public GoFunctionDef() {
         receiverName = "";
@@ -34,7 +34,7 @@ public class GoFunctionDef implements GoSomeDef {
 
         if (!args.isEmpty()) {
             boolean isFirstIter = true;
-            for (GoFuncArg arg: args) {
+            for (com.kakao.search.middle.golang.syntax.GoFuncArg arg: args) {
                 if (!isFirstIter) {
                     sb.append(", ");
                 }

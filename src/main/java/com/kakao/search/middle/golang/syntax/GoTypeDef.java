@@ -1,4 +1,4 @@
-package com.kakao.search.middle.syntax;
+package com.kakao.search.middle.golang.syntax;
 
 public class GoTypeDef implements GoSomeDef {
     public String typeName;

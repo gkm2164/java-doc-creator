@@ -1,4 +1,4 @@
-package com.kakao.search.middle.syntax;
+package com.kakao.search.middle.golang.syntax;
 
 public interface GoSomeDef {
     String getIdenticalName();

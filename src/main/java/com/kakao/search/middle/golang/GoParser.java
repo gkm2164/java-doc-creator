@@ -1,11 +1,11 @@
-package com.kakao.search.middle;
+package com.kakao.search.middle.golang;
 
 import com.kakao.search.middle.exceptions.TokenNoMoreToConsumeException;
 import com.kakao.search.middle.exceptions.TokenNotAcceptedException;
-import com.kakao.search.middle.syntax.GoFuncArg;
-import com.kakao.search.middle.syntax.GoFunctionDef;
-import com.kakao.search.middle.syntax.GoSomeDef;
-import com.kakao.search.middle.syntax.GoTypeDef;
+import com.kakao.search.middle.golang.syntax.GoFuncArg;
+import com.kakao.search.middle.golang.syntax.GoFunctionDef;
+import com.kakao.search.middle.golang.syntax.GoSomeDef;
+import com.kakao.search.middle.golang.syntax.GoTypeDef;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -109,7 +109,9 @@ public class GoParser {
             }
 
             switch (ch) {
-                case '(': case ')': case ',':
+                case '(':
+                case ')':
+                case ',':
                     ret.add(new GoToken(charTokenMap.get(ch), charNum, lineNum));
                     break;
                 case '\n':
@@ -233,25 +235,23 @@ public class GoParser {
             // argument parse
             while (it.hasNext()) {
                 // may ')' for stop, WORD for continue
-                GoToken mayFinish = it.assertTokenOr(GoTokenEnum.RBRACKET, GoTokenEnum.STRING);
-                if (mayFinish.is(GoTokenEnum.RBRACKET)) {
+                GoToken mayFinishOrString = it.assertTokenOr(GoTokenEnum.RBRACKET, GoTokenEnum.STRING);
+                if (mayFinishOrString.is(GoTokenEnum.RBRACKET)) {
                     break;
                 }
-                pendingVar.add(mayFinish);
-
-                if (it.glanceNext().is(GoTokenEnum.COMMA)) {
-                    GoToken comma = it.next();
-                    pendingVar.add(comma);
+                // STRING COMMA || STRING STRING
+                pendingVar.add(mayFinishOrString);
+                GoToken mayCommaOrElse = it.next();
+                if (mayCommaOrElse.is(GoTokenEnum.COMMA)) {
                     continue;
                 }
 
                 ArrayList<GoToken> typeNameTokens = new ArrayList<>();
                 int pars = 0;
-                if (!it.hasNext()) break;
-                GoToken argCtx = it.next();
-                for (; it.hasNext() && !(pars == 0 && argCtx.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET));
+                GoToken argCtx = mayCommaOrElse;
+                for (; it.hasNext()
+                        && !(pars == 0 && argCtx.isOneOf(GoTokenEnum.COMMA, GoTokenEnum.RBRACKET));
                      argCtx = it.next()) {
-
                     log.fine("parse arg: " + argCtx.value);
                     switch (argCtx.e) {
                         case LBRACKET:
@@ -264,7 +264,6 @@ public class GoParser {
                             break;
                     }
                     typeNameTokens.add(argCtx);
-
                 }
 
                 // in case of multiple parameter definition over 1 type, like
