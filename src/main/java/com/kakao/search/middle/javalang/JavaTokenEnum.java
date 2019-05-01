@@ -3,6 +3,7 @@ package com.kakao.search.middle.javalang;
 public enum JavaTokenEnum {
     CLASS("class", true),
     INTERFACE("interface", true),
+    ABSTRACT("abstract", true),
     ENUM("enum", true),
     PUBLIC("public", true),
     PROTECTED("protected", true),
@@ -10,12 +11,15 @@ public enum JavaTokenEnum {
     STATIC("static", true),
     PACKAGE("package", true),
     IMPORT("import", true),
-    VOID("void", true),
     FINAL("final", true),
+    EXTENDS("extends", true),
+    IMPLEMENTS("implements", true),
+    DEFAULT("default", true),
     TOKEN("", true),
     STRING("", true),
     CHAR("", true),
     ANNOTATION("@"),
+    ANNOTATION_INTERFACE("@interface"),
     LPAR("("),
     RPAR(")"),
     LBRACKET("["),
@@ -86,7 +90,7 @@ public enum JavaTokenEnum {
         this.saveTo = saveTo;
     }
 
-    String value;
+    public String value;
     boolean isKeyword;
     boolean takeUntil = false;
     String until;

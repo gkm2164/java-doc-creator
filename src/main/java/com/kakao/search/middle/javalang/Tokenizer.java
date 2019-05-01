@@ -1,5 +1,6 @@
 package com.kakao.search.middle.javalang;
 
+import com.kakao.search.middle.javalang.exceptions.NoTokenEnumExist;
 import javafx.util.Pair;
 
 import java.util.*;
