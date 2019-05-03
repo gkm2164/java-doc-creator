@@ -1,40 +1,13 @@
 package com.kakao.search.middle.javadoc
 
-import java.io.{File, FilenameFilter}
+import java.io.{File, FilenameFilter, PrintWriter}
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-import com.kakao.search.middle.exceptions.TokenNotAcceptedException
-import com.kakao.search.middle.javalang.{JavaTokenEnum, Tokenizer}
-import JavaTokenEnum._
+import com.kakao.search.middle.javalang.Tokenizer
 
-import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.io.Source
-
-
-sealed trait CodeNode {
-  def name: String
-  def print(): Unit
-}
-
-case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken]) extends CodeNode {
-  override def print(): Unit = {
-    println(s"at filename: $name, in package: $packageName")
-    //    println(tokens.mkString(" "))
-    println(analyze())
-  }
-
-  def analyze(): JavaCode = JavaCode(tokens)
-}
-
-case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends CodeNode {
-  override def print: Unit = {
-    println(s"===$name===")
-    codeNodes.foreach { case (childName, node) =>
-      println(s"=> $childName")
-      node.print
-    }
-  }
-}
 
 object Main {
   val onlyJavaAndDirFilter: FilenameFilter = (dir: File, name: String) => {
@@ -45,7 +18,9 @@ object Main {
   def main(args: Array[String]): Unit = {
     val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
     val node = currentPackage(new File(baseDir))
-    node.print
+//    val ldt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"))
+    val pw = new PrintWriter("javadoc.html")
+    node.print(pw)
   }
 
   def currentPackage(currentHandle: File): CodeNonLeaf = {
