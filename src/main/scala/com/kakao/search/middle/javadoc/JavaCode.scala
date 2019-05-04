@@ -8,12 +8,12 @@ import scala.annotation.tailrec
 
 case class JavaCode(packageName: String,
                     imports: List[String],
-                    defs: List[JavaDefininiton]) {
+                    defs: List[JavaDefinition]) {
   def setPackageName(str: String): JavaCode = copy(packageName = str)
 
   def appendImport(imp: String): JavaCode = this.copy(imports = imports :+ imp)
 
-  def appendDefinition(javaDefininiton: JavaDefininiton): JavaCode = this.copy(defs = defs :+ javaDefininiton)
+  def appendDefinition(javaDefininiton: JavaDefinition): JavaCode = this.copy(defs = defs :+ javaDefininiton)
 
   def show: String = {
     val sb = StringBuilder.newBuilder
@@ -28,7 +28,7 @@ case class JavaCode(packageName: String,
 object JavaCode {
   type TokenListState[+A] = List[JavaSToken] => (A, List[JavaSToken])
 
-  implicit class tlsMonadExtend[+A](tls: TokenListState[A]) {
+  implicit class TokenListStateMonadExtend[+A](tls: TokenListState[A]) {
     def map[B](f: A => B): TokenListState[B] = tokens => {
       val (x, next) = tls(tokens)
       (f(x), next)
@@ -42,25 +42,20 @@ object JavaCode {
 
   def emptyCode: JavaCode = JavaCode("", Nil, Nil)
 
-  def parseAnnotation: TokenListState[String] = tokens => {
-    def parseAnnotationName(tokens: List[JavaSToken]): (String, List[JavaSToken]) = {
-      def loop(acc: String): TokenListState[String] = {
-        case Nil => (acc, Nil)
-        case suspectDot :: JavaSToken(_, annName) :: t if suspectDot.tokenType == DOT => loop(acc + s".$annName")(t)
-        case JavaSToken(_, n) :: t => (acc + n, t)
-      }
-
-      loop("")(tokens)
+  def parseAnnotation: TokenListState[String] = {
+    def parseAnnotationName(base: String): TokenListState[String] = {
+      case Nil => (base, Nil)
+      case suspectDot :: JavaSToken(_, annName) :: t if suspectDot.tokenType == DOT => parseAnnotationName(base + s".$annName")(t)
+      case JavaSToken(_, n) :: t => (base + n, t)
     }
 
-    val (name, afterName) = parseAnnotationName(tokens)
-    (name, afterName match {
-      case JavaSToken(LPAR, _) :: _ => takeParenthesis(LPAR, RPAR)(afterName)._2
-      case _ => afterName
-    })
+    for {
+      name <- parseAnnotationName("")
+      _ <- parseParenthesis(LPAR, RPAR)
+    } yield name
   }
 
-  def parseDefs(modifier: JavaModifier): TokenListState[JavaDefininiton] = {
+  def parseDefs(modifier: JavaModifier): TokenListState[JavaDefinition] = {
     case Nil => throw new TokenNotAcceptedException("token is empty")
     case JavaSToken(ANNOTATION, _) :: t => parseAnnotation.flatMap(str => parseDefs(modifier.appendAnnotation(str)))(t)
     case JavaSToken(access@(PRIVATE | PROTECTED | PUBLIC), _) :: t => parseDefs(modifier.setAccess(access))(t)
@@ -82,29 +77,25 @@ object JavaCode {
       case h :: JavaSToken(sp, _) :: t if sp == separator => loop(t, acc :+ h.value)
       case h :: t => (acc :+ h.value, t)
     }
+
     loop(tokens, Nil)
   }
 
-  def parseType: TokenListState[String] = tokens => {
-    val (typename, next) = takeSeperatorIterate(DOT).map(x => x.mkString("."))(tokens) // parse *.*.*
-    val (gt, next2) = next match {
-      case JavaSToken(LT, _) :: _ => takeParenthesis(LT, GT).map(x => typename + x)(next)
-      case _ => (typename, next)
-    }
-
-    next2 match {
-      case JavaSToken(LBRACKET, _) :: _ =>
-        def takeLoop(acc: String): TokenListState[String] = {
-          case Nil => (acc, Nil)
-          case JavaSToken(LBRACKET, _) :: JavaSToken(RBRACKET, _) :: t if t.head.tokenType == LBRACKET => takeLoop(acc + "[]")(t)
-          case JavaSToken(LBRACKET, _) :: JavaSToken(RBRACKET, _) :: t => (acc + "[]", t)
-          case remains => (acc, remains)
-        }
-
-        takeLoop("")(next2)
-      case _ => (gt, next2)
-    }
+  def parseGenericType: TokenListState[String] = {
+    case tokens@JavaSToken(LT, _) :: _ => parseParenthesis(LT, GT)(tokens)
+    case tokens => ("", tokens)
   }
+
+  def parseArrayType(acc: String): TokenListState[String] = {
+    case JavaSToken(LBRACKET, _) :: JavaSToken(RBRACKET, _) :: t => parseArrayType(acc + "[]")(t)
+    case tokens => ("", tokens)
+  }
+
+  def parseType: TokenListState[String] = for {
+    typename <- takeSeperatorIterate(DOT).map(x => x.mkString("."))
+    genericName <- parseGenericType
+    arrayNotations <- parseArrayType("")
+  } yield typename + genericName + arrayNotations
 
   def takeToken[A](x: A): TokenListState[A] = tokens => (x, tokens.tail) // 토큰 한개를 흘려보냄
 
@@ -112,7 +103,7 @@ object JavaCode {
     def parseArgName(typename: String, arg: JavaArgument): TokenListState[JavaArgument] = tokens => (arg.copy(argumentType = typename, name = tokens.head.value), tokens.tail)
 
     def parseArg(javaArg: JavaArgument): TokenListState[JavaArgument] = {
-      case tokens@JavaSToken(ANNOTATION, _) :: _ => parseAnnotation.flatMap(x => parseArg(javaArg.appendAnnotation(x)))(tokens)
+      case JavaSToken(ANNOTATION, _) :: t => parseAnnotation.flatMap(x => parseArg(javaArg.appendAnnotation(x)))(t)
       case JavaSToken(FINAL, _) :: t => parseArg(javaArg.setFinal)(t)
       case t => parseType.flatMap(t => parseArgName(t, javaArg))(t)
     }
@@ -126,34 +117,31 @@ object JavaCode {
     loop(Nil)(tokens)
   }
 
-  def parseMembers(modifier: JavaModifier): TokenListState[JavaMembers] = tokens => {
-    import JavaTokenEnum._
-    tokens match {
-      case JavaSToken(LT, _) :: t => parseMembers(modifier)(takeParenthesis(LT, GT)(t)._2)
-      case _ =>
-        val (t, remain) = parseType(tokens)
-        val (name, remain2) = if (remain.head.tokenType == TOKEN) {
-          (remain.head.value, remain.tail)
-        } else {
-          (t, remain)
-        }
+  def takeTokenOrElse(token: JavaTokenEnum, default: String): TokenListState[String] = {
+    case JavaSToken(tk, v) :: t if token == tk => (v, t)
+    case t => (default, t)
+  }
 
-        if (remain2.head.tokenType == LPAR) {
-          val (args, remain3) = parseArgs(remain2.tail)
-          remain3 match {
-            case Nil => throw new TokenNotAcceptedException("nil list!")
-            case JavaSToken(SEMICOLON, _) :: tail => (JavaMethod(modifier, name, t, args), tail)
-            case JavaSToken(LBRACE, _) :: _ => (JavaMethod(modifier, name, t, args), takeParenthesis(LBRACE, RBRACE)(remain3)._2)
-            case JavaSToken(DEFAULT, _) :: tail => (JavaMethod(modifier, name, t, args), parseUntil(SEMICOLON)(tail)._2)
-            case h :: _ => throw new TokenNotAcceptedException(h.toString)
-          }
-        } else {
-          if (remain2.head.tokenType == SUBSTITUTE) {
-            (JavaMember(modifier, name, t), parseUntil(SEMICOLON)(remain2)._2)
-          } else {
-            (JavaMember(modifier, name, t), remain2.tail)
-          }
-        }
+  def parseMembers(modifier: JavaModifier): TokenListState[JavaMembers] = tokens => {
+    def dropLater: TokenListState[Unit] = {
+      case Nil => throw new TokenNotAcceptedException("nil list!")
+      case JavaSToken(SEMICOLON, _) :: tail => (Unit, tail)
+      case tokens@JavaSToken(LBRACE, _) :: _ => (Unit, parseParenthesis(LBRACE, RBRACE)(tokens)._2)
+      case JavaSToken(DEFAULT, _) :: tail => (Unit, parseUntil(SEMICOLON)(tail)._2)
+      case h :: _ => throw new TokenNotAcceptedException(h.toString)
+    }
+
+    def parseMemberAfterName(modifier: JavaModifier, typename: String, name: String): TokenListState[JavaMembers] = {
+      case Nil => throw new TokenNotAcceptedException("nil list!")
+      case JavaSToken(LPAR, _) :: t => parseArgs.flatMap(args => dropLater.map(_ => JavaMethod(modifier, name, typename, args)))(t)
+      case tokens@JavaSToken(SUBSTITUTE, _) :: _ => parseUntil(SEMICOLON).map(_ => JavaMember(modifier, name, typename))(tokens)
+      case JavaSToken(SEMICOLON, _) :: t => (JavaMember(modifier, name, typename), t)
+      case h :: _ => throw new TokenNotAcceptedException(h.toString)
+    }
+
+    tokens match {
+      case JavaSToken(LT, _) :: t => parseParenthesis(LT, GT).flatMap(_ => parseMembers(modifier))(t)
+      case tks => parseType.flatMap(typename => takeTokenOrElse(TOKEN, "").flatMap(name => parseMemberAfterName(modifier, typename, name)))(tks)
     }
   }
 
@@ -173,108 +161,64 @@ object JavaCode {
 
   def takeString: TokenListState[String] = tokens => (tokens.head.value, tokens.tail)
 
-  def parseClass(modifier: JavaModifier): TokenListState[JavaClass] = tokens => {
-    val (name, remain) = (tokens.head.value, tokens.tail)
-
-    @tailrec
-    def loop(tokens: List[JavaSToken], acc: List[JavaDefininiton]): (List[JavaDefininiton], List[JavaSToken]) = {
-      tokens match {
-        case Nil => throw new TokenNotAcceptedException("")
-        case JavaSToken(RBRACE, _) :: t => (acc, t)
-        case t =>
-          val (d, next) = parseDefs(JavaModifier.empty)(t)
-          loop(next, acc :+ d)
-      }
-    }
-
-    val (extendInh, rem2) = if (remain.head.tokenType == EXTENDS) {
-      separateByType(remain.tail)
-    } else {
-      (Nil, remain)
-    }
-
-    val (implementH, rem3) = if (rem2.head.tokenType == IMPLEMENTS) {
-      separateByType(rem2.tail)
-    } else {
-      (Nil, rem2)
-    }
-
-    if (rem3.head.tokenType != LBRACE) throw new TokenNotAcceptedException(rem3.head.toString)
-
-    val (defs, next) = loop(rem3.tail, Nil)
-    (JavaClass(name, modifier, defs, extendInh, implementH), next)
+  def parseClassInside(acc: List[JavaDefinition]): TokenListState[List[JavaDefinition]] = {
+    case Nil => throw new TokenNotAcceptedException("")
+    case JavaSToken(RBRACE, _) :: t => (acc, t)
+    case t => parseDefs(JavaModifier.empty).flatMap(d => parseClassInside(acc :+ d))(t)
   }
 
-  def parseAnnotationInterface(modifier: JavaModifier): TokenListState[JavaInterface] = tokens => {
-    val (name, remain) = (tokens.head.value, tokens.tail)
+  def parseClass(modifier: JavaModifier): TokenListState[JavaClass] = for {
+    name <- takeString
+    extendInh <- parseFromToken(EXTENDS)
+    implementH <- parseFromToken(IMPLEMENTS)
+    _ <- assertToken(LBRACE)
+    defs <- parseClassInside(Nil)
+  } yield JavaClass(name, modifier, defs, extendInh, implementH)
 
-    @tailrec
-    def loop(tokens: List[JavaSToken], acc: List[JavaDefininiton]): (List[JavaDefininiton], List[JavaSToken]) = {
-      tokens match {
-        case Nil => throw new TokenNotAcceptedException("")
-        case JavaSToken(RBRACE, _) :: t => (acc, t)
-        case t =>
-          val (d, next) = parseDefs(JavaModifier.empty)(t)
-          loop(next, acc :+ d)
-      }
-    }
-
-    val (extendInh, rem2) = if (remain.head.tokenType == EXTENDS) {
-      separateByType(remain.tail)
-    } else {
-      (Nil, remain)
-    }
-
-    if (rem2.head.tokenType != LBRACE) {
-      throw new TokenNotAcceptedException(s"${rem2.head.tokenType} => ${rem2.head.value}")
-    }
-
-    val (defs, next) = loop(rem2.tail, Nil)
-    (JavaInterface(name, modifier, defs, extendInh), next)
+  def parseFromToken(token: JavaTokenEnum): TokenListState[List[String]] = {
+    case JavaSToken(tk, _) :: t if tk == token => separateByType(t)
+    case tails => (Nil, tails)
   }
 
-  def parseInterface(modifier: JavaModifier): TokenListState[JavaInterface] = tokens => {
-    val (name, remain) = (tokens.head.value, tokens.tail)
-
-    @tailrec
-    def loop(tokens: List[JavaSToken], acc: List[JavaDefininiton]): (List[JavaDefininiton], List[JavaSToken]) = {
-      tokens match {
-        case Nil => throw new TokenNotAcceptedException("")
-        case JavaSToken(RBRACE, _) :: t => (acc, t)
-        case t =>
-          val (d, next) = parseDefs(JavaModifier.empty)(t)
-          loop(next, acc :+ d)
-      }
-    }
-
-    val (extendInh, rem2) = if (remain.head.tokenType == EXTENDS) {
-      separateByType(remain.tail)
-    } else {
-      (Nil, remain)
-    }
-
-    if (rem2.head.tokenType != LBRACE) {
-      throw new TokenNotAcceptedException(s"${rem2.head.tokenType} => ${rem2.head.value}")
-    }
-
-    val (defs, next) = loop(rem2.tail, Nil)
-    (JavaInterface(name, modifier, defs, extendInh), next)
+  def parseInterfaceDefs(acc: List[JavaDefinition]): TokenListState[List[JavaDefinition]] = {
+    case Nil => throw new TokenNotAcceptedException("")
+    case JavaSToken(RBRACE, _) :: t => (acc, t)
+    case t => parseDefs(JavaModifier.empty).flatMap(x => parseInterfaceDefs(acc :+ x))(t)
   }
 
-  def takeParenthesis(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): TokenListState[String] = tokens => {
-    @tailrec
-    def loop(rem: List[JavaSToken], cnt: Int, acc: String): (String, List[JavaSToken]) = {
-      rem match {
-        case Nil => (acc, Nil)
-        case JavaSToken(lp, _) :: t if lp == leftPar => loop(t, cnt + 1, acc + lp.value)
-        case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar => (acc + rp.value, t)
-        case JavaSToken(rp, _) :: t if rp == rightPar => loop(t, cnt - 1, acc + rp.value)
-        case JavaSToken(_, v) :: t => loop(t, cnt, acc + v)
-      }
+  def parseAnnotationInterface(modifier: JavaModifier): TokenListState[JavaAnnotationInterface] = for {
+    name <- takeString
+    extendInh <- parseFromToken(EXTENDS)
+    _ <- assertToken(LBRACE)
+    defs <- parseInterfaceDefs(Nil)
+  } yield JavaAnnotationInterface(name, modifier, defs, extendInh)
+
+  def parseInterface(modifier: JavaModifier): TokenListState[JavaInterface] = for {
+    name <- takeString
+    extendInh <- parseFromToken(EXTENDS)
+    _ <- assertToken(LBRACE)
+    defs <- parseInterfaceDefs(Nil)
+  } yield JavaInterface(name, modifier, defs, extendInh)
+
+
+  def assertToken(token: JavaTokenEnum): TokenListState[Unit] = {
+    case JavaSToken(tk, _) :: t if tk == token => (Unit, t)
+    case t => throw new TokenNotAcceptedException(s"${t.head.tokenType} => ${t.head.value}")
+  }
+
+  def parseParenthesis(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): TokenListState[String] = tokens => {
+    def loop(cnt: Int, acc: String): TokenListState[String] = {
+      case Nil => (acc, Nil)
+      case JavaSToken(lp, _) :: t if lp == leftPar => loop(cnt + 1, acc + lp.value)(t)
+      case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar => (acc + rp.value, t)
+      case JavaSToken(rp, _) :: t if rp == rightPar => loop(cnt - 1, acc + rp.value)(t)
+      case JavaSToken(_, v) :: t => loop(cnt, acc + v)(t)
     }
 
-    if (tokens.head.tokenType != leftPar) throw new TokenNotAcceptedException(tokens.head.toString)
-    loop(tokens.tail, 0, tokens.head.value)
+    tokens match {
+      case JavaSToken(lp, _) :: t if lp == leftPar => loop(0, lp.value)(t)
+      case tails => ("", tails)
+    }
   }
 
   def parseUntil(until: JavaTokenEnum): TokenListState[String] = tokens => {
@@ -291,7 +235,7 @@ object JavaCode {
   def parseCode(bowl: JavaCode): TokenListState[JavaCode] = {
     case Nil => (bowl, Nil)
     case JavaSToken(ANNOTATION, _) :: t => parseAnnotation.flatMap(_ => parseCode(bowl))(t) // ignore annotation
-    case JavaSToken(PACKAGE, _) :: t => parseUntil(SEMICOLON).flatMap(str => parseCode(bowl.setPackageName(str)))(t)
+    case JavaSToken(PACKAGE, _) :: t => parseUntil(SEMICOLON).flatMap(pkgName => parseCode(bowl.setPackageName(pkgName)))(t)
     case JavaSToken(IMPORT, _) :: t => parseUntil(SEMICOLON).flatMap(imp => parseCode(bowl.appendImport(imp)))(t)
     case tokens => parseDefs(JavaModifier.empty).flatMap(x => parseCode(bowl.appendDefinition(x)))(tokens)
   }

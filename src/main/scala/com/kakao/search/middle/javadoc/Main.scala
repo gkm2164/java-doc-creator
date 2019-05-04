@@ -1,8 +1,6 @@
 package com.kakao.search.middle.javadoc
 
 import java.io.{File, FilenameFilter, PrintWriter}
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 import com.kakao.search.middle.javalang.Tokenizer
 
@@ -18,9 +16,9 @@ object Main {
   def main(args: Array[String]): Unit = {
     val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
     val node = currentPackage(new File(baseDir))
-//    val ldt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"))
     val pw = new PrintWriter("javadoc.html")
     node.print(pw)
+    pw.close
   }
 
   def currentPackage(currentHandle: File): CodeNonLeaf = {
@@ -31,11 +29,12 @@ object Main {
         println(s"file name: ${pkgNameAcc.mkString(".")}.$filename")
         val src = Source.fromFile(currentHandle.getAbsolutePath)
         val tokens = Tokenizer.tokenize(src.mkString("")).asScala
-        CodeLeaf(filename, packageName, tokens.map(x => JavaSToken(x.getE, x.getValue)).toList)
+        CodeLeaf(filename, packageName,
+          tokens.map(x => JavaSToken(x.getE, x.getValue)).toList)
       } else {
         println(s"package name: ${pkgNameAcc.mkString(".")}.${currentHandle.getName}")
-
-        CodeNonLeaf(currentHandle.getName, currentHandle.listFiles(onlyJavaAndDirFilter).map(x => x.getName -> loop(x, pkgNameAcc :+ currentHandle.getName)).toMap)
+        CodeNonLeaf(currentHandle.getName,
+          currentHandle.listFiles(onlyJavaAndDirFilter).map(x => x.getName -> loop(x, pkgNameAcc :+ currentHandle.getName)).toMap)
       }
     }
 

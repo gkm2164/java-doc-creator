@@ -2,19 +2,29 @@ package com.kakao.search.middle
 
 import com.kakao.search.middle.javalang.JavaTokenEnum
 
+import scala.annotation.tailrec
+
 package object javadoc {
   import JavaTokenEnum._
 
+  def color(text: String, color: String): String = s"""<font color="$color">$text</font>"""
+
   case class JavaSToken(tokenType: JavaTokenEnum, value: String)
 
-  sealed trait JavaDefininiton {
+  sealed trait JavaDefinition {
     def show: String
 
     def modifier: JavaModifier
   }
 
-  case class JavaModifier(commentMacros: List[String], annotations: List[String], access: JavaTokenEnum, isStatic: Boolean, isFinal: Boolean, isAbstract: Boolean) {
-    def show: String = s"${commentMacros.mkString("\n")}"
+  case class JavaModifier(commentMacros: List[String],
+                          annotations: List[String],
+                          access: JavaTokenEnum,
+                          isStatic: Boolean,
+                          isFinal: Boolean,
+                          isAbstract: Boolean) {
+
+    def show: String = commentMacros.mkString("\n")
 
     def appendMacro(v: String): JavaModifier = this.copy(commentMacros = commentMacros :+ v)
 
@@ -27,27 +37,42 @@ package object javadoc {
     def setFinal: JavaModifier = this.copy(isFinal = true)
 
     def setAbstract: JavaModifier = this.copy(isAbstract = true)
+
   }
 
   object JavaModifier {
     def empty: JavaModifier = JavaModifier(Nil, Nil, PUBLIC, isStatic = false, isFinal = false, isAbstract = false)
   }
 
-  sealed trait JavaTypeDef extends JavaDefininiton {
+  sealed trait JavaTypeDef extends JavaDefinition {
     def inheritClass: List[String]
 
     def implementInterfaces: List[String]
   }
 
+  def escapeLTGT(str: String): String = {
+    @tailrec
+    def loop(str: String, acc: String): String = {
+      if (str.isEmpty) acc
+      else if (str.head == '<') loop(str.tail, acc + "&lt;")
+      else if (str.head == '>') loop(str.tail, acc + "&gt;")
+      else loop(str.tail, acc + str.head)
+    }
+    loop(str, "")
+  }
+
   case class JavaClass(name: String, modifier: JavaModifier,
-                       definitions: List[JavaDefininiton],
+                       definitions: List[JavaDefinition],
                        inheritClass: List[String],
                        implementInterfaces: List[String]) extends JavaTypeDef {
-    override def show: String = s"""<p><font color="blue">class</font> $name</p>""" + definitions.map(x => x.show).mkString("<div>", "", "</div>")
+
+    lazy val showExtends: String = if (inheritClass.isEmpty) "" else s" ${color("extends", "blue")} " + inheritClass.map(escapeLTGT).mkString(", ")
+    lazy val showImplements: String = if (inheritClass.isEmpty) "" else s" ${color("implements", "blue")} " + implementInterfaces.map(escapeLTGT).mkString(", ")
+    override def show: String = s"""${color("class", "blue")} $name$showExtends$showImplements</p>""" + definitions.map(x => x.show).mkString("<div>", "", "</div>")
   }
 
   case class JavaInterface(name: String, modifier: JavaModifier,
-                           definition: List[JavaDefininiton],
+                           definition: List[JavaDefinition],
                            inheritClass: List[String]) extends JavaTypeDef {
     override def implementInterfaces: List[String] = Nil
 
@@ -55,21 +80,19 @@ package object javadoc {
       s"""<p><font color="blue">interface</font> $name</p><div>
          |<b>inherit class</b>
          |<ul>
-         |${inheritClass.map(x => s"<li>$x</li>").mkString("")}
+         |${inheritClass.map(x => s"<li>${escapeLTGT(x)}</li>").mkString("")}
          |</ul>
          |</div>""".stripMargin
   }
 
   case class JavaAnnotationInterface(name: String, modifier: JavaModifier,
-                                     definitions: List[JavaDefininiton],
+                                     definitions: List[JavaDefinition],
                                      inheritClass: List[String]) extends JavaTypeDef {
     override def implementInterfaces: List[String] = Nil
-
     override def show: String = s"""<p><font color="blue">@interface</font> $name</p>"""
   }
 
   object ListImplicit {
-
     implicit class strListExt[+A](list: List[A]) {
       def addIf[B >: A](p: => Boolean, item: B): List[B] = if (p) list :+ item else list
 
@@ -78,7 +101,7 @@ package object javadoc {
 
   }
 
-  trait JavaMembers extends JavaDefininiton
+  trait JavaMembers extends JavaDefinition
 
   case class JavaMember(modifier: JavaModifier, name: String, memberType: String) extends JavaMembers {
 
@@ -96,15 +119,12 @@ package object javadoc {
         .addIf(modifier.isStatic, color("static", "blue"))
         .addIf(modifier.isFinal, color("final", "blue"))
         .addIf(modifier.isAbstract, color("abstract", "blue"))
-        .add(memberType)
+        .add(color(memberType, "orange"))
         .add(name).mkString(" ") + "</p>"
   }
 
   case class JavaMethod(modifier: JavaModifier, name: String, returnType: String, args: List[JavaArgument]) extends JavaMembers {
-    //  override def show: String = s"== method $name ==\n$this"
     import ListImplicit._
-
-    def color(text: String, color: String): String = s"""<font color="$color">$text</font>"""
 
     override def show: String = s"<p>${modifier.commentMacros}<br />" +
       Nil.addIf(modifier.annotations.nonEmpty, modifier.annotations.map(x => color(s"@$x", "#FFC433")).mkString(" "))
@@ -118,7 +138,6 @@ package object javadoc {
   }
 
   case class JavaArgument(annotations: List[String], isFinal: Boolean, name: String, argumentType: String) {
-
     import ListImplicit._
 
     def setFinal: JavaArgument = copy(isFinal = true)
@@ -128,7 +147,7 @@ package object javadoc {
     def show: String =
       Nil.addIf(annotations.nonEmpty, annotations.map(x => s"@$x").mkString(" "))
         .addIf(isFinal, "final")
-        .add(argumentType)
+        .add(escapeLTGT(argumentType))
         .add(name).mkString(" ")
   }
 

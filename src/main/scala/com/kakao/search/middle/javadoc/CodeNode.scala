@@ -18,11 +18,9 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
 
 case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends CodeNode {
   override def print(pw: PrintWriter): Unit = {
-    pw.println(s"<h1>===$name===</h1>")
     codeNodes.foreach { case (childName, node) =>
       pw.println(s"<h2>=&gt; $childName</h2>")
       node.print(pw)
     }
-    pw.close()
   }
 }
