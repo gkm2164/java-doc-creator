@@ -72,13 +72,13 @@ object JavaCode {
 
   def takeSeperatorIterate(separator: JavaTokenEnum): TokenListState[List[String]] = tokens => {
     @tailrec
-    def loop(tokens: List[JavaSToken], acc: List[String]): (List[String], List[JavaSToken]) = tokens match {
+    def loop(acc: List[String])(tokens: List[JavaSToken]): (List[String], List[JavaSToken]) = tokens match {
       case Nil => (acc, Nil)
-      case h :: JavaSToken(sp, _) :: t if sp == separator => loop(t, acc :+ h.value)
+      case h :: JavaSToken(sp, _) :: t if sp == separator => loop(acc :+ h.value)(t)
       case h :: t => (acc :+ h.value, t)
     }
 
-    loop(tokens, Nil)
+    loop(Nil)(tokens)
   }
 
   def parseGenericType: TokenListState[String] = {
