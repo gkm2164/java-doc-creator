@@ -42,13 +42,13 @@ object JavaCode {
 
   def emptyCode: JavaCode = JavaCode("", Nil, Nil)
 
-  def parseAnnotation: TokenListState[String] = {
-    def parseAnnotationName(base: String): TokenListState[String] = {
-      case Nil => (base, Nil)
-      case suspectDot :: JavaSToken(_, annName) :: t if suspectDot.tokenType == DOT => parseAnnotationName(base + s".$annName")(t)
-      case JavaSToken(_, n) :: t => (base + n, t)
-    }
+  def parseAnnotationName(base: String): TokenListState[String] = {
+    case Nil => (base, Nil)
+    case JavaSToken(DOT, _) :: JavaSToken(_, annName) :: t => parseAnnotationName(base + s".$annName")(t)
+    case JavaSToken(_, n) :: t => (base + n, t)
+  }
 
+  def parseAnnotation: TokenListState[String] = {
     for {
       name <- parseAnnotationName("")
       _ <- parseParenthesis(LPAR, RPAR)
