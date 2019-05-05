@@ -192,7 +192,7 @@ public class GoParser {
             return assertToken((token) -> token.e == e);
         }
 
-        GoToken assertTokenOr(GoTokenEnum... shoulds) throws TokenNotAcceptedException, TokenNoMoreToConsumeException {
+        GoToken assertTokenOr(GoTokenEnum[] shoulds) throws TokenNotAcceptedException, TokenNoMoreToConsumeException {
             return assertToken((token) -> {
                 for (GoTokenEnum should : shoulds) {
                     if (token.e == should) {
@@ -211,11 +211,11 @@ public class GoParser {
         log.fine(def);
 
         // should start with "func" or "type"
-        GoToken defType = it.assertTokenOr(GoTokenEnum.FUNC, GoTokenEnum.TYPE);
+        GoToken defType = it.assertTokenOr(new GoTokenEnum[]{GoTokenEnum.FUNC, GoTokenEnum.TYPE});
         if (defType.e == GoTokenEnum.FUNC) { // if it starts with "func",
             GoFunctionDef fd = new GoFunctionDef();
             // then next token should be "(" for receiver, or string for function name
-            GoToken mayFuncName = it.assertTokenOr(GoTokenEnum.LBRACKET, GoTokenEnum.STRING);
+            GoToken mayFuncName = it.assertTokenOr(new GoTokenEnum[]{GoTokenEnum.LBRACKET, GoTokenEnum.STRING});
             if (mayFuncName.e == GoTokenEnum.LBRACKET) { // if it starts with "(",
                 GoToken receiverName = it.assertTokenEq(GoTokenEnum.STRING); // it should start with receiver name
                 GoToken receiverType = it.assertTokenEq(GoTokenEnum.STRING); // and the type name should be followed
@@ -235,7 +235,7 @@ public class GoParser {
             // argument parse
             while (it.hasNext()) {
                 // may ')' for stop, WORD for continue
-                GoToken mayFinishOrString = it.assertTokenOr(GoTokenEnum.RBRACKET, GoTokenEnum.STRING);
+                GoToken mayFinishOrString = it.assertTokenOr(new GoTokenEnum[]{GoTokenEnum.RBRACKET, GoTokenEnum.STRING});
                 if (mayFinishOrString.is(GoTokenEnum.RBRACKET)) {
                     break;
                 }

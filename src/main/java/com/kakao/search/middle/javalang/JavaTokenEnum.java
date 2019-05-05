@@ -15,6 +15,7 @@ public enum JavaTokenEnum {
     EXTENDS("extends", true),
     IMPLEMENTS("implements", true),
     DEFAULT("default", true),
+    THROWS("throws", true),
     TOKEN("", true),
     STRING("", true),
     CHAR("", true),

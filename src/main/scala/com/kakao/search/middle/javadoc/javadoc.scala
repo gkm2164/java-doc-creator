@@ -20,6 +20,7 @@ package object javadoc {
   case class JavaModifier(commentMacros: List[String],
                           annotations: List[String],
                           access: JavaTokenEnum,
+                          generic: String,
                           isStatic: Boolean,
                           isFinal: Boolean,
                           isAbstract: Boolean) {
@@ -32,6 +33,8 @@ package object javadoc {
 
     def setAccess(access: JavaTokenEnum): JavaModifier = this.copy(access = access)
 
+    def setGeneric(generic: String): JavaModifier = this.copy(generic = generic)
+
     def setStatic: JavaModifier = this.copy(isStatic = true)
 
     def setFinal: JavaModifier = this.copy(isFinal = true)
@@ -41,7 +44,7 @@ package object javadoc {
   }
 
   object JavaModifier {
-    def empty: JavaModifier = JavaModifier(Nil, Nil, PUBLIC, isStatic = false, isFinal = false, isAbstract = false)
+    def empty: JavaModifier = JavaModifier(Nil, Nil, PUBLIC, "", isStatic = false, isFinal = false, isAbstract = false)
   }
 
   sealed trait JavaTypeDef extends JavaDefinition {
@@ -59,6 +62,15 @@ package object javadoc {
       else loop(str.tail, acc + str.head)
     }
     loop(str, "")
+  }
+
+  case class JavaEnumClass(name: String, modifier: JavaModifier,
+                           enumTokens: List[String],
+                           definitions: List[JavaDefinition]) extends JavaTypeDef {
+
+    override def show: String = s"$this"
+    override def inheritClass: List[String] = Nil
+    override def implementInterfaces: List[String] = Nil
   }
 
   case class JavaClass(name: String, modifier: JavaModifier,
