@@ -163,7 +163,7 @@ object JavaCode {
       case JavaSToken(SEMICOLON, _) :: tail => (Unit, tail)
       case tokens@JavaSToken(LBRACE, _) :: _ => (Unit, parseParenthesis(LBRACE, RBRACE).run(tokens)._2)
       case JavaSToken(DEFAULT, _) :: tail => (Unit, parseUntil(SEMICOLON).run(tail)._2)
-      case tokens@JavaSToken(THROWS, _) :: _ => (Unit, parseFromToken(THROWS).flatMap(_ => dropLater).run(tokens)._2)
+      case tokens@JavaSToken(THROWS, _) :: _ => (Unit, parseTokensFrom(THROWS).flatMap(_ => dropLater).run(tokens)._2)
       case h :: _ => throw new TokenNotAcceptedException(h.toString)
     })
 
@@ -205,13 +205,13 @@ object JavaCode {
 
   def parseClass(modifier: JavaModifier): TokenListState[JavaClass] = for {
     name <- takeString
-    extendInh <- parseFromToken(EXTENDS)
-    implementH <- parseFromToken(IMPLEMENTS)
+    extendInh <- parseTokensFrom(EXTENDS)
+    implementH <- parseTokensFrom(IMPLEMENTS)
     _ <- assertToken(LBRACE)
     defs <- parseClassInside(Nil)
   } yield JavaClass(name, modifier, defs, extendInh, implementH)
 
-  def parseFromToken(token: JavaTokenEnum): TokenListState[List[String]] = TokenListState({
+  def parseTokensFrom(token: JavaTokenEnum): TokenListState[List[String]] = TokenListState({
     case JavaSToken(tk, _) :: t if tk == token => separateByType.run(t)
     case tails => (Nil, tails)
   })
@@ -224,14 +224,14 @@ object JavaCode {
 
   def parseAnnotationInterface(modifier: JavaModifier): TokenListState[JavaAnnotationInterface] = for {
     name <- takeString
-    extendInh <- parseFromToken(EXTENDS)
+    extendInh <- parseTokensFrom(EXTENDS)
     _ <- assertToken(LBRACE)
     defs <- parseInterfaceDefs(Nil)
   } yield JavaAnnotationInterface(name, modifier, defs, extendInh)
 
   def parseInterface(modifier: JavaModifier): TokenListState[JavaInterface] = for {
     name <- takeString
-    extendInh <- parseFromToken(EXTENDS)
+    extendInh <- parseTokensFrom(EXTENDS)
     _ <- assertToken(LBRACE)
     defs <- parseInterfaceDefs(Nil)
   } yield JavaInterface(name, modifier, defs, extendInh)
