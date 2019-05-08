@@ -32,6 +32,7 @@ public enum JavaTokenEnum {
     GT(">"),
     GTE(">="),
     DOT("."),
+    ETC_ARRAY("..."),
     SUBSTITUTE("="),
     EQUAL("=="),
     PLUS("+"),
