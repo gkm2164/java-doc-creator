@@ -22,7 +22,7 @@ public class Tokenizer {
             this.isTerminal = false;
         }
 
-        public void setTerminal(JavaTokenEnum e) {
+        void setTerminal(JavaTokenEnum e) {
             this.isTerminal = true;
             this.tokenEnum = e;
         }
@@ -32,7 +32,7 @@ public class Tokenizer {
             throw new NoTokenEnumExist("");
         }
 
-        public Node getOrPut(char ch, Supplier<Node> nodeCreator) {
+        Node getOrPut(char ch, Supplier<Node> nodeCreator) {
             if (!next.containsKey(ch)) {
                 next.put(ch, nodeCreator.get());
             }
@@ -40,7 +40,7 @@ public class Tokenizer {
         }
     }
 
-    Node root = new Node("ROOT");
+    private Node root = new Node("ROOT");
     private static Tokenizer tokenizer;
 
 
@@ -88,7 +88,7 @@ public class Tokenizer {
     private static final Set<Character> WHITESPACES =
             "\t\n ".chars().mapToObj(c -> (char) c).collect(Collectors.toSet());
 
-    static boolean eqCharArray(char[] codes, int j, char[] untilChar) {
+    private static boolean eqCharArray(char[] codes, int j, char[] untilChar) {
         if (codes.length - j < untilChar.length) return false;
         for (int i = 0; i < untilChar.length; i++) {
             if (codes[j + i] != untilChar[i]) return false;

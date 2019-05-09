@@ -19,7 +19,7 @@ object Main {
     val node = currentPackage(new File(baseDir))
     val pw = new PrintWriter("javadoc.html")
     node.print(pw)
-    pw.close
+    pw.close()
   }
 
   def currentPackage(currentHandle: File): CodeNonLeaf = {
