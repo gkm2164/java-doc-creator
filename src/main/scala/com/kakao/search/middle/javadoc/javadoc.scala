@@ -68,7 +68,7 @@ package object javadoc {
                            enumTokens: List[String],
                            definitions: List[JavaDefinition]) extends JavaTypeDef {
 
-    override def show: String = s"""${color("enum", "blue")} $name</p>""" + s"""<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
+    override def show: String = s"""<h1>${color("enum", "blue")} $name</h1>""" + s"""<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
     override def inheritClass: List[String] = Nil
     override def implementInterfaces: List[String] = Nil
   }
@@ -80,7 +80,7 @@ package object javadoc {
 
     lazy val showExtends: String = if (inheritClass.isEmpty) "" else s" ${color("extends", "blue")} " + inheritClass.map(escapeLTGT).mkString(", ")
     lazy val showImplements: String = if (implementInterfaces.isEmpty) "" else s" ${color("implements", "blue")} " + implementInterfaces.map(escapeLTGT).mkString(", ")
-    override def show: String = s"""${modifier.commentMacros.mkString("<div>", "\n", "</div>")} ${color("class", "blue")} $name$showExtends$showImplements</p>""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
+    override def show: String = s"""${modifier.commentMacros.mkString("<div>", "\n", "</div>")} <h1>${color("class", "blue")} $name$showExtends$showImplements</h1>""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
   }
 
   case class JavaInterface(name: String, modifier: JavaModifier,
@@ -89,7 +89,8 @@ package object javadoc {
     override def implementInterfaces: List[String] = Nil
 
     override def show: String =
-      s"""<p>${color("interface", "blue")} $name</p><div>
+      s"""<h2>${color("interface", "blue")} $name</h2>
+         |<div>
          |<b>inherit class</b>
          |<ul>
          |${inheritClass.map(x => s"<li>${escapeLTGT(x)}</li>").mkString("")}

@@ -1,5 +1,4 @@
-package com.kakao.search.middle.godoc.functional
-
+package com.kakao.search.middle.functional
 
 trait Monoid[V] {
   def op(a: V, b: V): V

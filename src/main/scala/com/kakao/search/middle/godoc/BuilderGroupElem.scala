@@ -1,7 +1,7 @@
 package com.kakao.search.middle.godoc
 
+import com.kakao.search.middle.functional.Monoid
 import com.kakao.search.middle.godoc.doc.elements._
-import com.kakao.search.middle.godoc.functional.Monoid
 
 import scala.annotation.tailrec
 
@@ -58,7 +58,7 @@ case class GeneralGroup(methods: Seq[Method]) extends DocType
 case object NoneType extends DocType
 
 object BuilderGroup {
-  import com.kakao.search.middle.godoc.functional.MonoidSyntax._
+  import com.kakao.search.middle.functional.MonoidSyntax._
 
   def constructBuilderGroups(ret: Seq[(String, Seq[DefBlock])]): List[BuilderGroup] = {
     val graph = constructGraph(ret)

@@ -91,7 +91,7 @@ object JavaCode {
     }
   })
 
-  def takeSeperatorIterate(separator: JavaTokenEnum): TokenListState[List[String]] = TokenListState(tokens => {
+  def takeSeparatorIterate(separator: JavaTokenEnum): TokenListState[List[String]] = TokenListState(tokens => {
     @tailrec
     def loop(acc: List[String])(tokens: List[JavaSToken]): (List[String], List[JavaSToken]) = tokens match {
       case Nil => (acc, Nil)
@@ -114,7 +114,7 @@ object JavaCode {
   })
 
   def parseType: TokenListState[String] = for {
-    typename <- takeSeperatorIterate(DOT).map(x => x.mkString("."))
+    typename <- takeSeparatorIterate(DOT).map(x => x.mkString("."))
     genericName <- parseGenericType
     arrayNotations <- parseArrayType("")
   } yield typename + genericName + arrayNotations
@@ -174,17 +174,18 @@ object JavaCode {
     } yield after
   }
 
+  // LL(1)의 한계...ㅠㅠ, commaSeparatedType := type "," commaSeparatedType
+  //                                       | type
   def separateByType: TokenListState[List[String]] = TokenListState(tokens => {
-    def loop(acc: List[String], tokens: List[JavaSToken]): (List[String], List[JavaSToken]) = {
-      if (tokens.head.tokenType != TOKEN) TokenListState.unit(acc).run(tokens)
-      else {
-        val (t, next) = parseType.run(tokens)
-        if (next.head.tokenType == COMMA) loop(acc :+ t, next.tail)
-        else TokenListState.unit(acc :+ t).run(next)
+    def loop(acc: List[String]): TokenListState[List[String]] = for {
+      typename <- parseType
+      types <- TokenListState {
+        case JavaSToken(COMMA, _) :: t => loop(acc :+ typename).run(t)
+        case t => (acc, t)
       }
-    }
+    } yield types
 
-    loop(Nil, tokens)
+    loop(Nil).run(tokens)
   })
 
   def takeString: TokenListState[String] = TokenListState(tokens => (tokens.head.value, tokens.tail))
@@ -203,8 +204,8 @@ object JavaCode {
     defs <- parseClassInside(Nil)
   } yield JavaClass(name, modifier, defs, extendInh, implementH)
 
-  def parseTokensFrom(token: JavaTokenEnum): TokenListState[List[String]] = TokenListState {
-    case JavaSToken(tk, _) :: t if tk == token => separateByType.run(t)
+  def parseTokensFrom(targetToken: JavaTokenEnum): TokenListState[List[String]] = TokenListState {
+    case JavaSToken(token, _) :: t if token == targetToken => separateByType.run(t)
     case tails => (Nil, tails)
   }
 
@@ -264,7 +265,7 @@ object JavaCode {
     @tailrec
     def loop(tokens: List[JavaSToken], acc: String): (String, List[JavaSToken]) = tokens match {
       case Nil => (acc, Nil)
-      case h :: t if h.tokenType == until => (acc, t)
+      case JavaSToken(target, _) :: t if target == until => (acc, t)
       case h :: t => loop(t, acc + h.value)
     }
 
