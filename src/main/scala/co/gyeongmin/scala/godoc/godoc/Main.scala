@@ -84,7 +84,7 @@ object Main {
       w("""<!DOCTYPE html><html><head><title>Hello</title><link type="text/css" rel="stylesheet" href="doc.css"/></head><body>""")
       for (bg <- bgs) {
 
-        w(s"""<a id="${bg.typeName}"><h1>for ${bg.typeName}</h1>""")
+        w(s"""<a id="${bg.typeName}"></a><h1>for ${bg.typeName}</h1>""")
         w("<h2>생성자</h2>")
         bg.constructor.foreach(x => w(s"""<div>${x.show}</div>"""))
         //        w("<br/>")

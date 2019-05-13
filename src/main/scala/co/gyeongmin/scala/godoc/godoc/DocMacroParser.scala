@@ -19,7 +19,7 @@ object DocMacroParser {
           case "desc" => acc.copy(desc = Text.parse(value.dropWhile(_ == ':').trim).txt)
           case "ex" => acc.copy(ex = Text.parse(value.dropWhile(_ == ':').trim).txt)
           case "builder" => acc.copy(builder = true)
-          case "implements" => acc.copy(interface = Text.parse(value.dropWhile(_ == ':').trim).txt)
+          case "implements" => acc.copy(interface = Text.parse(value.dropWhile(_ == ':').trim).txt.split(",").map(_.trim).toList)
           case k => throw new Exception(s"unknown command $k")
         })
       }
@@ -38,7 +38,7 @@ object DocMacroParser {
         s = nextStr.drop(nextTake)
         ret.replaceAll("\n// ", "\n").trim
       }
-    }, IncompleteBlock(TypeRequired.empty, "", "", "", builder = false))
+    }, IncompleteBlock(TypeRequired.empty, Nil, "", "", builder = false))
   }
 
   def parse(code: String): Seq[DefBlock] = {
@@ -72,10 +72,9 @@ object DocMacroParser {
     parse(f)
   }
 
-  case class IncompleteBlock(args: TypeRequired, interface: String, desc: String, ex: String, builder: Boolean) {
+  case class IncompleteBlock(args: TypeRequired, interface: List[String], desc: String, ex: String, builder: Boolean) {
 
     import scala.collection.JavaConverters._
-
 
     implicit class ExtString(x: String) {
       def toOption: Option[String] = Option(x).filter(_ != "")
@@ -92,7 +91,7 @@ object DocMacroParser {
       case x: GoFunctionDef =>
         if (x.receiverType != "") ReceiverFuncDefBlock(x.receiverName, x.receiverType, x.toFuncDefBlock)
         else x.toFuncDefBlock
-      case x: GoTypeDef => TypeDefBlock(x.typeName, x.isInterface, interface.toOption, desc.toOption, ex.toOption, builder)
+      case x: GoTypeDef => TypeDefBlock(x.typeName, x.isInterface, interface, desc.toOption, ex.toOption, builder)
     }
   }
 

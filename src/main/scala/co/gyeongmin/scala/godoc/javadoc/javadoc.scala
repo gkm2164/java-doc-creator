@@ -68,7 +68,7 @@ package object javadoc {
                            enumTokens: List[String],
                            definitions: List[JavaDefinition]) extends JavaTypeDef {
 
-    override def show: String = s"""<h1>${color("enum", "blue")} $name</h1>""" + s"""<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
+    override def show: String = s"""<h3 class="type-def">${color("enum", "blue")} $name</h3>""" + s"""<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}""" + definitions.map(x => x.show).mkString("<div>", "", "</div>")
     override def inheritClass: List[String] = Nil
     override def implementInterfaces: List[String] = Nil
   }
@@ -80,7 +80,7 @@ package object javadoc {
 
     lazy val showExtends: String = if (inheritClass.isEmpty) "" else s" ${color("extends", "blue")} " + inheritClass.map(escapeLTGT).mkString(", ")
     lazy val showImplements: String = if (implementInterfaces.isEmpty) "" else s" ${color("implements", "blue")} " + implementInterfaces.map(escapeLTGT).mkString(", ")
-    override def show: String = s"""${modifier.commentMacros.mkString("<div>", "\n", "</div>")} <h1>${color("class", "blue")} $name$showExtends$showImplements</h1>""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
+    override def show: String = s"""${modifier.commentMacros.mkString("<div>", "\n", "</div>")} <h3 class="type-def">${color("class", "blue")} $name$showExtends$showImplements</h3>""" + definitions.map(x => x.show).mkString("<div>", "", "</div>")
   }
 
   case class JavaInterface(name: String, modifier: JavaModifier,
@@ -89,7 +89,7 @@ package object javadoc {
     override def implementInterfaces: List[String] = Nil
 
     override def show: String =
-      s"""<h2>${color("interface", "blue")} $name</h2>
+      s"""<h3 class="type-def">${color("interface", "blue")} $name</h3>
          |<div>
          |<b>inherit class</b>
          |${inheritClass.map(x => s"<li>${escapeLTGT(x)}</li>").mkString("<ul>", "", "</ul>")}
@@ -100,7 +100,7 @@ package object javadoc {
                                      definitions: List[JavaDefinition],
                                      inheritClass: List[String]) extends JavaTypeDef {
     override def implementInterfaces: List[String] = Nil
-    override def show: String = s"""<p>${color("@interface", "blue")} $name</p>"""
+    override def show: String = s"""<h3 class="type-def">${color("@interface", "blue")} $name</h3>"""
   }
 
   object ListImplicit {
@@ -122,26 +122,26 @@ package object javadoc {
 
     def setType(t: String): JavaMember = this.copy(memberType = t)
 
-    override def show: String = s"<p>${modifier.commentMacros}<br />" +
+    override def show: String = s"${modifier.commentMacros.mkString("<div>", "\n", "</div>")}" +
       Nil.addIf(modifier.annotations.nonEmpty, modifier.annotations.map(x => color(s"@$x", "#FFC433")).mkString(" "))
         .add(color(modifier.access.value, "blue"))
         .addIf(modifier.isStatic, color("static", "blue"))
         .addIf(modifier.isFinal, color("final", "blue"))
         .addIf(modifier.isAbstract, color("abstract", "blue"))
         .add(color(escapeLTGT(memberType), "#769AC8"))
-        .add(name).mkString(" ") + "</p>"
+        .add(name).mkString(" ") + "<br/>"
   }
 
   case class JavaMethod(modifier: JavaModifier, name: String, returnType: String, args: List[JavaArgument]) extends JavaMembers {
     import ListImplicit._
-    override def show: String = s"<p>${modifier.commentMacros.mkString("<div>", "\n", "</div>")}<br />" +
+    override def show: String = s"${modifier.commentMacros.mkString("<div>", "\n", "</div>")}" +
       Nil.addIf(modifier.annotations.nonEmpty, modifier.annotations.map(x => color(s"@$x", "#FFC433")).mkString(" "))
       .add(color(modifier.access.value, "blue"))
       .addIf(modifier.isStatic, color("static", "blue"))
       .addIf(modifier.isFinal, color("final", "blue"))
       .addIf(modifier.isAbstract, color("abstract", "blue"))
       .add(color(escapeLTGT(returnType), "#769AC8") + (if(name == "") "" else s" $name") + args.map(_.show).mkString("(", ", ", ")"))
-      .mkString(" ") + "</p>"
+      .mkString(" ") + "<br />"
   }
 
   case class JavaArgument(annotations: List[String], isFinal: Boolean, name: String, argumentType: String) {

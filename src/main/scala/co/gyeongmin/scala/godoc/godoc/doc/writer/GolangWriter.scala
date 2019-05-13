@@ -37,7 +37,7 @@ object GolangWriter {
         s"""<p><span class="reserved-keyword">func</span> $name(${argList.map(showArgument).mkString(", ")}) ${colorType(returnType)}</p>""" + showDesc(desc, ex)
       case ReceiverFuncDefBlock(rName, rType, FuncDefBlock(name, argList, returnType, desc, ex)) =>
         s"""<span class="reserved-keyword">func</span> ($rName ${colorType(rType)}) $name(${argList.map(showArgument).mkString(", ")}) ${colorType(returnType)}""" + showDesc(desc, ex)
-      case TypeDefBlock(name, _, implements, desc, ex, _) => s"""<span class="reserved-keyword">type</span> $name ${implements.map(x => s":implements => $x").getOrElse("")}""" + showDesc(desc, ex)
+      case TypeDefBlock(name, _, implements, desc, ex, _) => s"""<span class="reserved-keyword">type</span> $name ${implements.map(x => s"[$x]").mkString(s":implements =>", ", ", "")}""" + showDesc(desc, ex)
     }
   }
 }

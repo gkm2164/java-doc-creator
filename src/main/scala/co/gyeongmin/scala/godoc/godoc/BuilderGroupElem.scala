@@ -33,7 +33,7 @@ trait FDefBlock {
   def show: String
 }
 
-case class TypeDefBlock(name: String, interface: Boolean, implements: Option[String], desc: Option[String], ex: Option[String], builder: Boolean) extends DefBlock
+case class TypeDefBlock(name: String, interface: Boolean, implements: List[String], desc: Option[String], ex: Option[String], builder: Boolean) extends DefBlock
 
 case class FuncDefBlock(name: String, argList: List[Argument], returnType: String, desc: Option[String], ex: Option[String]) extends DefBlock
 
@@ -174,10 +174,10 @@ object BuilderGroup {
 
     val res1 = recur(builderTypes, Map.empty)
 
-    val dependTypes = builderTypes.filter(x => x.implements.isDefined)
+    val dependTypes = builderTypes.filter(x => x.implements.nonEmpty)
 
     val implementRelation: Map[TypeDefBlock, List[TypeDefBlock]] =
-      dependTypes.map(x => typeMap(x.implements.get) -> x)
+      dependTypes.flatMap(x => x.implements.map(t => typeMap(t) -> x))
         .foldLeft(Map.empty[TypeDefBlock, List[TypeDefBlock]]) { (acc, pair) =>
           val (key, value) = pair
           acc.updated(key, acc.getOrElse(key, List()) :+ value)

@@ -19,7 +19,7 @@ case class JavaCode(packageName: String,
   def show: String =
     StringBuilder.newBuilder
       .append(s"<h3>packagename: $packageName</h3>")
-      .append(imports.map(x => s"<li>import $x</li>").mkString("<ul>", "", "</ul>"))
+//      .append(imports.map(x => s"<li>import $x</li>").mkString("<ul>", "", "</ul>"))
       .append(s"<p>total ${defs.length} number of definitions are contained</p>")
       .append(defs.map(_.show).mkString("\n"))
       .toString()
@@ -244,7 +244,7 @@ object JavaCode {
     def loop(cnt: Int, acc: String): TokenListState[String] = TokenListState {
       case Nil => (acc, Nil)
       case JavaSToken(lp, _) :: t if lp == leftPar => loop(cnt + 1, acc + lp.value).run(t)
-      case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar => (acc + rp.value, t)
+      case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar => TokenListState.unit(acc + rp.value).run(t)
       case JavaSToken(rp, _) :: t if rp == rightPar => loop(cnt - 1, acc + rp.value).run(t)
       case JavaSToken(_, v) :: t => loop(cnt, acc + v).run(t)
     }
