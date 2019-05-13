@@ -80,7 +80,7 @@ package object javadoc {
 
     lazy val showExtends: String = if (inheritClass.isEmpty) "" else s" ${color("extends", "blue")} " + inheritClass.map(escapeLTGT).mkString(", ")
     lazy val showImplements: String = if (implementInterfaces.isEmpty) "" else s" ${color("implements", "blue")} " + implementInterfaces.map(escapeLTGT).mkString(", ")
-    override def show: String = s"""${modifier.commentMacros.mkString("<div>", "\n", "</div>")} <h3 class="type-def">${color("class", "blue")} $name$showExtends$showImplements</h3>""" + definitions.map(x => x.show).mkString("<div>", "", "</div>")
+    override def show: String = s"""<h3 class="type-def">${color("class", "blue")} $name$showExtends$showImplements</h3>""" + modifier.commentMacros.map(_.drop(3)).mkString("<pre class=\"code\">", "\n", "</pre>") + definitions.map(x => x.show).mkString("<div>", "", "</div>")
   }
 
   case class JavaInterface(name: String, modifier: JavaModifier,
@@ -134,14 +134,14 @@ package object javadoc {
 
   case class JavaMethod(modifier: JavaModifier, name: String, returnType: String, args: List[JavaArgument]) extends JavaMembers {
     import ListImplicit._
-    override def show: String = s"${modifier.commentMacros.mkString("<div>", "\n", "</div>")}" +
-      Nil.addIf(modifier.annotations.nonEmpty, modifier.annotations.map(x => color(s"@$x", "#FFC433")).mkString(" "))
+    override def show: String =
+      "<p>" + Nil.addIf(modifier.annotations.nonEmpty, modifier.annotations.map(x => color(s"@$x", "#FFC433")).mkString(" "))
       .add(color(modifier.access.value, "blue"))
       .addIf(modifier.isStatic, color("static", "blue"))
       .addIf(modifier.isFinal, color("final", "blue"))
       .addIf(modifier.isAbstract, color("abstract", "blue"))
       .add(color(escapeLTGT(returnType), "#769AC8") + (if(name == "") "" else s" $name") + args.map(_.show).mkString("(", ", ", ")"))
-      .mkString(" ") + "<br />"
+      .mkString(" ") + "</p>" + s"${modifier.commentMacros.map(_.drop(3)).mkString("<pre>", "\n", "</pre>")}" // drop "//="
   }
 
   case class JavaArgument(annotations: List[String], isFinal: Boolean, name: String, argumentType: String) {
