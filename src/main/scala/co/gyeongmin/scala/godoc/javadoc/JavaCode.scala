@@ -82,14 +82,13 @@ object JavaCode {
     case JavaSToken(ENUM, _) :: t => parseEnum(modifier).run(t)
     case JavaSToken(INTERFACE, _) :: t => parseInterface(modifier).run(t)
     case JavaSToken(ANNOTATION_INTERFACE, _) :: t => parseAnnotationInterface(modifier).run(t)
-    case tokens@JavaSToken(TOKEN, _) :: _ => parseMembers(modifier).run(tokens)
-    case h :: t => throw new TokenNotAcceptedException(s"${h.tokenType} => ${h.value}, ${t.take(10)}")
+    case tokens => parseMembers(modifier).run(tokens)
   }
 
-  def takeSeparatorIterate(separator: JavaTokenEnum): TokenListState[List[String]] = TokenListState(tokens => {
+  def takeDotSeparated: TokenListState[List[String]] = TokenListState(tokens => {
     def loop(acc: List[String]): TokenListState[List[String]] = TokenListState {
       case Nil => (acc, Nil)
-      case h :: JavaSToken(sp, _) :: t if sp == separator => loop(acc :+ h.value).run(t)
+      case h :: JavaSToken(DOT, _) :: t => loop(acc :+ h.value).run(t)
       case h :: t => (acc :+ h.value, t)
     }
 
@@ -108,7 +107,7 @@ object JavaCode {
   }
 
   def parseType: TokenListState[String] = for {
-    typename <- takeSeparatorIterate(DOT).map(x => x.mkString("."))
+    typename <- takeDotSeparated.map(x => x.mkString("."))
     genericName <- parseGenericType
     arrayNotations <- parseArrayType("")
   } yield typename + genericName + arrayNotations

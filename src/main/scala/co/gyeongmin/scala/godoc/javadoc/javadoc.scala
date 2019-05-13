@@ -92,9 +92,7 @@ package object javadoc {
       s"""<h2>${color("interface", "blue")} $name</h2>
          |<div>
          |<b>inherit class</b>
-         |<ul>
-         |${inheritClass.map(x => s"<li>${escapeLTGT(x)}</li>").mkString("")}
-         |</ul>
+         |${inheritClass.map(x => s"<li>${escapeLTGT(x)}</li>").mkString("<ul>", "", "</ul>")}
          |</div>""".stripMargin
   }
 
