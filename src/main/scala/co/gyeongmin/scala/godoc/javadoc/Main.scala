@@ -29,7 +29,7 @@ object Main {
       if (currentHandle.isFile) {
         val filename = currentHandle.getName
         val packageName = pkgNameAcc.mkString(".")
-        println(s"file name: ${pkgNameAcc.mkString(".")}.$filename")
+        println(s"file name: ${pkgNameAcc.mkString("/")}/$filename")
         val src = Source.fromFile(currentHandle.getAbsolutePath)
         val tokens = Tokenizer.tokenize(src.mkString("")).asScala
         CodeLeaf(filename, packageName,

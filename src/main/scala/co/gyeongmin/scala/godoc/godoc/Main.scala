@@ -87,16 +87,10 @@ object Main {
         w(s"""<a id="${bg.typeName}"></a><h1>for ${bg.typeName}</h1>""")
         w("<h2>생성자</h2>")
         bg.constructor.foreach(x => w(s"""<div>${x.show}</div>"""))
-        //        w("<br/>")
-        //        w(s"== setters for ${bg.typeName} ==")
         w("<h2>설정</h2>")
         bg.setters.foreach(x => w(s"""<div>${x.show}</div>"""))
-        //        w("<br/>")
-        //        w(s"== methods for ${bg.typeName} ==")
         w("<h2>일반 함수</h2>")
         bg.methods.foreach(x => w(s"""<div>${x.show}</div>"""))
-
-        //        w("<br/>")
       }
 
       w("</body></html>")
