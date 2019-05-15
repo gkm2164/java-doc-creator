@@ -71,7 +71,10 @@ package object javadoc {
   case class JavaEnumClass(name: String, modifier: JavaModifier,
                            enumTokens: List[String],
                            definitions: List[JavaDefinition]) extends JavaTypeDef {
-    override def show: String = s"""<h3 class="type-def">${color("enum", "blue")} $name</h3>""" + s"""<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}""" + definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")
+    override def show: String =
+      s"""<h3 class="type-def">${color("enum", "blue")} $name</h3>
+         |<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}
+         |${definitions.filter(_.modifier.access != PRIVATE).map(x => x.show).mkString("<div>", "", "</div>")}""".stripMargin
 
     override def inheritClass: List[String] = Nil
 
@@ -87,7 +90,11 @@ package object javadoc {
     lazy val showImplements: String = if (implementInterfaces.isEmpty) "" else s" ${color("implements", "blue")} " + implementInterfaces.map(escapeLTGT).mkString(", ")
     def childDefinitions: String = definitions.filter(_.modifier.access != PRIVATE).sortBy(x => x.name).map(x => x.show).mkString("<div>", "", "</div>")
 
-    override def show: String = s"""<h3 class="type-def">${color("class", "blue")} $name$showExtends$showImplements</h3>""" + modifier.commentMacros.map(_.drop(3)).mkString("<pre class=\"code\">", "\n", "</pre>") + s"<b>${modifier.fullPath}</b>" + childDefinitions
+    override def show: String =
+      s"""<h3 class="type-def">${color("class", "blue")} $name$showExtends$showImplements</h3>
+         |${modifier.commentMacros.map(_.drop(3)).mkString("<pre class=\"code\">", "\n", "</pre>")}
+         |<b>${modifier.fullPath}</b>
+         |$childDefinitions""".stripMargin
   }
 
   case class JavaInterface(name: String, modifier: JavaModifier,

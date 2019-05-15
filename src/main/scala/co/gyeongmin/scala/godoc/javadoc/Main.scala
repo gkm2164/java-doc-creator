@@ -14,8 +14,8 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-//    val baseDir = "/Users/ben.go/go-doc-creator/src/main/java"
-    val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
+    val baseDir = "/Users/ben.go/go-doc-creator/src/main/java"
+//    val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
     val node = currentPackage(new File(baseDir))
     val pw = new PrintWriter("javadoc.html")
     pw.write("""<!DOCTYPE html><html><head><meta charset="UTF-8" /><title>document</title><link type="text/css" rel="stylesheet" href="doc.css" /> </head><body>""")

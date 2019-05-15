@@ -11,8 +11,9 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+//= Go 문서 파서
 public class GoParser {
-
+    //= Go 토큰 데이터 타입
     static class GoToken {
         GoTokenEnum e;
         String value;
@@ -134,19 +135,19 @@ public class GoParser {
         ret.toArray(r);
         return r;
     }
+//
+//    public static void debugToken(GoToken[] tokens) {
+//        int num = 0;
+//        for (GoToken e : tokens) {
+//            System.out.print(num++ + ": " + e.e);
+//            if (e.e == GoTokenEnum.STRING) {
+//                System.out.print("(" + e.value + ")");
+//            }
+//            System.out.println();
+//        }
+//    }
 
-    public static void debugToken(GoToken[] tokens) {
-        int num = 0;
-        for (GoToken e : tokens) {
-            System.out.print(num++ + ": " + e.e);
-            if (e.e == GoTokenEnum.STRING) {
-                System.out.print("(" + e.value + ")");
-            }
-            System.out.println();
-        }
-    }
-
-    public static class GoTokenIterator implements Iterator<GoToken> {
+    private static class GoTokenIterator implements Iterator<GoToken> {
         private int idx = 0;
         private GoToken[] tokens = null;
 
