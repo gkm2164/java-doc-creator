@@ -1,7 +1,6 @@
-package co.gyeongmin.scala.godoc.javadoc
+package co.gyeongmin.scala.godoc.parser
 
 import co.gyeongmin.scala.godoc.exceptions.TokenNotAcceptedException
-import co.gyeongmin.scala.godoc.javadoc.LRParser._
 
 import scala.annotation.tailrec
 
@@ -12,107 +11,6 @@ object LRParser {
       Not :: Token("x") :: Plus :: Token("y") :: Mult :: Token("z") :: Div :: Token("k") :: Equal :: Not :: Token("a") :: Semicolon :: Nil, Nil))
   }
 
-  trait LRSymbol {
-    def value: String
-  }
-
-  trait LRToken extends LRSymbol {
-    def isOneOf(tokens: LRToken*): Boolean = tokens.contains(this)
-  }
-
-  /*
-  S -> C ;
-  C  -> C (==, ||, &&) C
-     | E
-  E -> E (+, -) E
-     | T
-  T -> T (*, /) T
-     | F
-  F -> ( E )
-     | Token
-     | ! F
-
-   */
-
-  abstract class Op extends LRToken
-
-  abstract class CondOp extends Op
-
-  case class S(value: String) extends LRSymbol
-
-  case class C(value: String) extends LRSymbol
-
-  case class E(value: String) extends LRSymbol
-
-  case class T(value: String) extends LRSymbol
-
-  case class F(value: String) extends LRSymbol
-
-  case class Token(value: String) extends LRToken
-
-  case object Plus extends Op {
-    override def value: String = "+"
-  }
-
-  case object Minus extends Op {
-    override def value: String = "-"
-  }
-
-  case object Mult extends Op {
-    override def value: String = "*"
-  }
-
-  case object Div extends Op {
-    override def value: String = "/"
-  }
-
-  case object Equal extends CondOp {
-    override def value: String = "=="
-  }
-
-  case object NotEqual extends CondOp {
-    override def value: String = "!="
-  }
-
-  case object Less extends CondOp {
-    override def value: String = "<"
-  }
-
-  case object Greater extends CondOp {
-    override def value: String = ">"
-  }
-
-  case object LessEqual extends CondOp {
-    override def value: String = "<="
-  }
-
-  case object GreaterEqual extends CondOp {
-    override def value: String = ">="
-  }
-
-  case object Or extends CondOp {
-    override def value: String = "||"
-  }
-
-  case object And extends CondOp {
-    override def value: String = "&&"
-  }
-
-  case object Not extends Op {
-    override def value: String = "!"
-  }
-
-  case object LBracket extends LRToken {
-    override def value: String = "("
-  }
-
-  case object RBracket extends LRToken {
-    override def value: String = ")"
-  }
-
-  case object Semicolon extends LRToken {
-    override def value: String = ";"
-  }
 
 }
 
@@ -162,7 +60,9 @@ object LRParserRunner {
         println(s"reduce => S -> C (lookahead 1 token, $op)")
         matchStack(tokens, S(v) :: t)
 
-      case (_, Semicolon :: S(v) :: t) => println("reduce => S -> S ;"); matchStack(tokens, S(v) :: t)
+      case (_, Semicolon :: S(v) :: t) =>
+        println("reduce => S -> S ;")
+        matchStack(tokens, S(v) :: t)
 
       case (Nil, S(v) :: Nil) => v
 
