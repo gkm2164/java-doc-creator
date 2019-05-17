@@ -17,7 +17,7 @@ case class JavaCode(packageName: String,
     StringBuilder.newBuilder
       .append(s"<h3>package: $packageName</h3>")
       .append(s"<p>total ${defs.length} number of definitions are contained</p>")
-      .append(defs.map(_.show).mkString("\n"))
+      .append(defs.sortBy(_.name).map(_.show).mkString("\n"))
       .toString()
 }
 

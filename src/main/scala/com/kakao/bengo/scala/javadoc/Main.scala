@@ -22,7 +22,10 @@ object Main {
     pw.write("<nav>")
     node.buildNavTree(pw)
     pw.write("</nav>")
+    pw.write("<div class=\"contents\">")
+    pw.write("<h1>Documentation</h1>")
     node.print(pw)
+    pw.write("</div>")
     pw.write("</body></html>")
     pw.close()
   }
