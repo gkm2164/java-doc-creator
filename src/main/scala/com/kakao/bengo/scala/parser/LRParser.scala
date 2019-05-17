@@ -5,8 +5,6 @@ import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import scala.annotation.tailrec
 
 object LRParser {
-
-
   def main(args: Array[String]): Unit = {
     println(parse( // !x + y * z / k == !a;
       Not :: Token("x") :: Plus :: Token("y") :: Mult :: Token("z") :: Div :: Token("k") :: Equal :: Not :: Token("a") :: Semicolon :: Nil, Nil))
@@ -69,8 +67,4 @@ object LRParser {
       }
     }
   }
-}
-
-object LRParserRunner {
-
 }
