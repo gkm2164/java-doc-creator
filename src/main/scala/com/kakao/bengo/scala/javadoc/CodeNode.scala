@@ -65,7 +65,6 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
 
         case JavaMethod(modifier, methodName, _, args) if modifier.access == PUBLIC =>
           pw.write("<li>")
-//          pw.write(s"""<a href="#${definition.id}">$methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})</a>""")
           pw.write(s"""<a href="#${definition.id}">$methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})</a>""")
 
           pw.write("</li>")
