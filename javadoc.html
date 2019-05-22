@@ -1,1198 +1,568 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8"/>
-    <title>document</title>
-    <link type="text/css" rel="stylesheet" href="doc.css"/>
-</head>
-<body>
-<nav>
-    <ul class="non-leaf">
-        <li class="non-leaf"><p>com.</p>
-            <ul class="non-leaf">
-                <li class="non-leaf"><p>kakao.</p>
-                    <ul class="non-leaf">
-                        <li class="non-leaf"><p>search.</p>
-                            <ul class="non-leaf">
-                                <li class="non-leaf"><p>da.</p>
-                                    <ul class="non-leaf">
-                                        <li class="non-leaf"><p>commons.</p>
-                                            <ul class="non-leaf">
-                                                <li class="non-leaf"><p>intenthandler.</p>
-                                                    <ul class="non-leaf">
-                                                        <li><a href="#TjglVhiZoR"><b>AudioTokenUtils</b></a>
-                                                            <ul>
-                                                                <li><a href="#awH4h3tmEP">makeAudioToken(rawToken)</a>
-                                                                </li>
-                                                                <li><a href="#ugeIMaF999">generateId(intent)</a></li>
-                                                                <li><a href="#TLFOdoCg6f">generateTokenHeader(botId,
-                                                                    intent)</a></li>
-                                                            </ul>
-                                                        </li>
-                                                        <li><a href="#Reyls1dGsN"><b>DefaultAudioItemIntentHandlerInterceptor</b></a>
-                                                            <ul>
-                                                                <li><a href="#VkQmHTJmQd">DefaultAudioItemIntentHandlerInterceptor(maker)</a>
-                                                                </li>
-                                                                <li><a href="#QmbeyFNb37">postHandle(daHttpRequest,
-                                                                    daHttpResponse, handlerMethod)</a></li>
-                                                            </ul>
-                                                        </li>
-                                                        <li><a href="#bHDg1WMFLV"><b>DomainAgentHttpRequest</b></a>
-                                                            <ul></ul>
-                                                        </li>
-                                                        <li><a href="#jbNIMNyLc7"><b>DomainAgentHttpResponse</b></a>
-                                                            <ul></ul>
-                                                        </li>
-                                                        <li><a href="#LBuT6NtCyb">IntentHandlerConfigurer</a></li>
-                                                        <li><a href="#nCJEhmNQLu">IntentHandlerInterceptor</a></li>
-                                                        <li><a href="#Eta6qzhzWk">RequestDispatcherInitializer</a></li>
-                                                        <li><a href="#uGGQNc5jBl"><b>StandardRequestDispatcherInitializer</b></a>
-                                                            <ul>
-                                                                <li><a href="#5gjw1fAlXJ">init(requestDispatcher)</a>
-                                                                </li>
-                                                                <li><a href="#LxyOTv7W5g">init(requestDispatcher,
-                                                                    intentHandlers)</a></li>
-                                                                <li><a href="#dVCSYMuPJ5">init(requestDispatcher,
-                                                                    intentHandlers, intentHandlerConfigurers)</a></li>
-                                                                <li><a href="#wrDK9xNnOj"><b>NotMatchedHandler</b></a>
-                                                                    <ul>
-                                                                        <li>
-                                                                            <a href="#wB5WSFOhac">notMatchedMapping()</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                        <li class="non-leaf"><p>annotation.</p>
-                                                            <ul class="non-leaf">
-                                                                <li><a href="#MNI20akFdm">AudioEventIntentMapping</a>
-                                                                    <ul></ul>
-                                                                </li>
-                                                                <li><a href="#uIGrrb7HYP">EventMapping</a>
-                                                                    <ul></ul>
-                                                                </li>
-                                                                <li><a href="#dHZs8lkLPz">IntentMapping</a>
-                                                                    <ul></ul>
-                                                                </li>
-                                                                <li><a href="#Sx3t3Y7f5d">IntentParam</a>
-                                                                    <ul></ul>
-                                                                </li>
-                                                                <li><a href="#gtxAq0gLqv">IntentParamsHint</a>
-                                                                    <ul></ul>
-                                                                </li>
-                                                                <li><a href="#rlc6Ee852x">UserReqParamState</a>
-                                                                    <ul></ul>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                        <li class="non-leaf"><p>argumentresolver.</p>
-                                                            <ul class="non-leaf">
-                                                                <li>
-                                                                    <a href="#EhXQc8Hkyn"><b>AudioTokenArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#oYuRjqflVB">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#B1M4eCujNC">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#Xq8n4YIM5i"><b>AudioTokenParamArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#50kny0qDD4">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#3FodupNsaW">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#Z2dOQe1Vln"><b>BotArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#XNEn8CyXjO">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#bGHn5bQNu9">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#XHDQ7CBSXV"><b>IntentParamArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#bPZmOf4Q2M">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#2Ua2gflquz">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#6rbsKJ8Jvh"><b>IntentParamModelArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#Yq3t7EiJu2">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#bbXBwidHy6">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#yNypNJmCaU"><b>ParamsUserArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#St7oZt3cU8">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#PHDPCcnG1q">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#slgkpaViLR"><b>UserReqParamStateArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#cwmLFckWZB">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#XSdZoAlYCR">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#aAyCGLAkMe"><b>UserRequestArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#Gn5LmMFYnU">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#9txGypfKc0">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#mbjvF1rvWo"><b>UserUtteranceArgumentResolver</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#VlIbFSnxSg">supportsParameter(parameter)</a>
-                                                                        </li>
-                                                                        <li><a href="#YNcDqv7dn7">resolveArgument(parameter,
-                                                                            daHttpRequest)</a></li>
-                                                                    </ul>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                        <li class="non-leaf"><p>exception.</p>
-                                                            <ul class="non-leaf">
-                                                                <li><a href="#x9ls6DfEuN"><b>AudioTokenFormatInvalidException</b></a>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#i9fPBZ0CSw"><b>FromJsonFailException</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#NsTapsaXey">FromJsonFailException(cause)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#CQ2NeyKuS5"><b>HandlerMethodArgResolveFailException</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#t3UALA3M8Q">HandlerMethodArgResolveFailException()</a>
-                                                                        </li>
-                                                                        <li><a href="#PAzzow6Fln">HandlerMethodArgResolveFailException(msg)</a>
-                                                                        </li>
-                                                                        <li><a href="#SRyn7NMxV5">HandlerMethodArgResolveFailException(msg,
-                                                                            cause)</a></li>
-                                                                        <li><a href="#HDxSuTXm4R">HandlerMethodArgResolveFailException(cause)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#HpUUnxoKor"><b>IntentHandlerException</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#rqogAga2TX">IntentHandlerException()</a>
-                                                                        </li>
-                                                                        <li><a href="#iyyRRpYXQ7">IntentHandlerException(msg)</a>
-                                                                        </li>
-                                                                        <li><a href="#THeWvS2Trp">IntentHandlerException(msg,
-                                                                            cause)</a></li>
-                                                                        <li><a href="#iAqmNkLGT9">IntentHandlerException(cause)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#R4QVz1ZDtl"><b>IntentHandlerMethodInvokeException</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#SyJekh0V40">IntentHandlerMethodInvokeException()</a>
-                                                                        </li>
-                                                                        <li><a href="#7CqpiEqwtV">IntentHandlerMethodInvokeException(msg)</a>
-                                                                        </li>
-                                                                        <li><a href="#oXXGgadtsL">IntentHandlerMethodInvokeException(msg,
-                                                                            cause)</a></li>
-                                                                        <li><a href="#6bmrO0xvfo">IntentHandlerMethodInvokeException(cause)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#OZK6RptD2m"><b>RequestIdNotFoundException</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#W3T5CVBvNd">RequestIdNotFoundException()</a>
-                                                                        </li>
-                                                                        <li><a href="#mx4OBQeHMD">RequestIdNotFoundException(msg)</a>
-                                                                        </li>
-                                                                        <li><a href="#ffoR4olRu9">RequestIdNotFoundException(msg,
-                                                                            cause)</a></li>
-                                                                        <li><a href="#yWKZrbSbI0">RequestIdNotFoundException(cause)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#xpjQrBO0gI"><b>ToJsonFailException</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#UdIH94lvcY">ToJsonFailException(cause)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                        <li class="non-leaf"><p>mappingcondition.</p>
-                                                            <ul class="non-leaf">
-                                                                <li><a href="#dhVnQTMunA"><b>AudioEventCondition</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#UcRLa7xYDA">AudioEventCondition(audioEventType,
-                                                                            intentName)</a></li>
-                                                                        <li><a href="#sWJfh5p1GH">isMatchingCondition(daHttpRequest)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#a39qCGTddP"><b>AudioEventIntentConditionCreater</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#wdMluipVAU">isRequire(handlerMethod)</a>
-                                                                        </li>
-                                                                        <li><a href="#nYYsQ6jkvw">createCondition(handlerMethod)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#pG0sZYA91G"><b>IntentNameCondition</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#e3o4VpPFZz">IntentNameCondition(intentName)</a>
-                                                                        </li>
-                                                                        <li><a href="#6O3r5MnOmy">isMatchingCondition(daHttpRequest)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#d5MUieHwyF"><b>IntentNameConditionCreater</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#KcCPKBKLRS">isRequire(handlerMethod)</a>
-                                                                        </li>
-                                                                        <li><a href="#0QVyS7CTes">createCondition(handlerMethod)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#vHtA4hBABZ"><b>RequiredEntityCondition</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#RomLR1A5oO">RequiredEntityCondition(intentParamsHint,
-                                                                            requiredEntityNames)</a></li>
-                                                                        <li><a href="#jRSyoZDWDy">isMatchingCondition(daHttpRequest)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#jDPXcky31l"><b>RequiredEntityConditionCreater</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#2FC5GZnkgN">isRequire(handlerMethod)</a>
-                                                                        </li>
-                                                                        <li><a href="#RYQa3AxQJh">createCondition(handlerMethod)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                        <li class="non-leaf"><p>resulthandler.</p>
-                                                            <ul class="non-leaf">
-                                                                <li><a href="#YJhhkhQT02"><b>AnswerResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#hOTBv8fN2t">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#FtKQWqJjnA">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#SykoqBAJX5"><b>DomainAgentHttpResponseResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#81VVWWB4xS">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#dF86HO59JU">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#3bqMXTLZ2X"><b>DomainAgentResponseResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#2CCC8J0mmQ">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#P1nHsPnuFn">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#lSnEzIIgss"><b>InstructionResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#3k0e13O9IE">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#dElwcgNVMQ">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#UjylWoXbgS"><b>NullValueResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#w0jtDk6H32">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#m7iaF86Qnp">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li>
-                                                                    <a href="#vbW9cMAvn8"><b>OutputContextResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#5Txbkls1fl">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#Vn8A0TAmqY">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                                <li><a href="#7hfJFLpmSB"><b>StringResultHandler</b></a>
-                                                                    <ul>
-                                                                        <li><a href="#Ep1s20dv9H">isSupports(handlerResult)</a>
-                                                                        </li>
-                                                                        <li><a href="#icXgBOKzga">handleResult(handlerResult)</a>
-                                                                        </li>
-                                                                    </ul>
-                                                                </li>
-                                                            </ul>
-                                                        </li>
-                                                    </ul>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</nav>
-<div class="contents"><h1>Documentation</h1>
-    <hr/>
-    <p>at filename: AudioTokenUtils.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="TjglVhiZoR"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AudioTokenUtils</h3>
-        <pre class="code">
- ...
- ...
- ...</pre>
-        <b>com.kakao.search.da.commons.intenthandler</b>
-        <div><a id="ugeIMaF999"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">String</span> generateId(String intent)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.AudioTokenUtils</h4><a id="TLFOdoCg6f"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">String</span> generateTokenHeader(String botId, String intent)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.AudioTokenUtils</h4><a id="awH4h3tmEP"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">AudioToken</span> makeAudioToken(String rawToken)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.AudioTokenUtils</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: DefaultAudioItemIntentHandlerInterceptor.java, in package:
-        com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="Reyls1dGsN"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> DefaultAudioItemIntentHandlerInterceptor <span
-                style="color: blue;">implements</span> IntentHandlerInterceptor</h3>
-        <pre class="code">desc: 요청 처리 응답에 AudioItem이 있을 경우 id와 token값을 생성해준다.</pre>
-        <b>com.kakao.search.da.commons.intenthandler</b>
-        <div><a id="VkQmHTJmQd"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">DefaultAudioItemIntentHandlerInterceptor</span>
-                DefaultAudioItemIntentHandlerInterceptor(String maker)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.DefaultAudioItemIntentHandlerInterceptor</h4><a
-                    id="QmbeyFNb37"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">void</span> postHandle(DomainAgentHttpRequest daHttpRequest,
-                DomainAgentHttpResponse daHttpResponse, HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.DefaultAudioItemIntentHandlerInterceptor</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: DomainAgentHttpRequest.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="bHDg1WMFLV"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> DomainAgentHttpRequest</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler</b>
-        <div></div>
-    </div>
-    <hr/>
-    <p>at filename: DomainAgentHttpResponse.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="jbNIMNyLc7"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> DomainAgentHttpResponse</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler</b>
-        <div></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentHandlerConfigurer.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="LBuT6NtCyb"></a>
-        <h3 class="type-def"><span style="color: blue;">interface</span> IntentHandlerConfigurer</h3>
-        <h4>com.kakao.search.da.commons.intenthandler</h4>
-        <div>
-            <b>inherit class</b>
-            <ul>
-                <li>HandlerMapperConfigurer&lt;DomainAgentHttpRequest,DomainAgentHttpResponse&gt;</li>
-            </ul>
-        </div>
-    </div>
-    <hr/>
-    <p>at filename: IntentHandlerInterceptor.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="nCJEhmNQLu"></a>
-        <h3 class="type-def"><span style="color: blue;">interface</span> IntentHandlerInterceptor</h3>
-        <h4>com.kakao.search.da.commons.intenthandler</h4>
-        <div>
-            <b>inherit class</b>
-            <ul>
-                <li>RequestHandlerInterceptor&lt;DomainAgentHttpRequest,DomainAgentHttpResponse&gt;</li>
-            </ul>
-        </div>
-    </div>
-    <hr/>
-    <p>at filename: RequestDispatcherInitializer.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="Eta6qzhzWk"></a>
-        <h3 class="type-def"><span style="color: blue;">interface</span> RequestDispatcherInitializer</h3>
-        <h4>com.kakao.search.da.commons.intenthandler</h4>
-        <div>
-            <b>inherit class</b>
-            <ul></ul>
-        </div>
-    </div>
-    <hr/>
-    <p>at filename: StandardRequestDispatcherInitializer.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="uGGQNc5jBl"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> StandardRequestDispatcherInitializer <span
-                style="color: blue;">implements</span> RequestDispatcherInitializer</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler</b>
-        <div><a id="wrDK9xNnOj"></a>
-            <h3 class="type-def"><span style="color: blue;">class</span> NotMatchedHandler</h3>
-            <pre class="code"></pre>
-            <b>com.kakao.search.da.commons.intenthandler.StandardRequestDispatcherInitializer</b>
-            <div><a id="wB5WSFOhac"></a>
-                <p><span style="color: blue;">public</span> <span style="color: #769AC8;">DomainAgentHttpResponse</span>
-                    notMatchedMapping()</p>
-                <pre></pre>
-                <h4>
-                    com.kakao.search.da.commons.intenthandler.StandardRequestDispatcherInitializer.NotMatchedHandler</h4>
-            </div>
-            <a id="5gjw1fAlXJ"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">void</span> init(RequestDispatcher&lt;DomainAgentHttpRequest,DomainAgentHttpResponse&gt;
-                requestDispatcher)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.StandardRequestDispatcherInitializer</h4><a
-                    id="LxyOTv7W5g"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">void</span> init(RequestDispatcher&lt;DomainAgentHttpRequest,DomainAgentHttpResponse&gt;
-                requestDispatcher, Collection&lt;Object&gt; intentHandlers)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.StandardRequestDispatcherInitializer</h4><a
-                    id="dVCSYMuPJ5"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">void</span> init(RequestDispatcher&lt;DomainAgentHttpRequest,DomainAgentHttpResponse&gt;
-                requestDispatcher, Collection&lt;Object&gt; intentHandlers, Collection&lt;IntentHandlerConfigurer&gt;
-                intentHandlerConfigurers)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.StandardRequestDispatcherInitializer</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: AudioEventIntentMapping.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="MNI20akFdm"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> AudioEventIntentMapping</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: AudioTokenParam.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="VPkrZ6ul0M"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> AudioTokenParam</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: EventMapping.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="uIGrrb7HYP"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> EventMapping</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: IntentMapping.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="dHZs8lkLPz"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> IntentMapping</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: IntentParam.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="Sx3t3Y7f5d"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> IntentParam</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: IntentParamModel.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="rVPDq5PNvd"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> IntentParamModel</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: IntentParamsHint.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="gtxAq0gLqv"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> IntentParamsHint</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: UserReqParamState.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="rlc6Ee852x"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> UserReqParamState</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: UserUtterance.java, in package: com.kakao.search.da.commons.intenthandler.annotation</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.annotation</h3>
-        <p>total 1 number of definitions are contained</p><a id="R9iUjAwHhy"></a>
-        <h3 class="type-def"><span style="color: blue;">@interface</span> UserUtterance</h3>
-        <h4>com.kakao.search.da.commons.intenthandler.annotation</h4>
-    </div>
-    <hr/>
-    <p>at filename: AudioTokenArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="EhXQc8Hkyn"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AudioTokenArgumentResolver <span
-                style="color: blue;">implements</span> RequestMethodArgumentResolver&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="B1M4eCujNC"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.AudioTokenArgumentResolver</h4><a
-                    id="oYuRjqflVB"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.AudioTokenArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: AudioTokenParamArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 2 number of definitions are contained</p><a id="Xq8n4YIM5i"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AudioTokenParamArgumentResolver <span
-                style="color: blue;">extends</span> RequestMethodArgumentResolverSupport&lt;DomainAgentHttpRequest&gt;
-        </h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="3FodupNsaW"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.AudioTokenParamArgumentResolver</h4><a
-                    id="50kny0qDD4"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.AudioTokenParamArgumentResolver</h4></div>
-        <a id="E4XA4ySgvq"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> NameValue</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="bJwTnQPsAm"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">boolean</span> isNull()</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.NameValue</h4><a id="2Dh2VSemRT"></a>
-            <p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span
-                    style="color: #769AC8;">NameValue</span> of(String nameValue, String delimiter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.NameValue</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: BotArgumentResolver.java, in package: com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="Z2dOQe1Vln"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> BotArgumentResolver <span style="color: blue;">implements</span>
-            RequestMethodArgumentResolver&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="bGHn5bQNu9"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.BotArgumentResolver</h4><a
-                    id="XNEn8CyXjO"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.BotArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentParamArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="XHDQ7CBSXV"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> IntentParamArgumentResolver <span
-                style="color: blue;">extends</span> RequestMethodArgumentResolverSupport&lt;DomainAgentHttpRequest&gt;
-        </h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="2Ua2gflquz"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.IntentParamArgumentResolver</h4><a
-                    id="bPZmOf4Q2M"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.IntentParamArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentParamModelArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="6rbsKJ8Jvh"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> IntentParamModelArgumentResolver <span
-                style="color: blue;">extends</span> RequestMethodArgumentResolverSupport&lt;DomainAgentHttpRequest&gt;
-        </h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="bbXBwidHy6"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.IntentParamModelArgumentResolver</h4><a
-                    id="Yq3t7EiJu2"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.IntentParamModelArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: ParamsUserArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="yNypNJmCaU"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> ParamsUserArgumentResolver <span
-                style="color: blue;">implements</span> RequestMethodArgumentResolver&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="PHDPCcnG1q"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.ParamsUserArgumentResolver</h4><a
-                    id="St7oZt3cU8"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.ParamsUserArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: UserReqParamStateArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="slgkpaViLR"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> UserReqParamStateArgumentResolver <span
-                style="color: blue;">implements</span> RequestMethodArgumentResolver&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="XSdZoAlYCR"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.UserReqParamStateArgumentResolver</h4><a
-                    id="cwmLFckWZB"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.UserReqParamStateArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: UserRequestArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="aAyCGLAkMe"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> UserRequestArgumentResolver <span
-                style="color: blue;">implements</span> RequestMethodArgumentResolver&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="9txGypfKc0"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.UserRequestArgumentResolver</h4><a
-                    id="Gn5LmMFYnU"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.UserRequestArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: UserUtteranceArgumentResolver.java, in package:
-        com.kakao.search.da.commons.intenthandler.argumentresolver</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.argumentresolver</h3>
-        <p>total 1 number of definitions are contained</p><a id="mbjvF1rvWo"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> UserUtteranceArgumentResolver <span
-                style="color: blue;">implements</span> RequestMethodArgumentResolver&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.argumentresolver</b>
-        <div><a id="YNcDqv7dn7"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">Object</span> resolveArgument(MethodParameter parameter,
-                DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.UserUtteranceArgumentResolver</h4><a
-                    id="VlIbFSnxSg"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> supportsParameter(MethodParameter parameter)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.argumentresolver.UserUtteranceArgumentResolver</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: AudioTokenFormatInvalidException.java, in package:
-        com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="x9ls6DfEuN"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AudioTokenFormatInvalidException <span
-                style="color: blue;">extends</span> IntentHandlerException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div></div>
-    </div>
-    <hr/>
-    <p>at filename: FromJsonFailException.java, in package: com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="i9fPBZ0CSw"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> FromJsonFailException <span style="color: blue;">extends</span>
-            IntentHandlerException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div><a id="NsTapsaXey"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">FromJsonFailException</span>
-                FromJsonFailException(Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.FromJsonFailException</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: HandlerMethodArgResolveFailException.java, in package:
-        com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="CQ2NeyKuS5"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> HandlerMethodArgResolveFailException <span
-                style="color: blue;">extends</span> RuntimeException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div><a id="t3UALA3M8Q"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">HandlerMethodArgResolveFailException</span>
-                HandlerMethodArgResolveFailException()</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.HandlerMethodArgResolveFailException</h4><a
-                    id="PAzzow6Fln"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">HandlerMethodArgResolveFailException</span>
-                HandlerMethodArgResolveFailException(String msg)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.HandlerMethodArgResolveFailException</h4><a
-                    id="SRyn7NMxV5"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">HandlerMethodArgResolveFailException</span>
-                HandlerMethodArgResolveFailException(String msg, Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.HandlerMethodArgResolveFailException</h4><a
-                    id="HDxSuTXm4R"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">HandlerMethodArgResolveFailException</span>
-                HandlerMethodArgResolveFailException(Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.HandlerMethodArgResolveFailException</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentHandlerException.java, in package: com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="HpUUnxoKor"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> IntentHandlerException <span style="color: blue;">extends</span>
-            RuntimeException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div><a id="rqogAga2TX"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">IntentHandlerException</span>
-                IntentHandlerException()</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerException</h4><a id="iyyRRpYXQ7"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">IntentHandlerException</span>
-                IntentHandlerException(String msg)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerException</h4><a id="THeWvS2Trp"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">IntentHandlerException</span>
-                IntentHandlerException(String msg, Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerException</h4><a id="iAqmNkLGT9"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">IntentHandlerException</span>
-                IntentHandlerException(Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerException</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentHandlerMethodInvokeException.java, in package:
-        com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="R4QVz1ZDtl"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> IntentHandlerMethodInvokeException <span
-                style="color: blue;">extends</span> IntentHandlerException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div><a id="SyJekh0V40"></a>
-            <p><span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">IntentHandlerMethodInvokeException</span>
-                IntentHandlerMethodInvokeException()</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerMethodInvokeException</h4><a
-                    id="7CqpiEqwtV"></a>
-            <p><span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">IntentHandlerMethodInvokeException</span>
-                IntentHandlerMethodInvokeException(String msg)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerMethodInvokeException</h4><a
-                    id="oXXGgadtsL"></a>
-            <p><span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">IntentHandlerMethodInvokeException</span>
-                IntentHandlerMethodInvokeException(String msg, Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerMethodInvokeException</h4><a
-                    id="6bmrO0xvfo"></a>
-            <p><span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">IntentHandlerMethodInvokeException</span>
-                IntentHandlerMethodInvokeException(Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.IntentHandlerMethodInvokeException</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: RequestIdNotFoundException.java, in package: com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="OZK6RptD2m"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> RequestIdNotFoundException <span
-                style="color: blue;">extends</span> IntentHandlerException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div><a id="W3T5CVBvNd"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">RequestIdNotFoundException</span>
-                RequestIdNotFoundException()</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.RequestIdNotFoundException</h4><a
-                    id="mx4OBQeHMD"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">RequestIdNotFoundException</span>
-                RequestIdNotFoundException(String msg)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.RequestIdNotFoundException</h4><a
-                    id="ffoR4olRu9"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">RequestIdNotFoundException</span>
-                RequestIdNotFoundException(String msg, Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.RequestIdNotFoundException</h4><a
-                    id="yWKZrbSbI0"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">RequestIdNotFoundException</span>
-                RequestIdNotFoundException(Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.RequestIdNotFoundException</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: ToJsonFailException.java, in package: com.kakao.search.da.commons.intenthandler.exception</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.exception</h3>
-        <p>total 1 number of definitions are contained</p><a id="xpjQrBO0gI"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> ToJsonFailException <span style="color: blue;">extends</span>
-            IntentHandlerException</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.exception</b>
-        <div><a id="UdIH94lvcY"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">ToJsonFailException</span>
-                ToJsonFailException(Throwable cause)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.exception.ToJsonFailException</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: AudioEventCondition.java, in package: com.kakao.search.da.commons.intenthandler.mappingcondition</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.mappingcondition</h3>
-        <p>total 1 number of definitions are contained</p><a id="dhVnQTMunA"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AudioEventCondition <span style="color: blue;">implements</span>
-            RequestMappingCondition&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.mappingcondition</b>
-        <div><a id="UcRLa7xYDA"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">AudioEventCondition</span>
-                AudioEventCondition(AudioEventType audioEventType, String intentName)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.AudioEventCondition</h4><a
-                    id="sWJfh5p1GH"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isMatchingCondition(DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.AudioEventCondition</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: AudioEventIntentConditionCreater.java, in package:
-        com.kakao.search.da.commons.intenthandler.mappingcondition</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.mappingcondition</h3>
-        <p>total 1 number of definitions are contained</p><a id="a39qCGTddP"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AudioEventIntentConditionCreater <span
-                style="color: blue;">implements</span> RequestMappingConditionCreater&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.mappingcondition</b>
-        <div><a id="nYYsQ6jkvw"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">RequestMappingCondition&lt;DomainAgentHttpRequest&gt;</span>
-                createCondition(HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.AudioEventIntentConditionCreater</h4><a
-                    id="wdMluipVAU"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isRequire(HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.AudioEventIntentConditionCreater</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentNameCondition.java, in package: com.kakao.search.da.commons.intenthandler.mappingcondition</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.mappingcondition</h3>
-        <p>total 1 number of definitions are contained</p><a id="pG0sZYA91G"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> IntentNameCondition <span style="color: blue;">implements</span>
-            RequestMappingCondition&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.mappingcondition</b>
-        <div><a id="e3o4VpPFZz"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">IntentNameCondition</span>
-                IntentNameCondition(final String intentName)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.IntentNameCondition</h4><a
-                    id="6O3r5MnOmy"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">boolean</span>
-                isMatchingCondition(DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.IntentNameCondition</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: IntentNameConditionCreater.java, in package:
-        com.kakao.search.da.commons.intenthandler.mappingcondition</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.mappingcondition</h3>
-        <p>total 1 number of definitions are contained</p><a id="d5MUieHwyF"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> IntentNameConditionCreater <span
-                style="color: blue;">implements</span> RequestMappingConditionCreater&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.mappingcondition</b>
-        <div><a id="0QVyS7CTes"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">RequestMappingCondition&lt;DomainAgentHttpRequest&gt;</span>
-                createCondition(HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.IntentNameConditionCreater</h4><a
-                    id="KcCPKBKLRS"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isRequire(HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.IntentNameConditionCreater</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: RequiredEntityCondition.java, in package:
-        com.kakao.search.da.commons.intenthandler.mappingcondition</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.mappingcondition</h3>
-        <p>total 1 number of definitions are contained</p><a id="vHtA4hBABZ"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> RequiredEntityCondition <span style="color: blue;">implements</span>
-            RequestMappingCondition&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.mappingcondition</b>
-        <div><a id="RomLR1A5oO"></a>
-            <p><span style="color: blue;">public</span> <span style="color: #769AC8;">RequiredEntityCondition</span>
-                RequiredEntityCondition(IntentParamsHint intentParamsHint, String[] requiredEntityNames)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.RequiredEntityCondition</h4><a
-                    id="jRSyoZDWDy"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isMatchingCondition(DomainAgentHttpRequest daHttpRequest)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.RequiredEntityCondition</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: RequiredEntityConditionCreater.java, in package:
-        com.kakao.search.da.commons.intenthandler.mappingcondition</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.mappingcondition</h3>
-        <p>total 1 number of definitions are contained</p><a id="jDPXcky31l"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> RequiredEntityConditionCreater <span
-                style="color: blue;">implements</span> RequestMappingConditionCreater&lt;DomainAgentHttpRequest&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.mappingcondition</b>
-        <div><a id="RYQa3AxQJh"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">RequestMappingCondition&lt;DomainAgentHttpRequest&gt;</span>
-                createCondition(HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.RequiredEntityConditionCreater</h4><a
-                    id="2FC5GZnkgN"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isRequire(HandlerMethod handlerMethod)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.mappingcondition.RequiredEntityConditionCreater</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: package-info.java, in package: com.kakao.search.da.commons.intenthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler</h3>
-        <p>total 0 number of definitions are contained</p></div>
-    <hr/>
-    <p>at filename: AnswerResultHandler.java, in package: com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="YJhhkhQT02"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> AnswerResultHandler <span style="color: blue;">implements</span>
-            RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="FtKQWqJjnA"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.AnswerResultHandler</h4><a id="hOTBv8fN2t"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.AnswerResultHandler</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: DomainAgentHttpResponseResultHandler.java, in package:
-        com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="SykoqBAJX5"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> DomainAgentHttpResponseResultHandler <span
-                style="color: blue;">implements</span> RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="dF86HO59JU"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.DomainAgentHttpResponseResultHandler</h4><a
-                    id="81VVWWB4xS"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.DomainAgentHttpResponseResultHandler</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: DomainAgentResponseResultHandler.java, in package:
-        com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="3bqMXTLZ2X"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> DomainAgentResponseResultHandler <span
-                style="color: blue;">implements</span> RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="P1nHsPnuFn"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.DomainAgentResponseResultHandler</h4><a
-                    id="2CCC8J0mmQ"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.DomainAgentResponseResultHandler</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: InstructionResultHandler.java, in package:
-        com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="lSnEzIIgss"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> InstructionResultHandler <span
-                style="color: blue;">implements</span> RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="dElwcgNVMQ"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.InstructionResultHandler</h4><a
-                    id="3k0e13O9IE"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(final RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.InstructionResultHandler</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: NullValueResultHandler.java, in package: com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="UjylWoXbgS"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> NullValueResultHandler <span style="color: blue;">implements</span>
-            RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="m7iaF86Qnp"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.NullValueResultHandler</h4><a
-                    id="w0jtDk6H32"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.NullValueResultHandler</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: OutputContextResultHandler.java, in package:
-        com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="vbW9cMAvn8"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> OutputContextResultHandler <span
-                style="color: blue;">implements</span> RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="Vn8A0TAmqY"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.OutputContextResultHandler</h4><a
-                    id="5Txbkls1fl"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.OutputContextResultHandler</h4></div>
-    </div>
-    <hr/>
-    <p>at filename: StringResultHandler.java, in package: com.kakao.search.da.commons.intenthandler.resulthandler</p>
-    <div><h3>package: com.kakao.search.da.commons.intenthandler.resulthandler</h3>
-        <p>total 1 number of definitions are contained</p><a id="7hfJFLpmSB"></a>
-        <h3 class="type-def"><span style="color: blue;">class</span> StringResultHandler <span style="color: blue;">implements</span>
-            RequestHandlerResultHandler&lt;DomainAgentHttpResponse&gt;</h3>
-        <pre class="code"></pre>
-        <b>com.kakao.search.da.commons.intenthandler.resulthandler</b>
-        <div><a id="icXgBOKzga"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">DomainAgentHttpResponse</span> handleResult(RequestHandlerResult
-                handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.StringResultHandler</h4><a id="Ep1s20dv9H"></a>
-            <p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span
-                    style="color: #769AC8;">boolean</span> isSupports(RequestHandlerResult handlerResult)</p>
-            <pre></pre>
-            <h4>com.kakao.search.da.commons.intenthandler.resulthandler.StringResultHandler</h4></div>
-    </div>
-</div>
-</body>
-</html>
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8" /><title>document</title><link type="text/css" rel="stylesheet" href="doc.css" /> </head><body><nav><ul class="non-leaf"><li class="non-leaf"><p>com.</p><ul class="non-leaf"><li class="non-leaf"><p>kakao.</p><ul class="non-leaf"><li class="non-leaf"><p>search.</p><ul class="non-leaf"><li class="non-leaf"><p>da.</p><ul class="non-leaf"><li class="non-leaf"><p>config.</p><ul class="non-leaf"><li><a href="#Tx4lIZ2x41"><b>DaConfig</b></a><ul></ul></li></ul></li><li class="non-leaf"><p>constant.</p><ul class="non-leaf"><li><a href="#LgbcJBQ0t2"><b>DaConstant</b></a><ul><li><a href="#lvDuM1nTk0">DEFAULT_SERVICE_ID</a></li></ul></li><li><a href="#Ab54YZTUFU"><b>PlayAudioConstant</b></a><ul><li><a href="#El7RNyj4YW">PLAY_IN_BACKGROUND_ALLOW</a></li><li><a href="#ovfmHQJg26">PLAY_IN_BACKGROUND_DISALLOW</a></li><li><a href="#Y9Av8T6Pcr">DEFAULT_FORMAT</a></li><li><a href="#WeXKnrY9jr">REPLACE_ALL_PLAY_AUDIO_ACTION</a></li><li><a href="#ZT204SbSIw">ENQUEUE_PLAY_AUDIO_ACTION</a></li><li><a href="#z3X8g70h5Z">REPLACE_ENQUEUE_PLAY_AUDIO_ACTION</a></li></ul></li><li><a href="#TBNEEISuOq"><b>State</b></a><ul><li><a href="#BPjebneaFF">AUDIOPLAYER_PLAY_STATE</a></li><li><a href="#5hYceowWSy">AUDIOPLAYER_CONTENT_STATE</a></li><li><a href="#9M3bxcAnXX">GEOLOCATION_POSITION</a></li><li><a href="#QNMI7Ykdhr">SPEAKER_VOLUME</a></li></ul></li></ul></li><li class="non-leaf"><p>context.</p><ul class="non-leaf"><li><a href="#rftFSAIY56"><b>DaContext</b></a><ul><li><a href="#qvZmLkI03H">createRequestContext(request)</a></li></ul></li><li><a href="#S8bhU4dpWB"><b>DaContextHolder</b></a><ul><li><a href="#4ZLM6c2YFB">setDaContext(daContext)</a></li><li><a href="#ITuqaCc9o4">getDaContext()</a></li><li><a href="#eY4OL08bDD">clearDaContext()</a></li></ul></li></ul></li><li class="non-leaf"><p>dto.</p><ul class="non-leaf"><li><a href="#hVHPjTayaQ"><b>IdName</b></a><ul><li><a href="#YybnxjFVDJ">createIdName(id, name)</a></li></ul></li><li><a href="#dJWyuDDNC8"><b>Token</b></a><ul><li><a href="#easmY2PPwh">TOKEN_SEPERATOR</a></li><li><a href="#Dul8mjz6zv">setToken(serviceId, botId, tokenValue)</a></li></ul></li><li><a href="#GDv2H9DM8C">TokenValue</a></li><li class="non-leaf"><p>request.</p><ul class="non-leaf"><li><a href="#kjWy7uSx1H"><b>DaRequest</b></a><ul><li><a href="#ST7lfWT0Wt"><b>UserRequest</b></a><ul><li><a href="#LyXkhLZwsS">getEventDefined()</a></li><li><a href="#zO9KiYiECo"><b>UserReqParams</b></a><ul><li><a href="#KuoVwKFPSy"><b>UserReqParamsBody</b></a><ul></ul></li><li><a href="#vFiFriz2Lh"><b>Meta</b></a><ul></ul></li><li><a href="#Whvw5fkH4j"><b>Service</b></a><ul></ul></li><li><a href="#hWmxhdUwNm"><b>Capability</b></a><ul></ul></li><li><a href="#qIOCeBXfbK"><b>Agent</b></a><ul></ul></li><li><a href="#lnBEA1ms8V"><b>State</b></a><ul></ul></li><li><a href="#g9m3le9cdX"><b>ParamsUser</b></a><ul></ul></li><li><a href="#hh1qpvkMqY"><b>Device</b></a><ul></ul></li><li><a href="#1NxSOH2G0D"><b>Profile</b></a><ul></ul></li><li><a href="#k9KANsapGr"><b>Domain</b></a><ul></ul></li><li><a href="#qlVjLWvklz"><b>Gdm</b></a><ul><li><a href="#pNN1VXGkwq"><b>Utterance</b></a><ul></ul></li><li><a href="#bpmUip1csb"><b>Handover</b></a><ul><li><a href="#9mvXh0wpmN"><b>BotIdName</b></a><ul></ul></li></ul></li></ul></li></ul></li><li><a href="#6T4iuAvy90"><b>User</b></a><ul></ul></li><li><a href="#XwTe1qs1m0"><b>UserProperties</b></a><ul></ul></li><li><a href="#9dXIvE31Lh"><b>Event</b></a><ul></ul></li><li><a href="#kz0WJA0CE3"><b>ChainInfo</b></a><ul></ul></li></ul></li><li><a href="#voqNA2j4pc"><b>Context</b></a><ul></ul></li><li><a href="#lRirrSF6Ba"><b>Bot</b></a><ul></ul></li><li><a href="#I5DEvbHfrP"><b>Intent</b></a><ul></ul></li><li><a href="#kMNpeAd6R8"><b>Action</b></a><ul></ul></li><li><a href="#K3PzJj6sAi">toString()</a></li></ul></li><li><a href="#CaGZz94gWw"><b>Geolocation</b></a><ul><li><a href="#LRnthlXuUt">createGeolocation(latitude, longitude)</a></li></ul></li><li><a href="#xj3rssatJG"><b>KeyValueData</b></a><ul></ul></li></ul></li><li class="non-leaf"><p>response.</p><ul class="non-leaf"><li><a href="#tVJbORz7Ur"><b>Baggage</b></a><ul></ul></li><li><a href="#yQeaqmiuHo"><b>DaResult</b></a><ul><li><a href="#dKDxySf9sW">createDaResult()</a></li><li><a href="#DymSwPzWKI">createDaResult(answer)</a></li><li><a href="#cGrETGEvlU">createDaResult(instructions)</a></li><li><a href="#fg9QmlBQBa">createDaResult(answer, instructions)</a></li><li><a href="#9LHoCKMZU3">toString()</a></li></ul></li><li><a href="#gRptOt0DfG"><b>OutputContext</b></a><ul><li><a href="#qrlHHMELbo">createOutputContext(lifespan, name, params)</a></li></ul></li><li class="non-leaf"><p>answer.</p><ul class="non-leaf"><li><a href="#bZi8F82uxA"><b>Answer</b></a><ul><li><a href="#rE7FJkyqx3">createAnswer()</a></li><li><a href="#SrWlpNRYBL">createDefaultAnswer()</a></li><li><a href="#bjlTmVlezN">createErrorAnswer()</a></li><li><a href="#ylB3RCHOW2">setAnswer(sentence, status, dialog)</a></li><li><a href="#ynoGwBFBwH">setAnswer(sentence, status, dialog, body)</a></li></ul></li><li><a href="#7ZNzsWwNVf"><b>Handover</b></a><ul></ul></li></ul></li><li class="non-leaf"><p>instruction.</p><ul class="non-leaf"><li><a href="#wUi7gLyC0o"><b>DummyInstructionParam</b></a><ul><li><a href="#CaFpWzrd2X">createDummyInstructionParam()</a></li></ul></li><li><a href="#ShXpDhL3fF"><b>Instruction</b></a><ul><li><a href="#XOlb3dMQVv">createInstruction(instructionBody)</a></li></ul></li><li><a href="#zMnFsfmLic">InstructionBody</a><ul></ul></li><li><a href="#zwcW5V2227">InstructionParam</a></li><li class="non-leaf"><p>audio.</p><ul class="non-leaf"><li class="non-leaf"><p>body.</p><ul class="non-leaf"><li><a href="#JV8L3QmQmw"><b>PlayAudio</b></a><ul><li><a href="#vTJa6QSKG7">getInstructionType()</a></li></ul></li><li><a href="#GhpKIXX7Ww"><b>StopAudio</b></a><ul><li><a href="#WbbzWhRB6S">getInstructionType()</a></li><li><a href="#GG3RmLjEzT">fillBody(instructionParam)</a></li></ul></li></ul></li><li class="non-leaf"><p>constant.</p><ul class="non-leaf"><li><a href="#6RMuoNB8eK">AudioControl</a></li><li><a href="#0N8LRpD3Yz">PlayChannel</a></li></ul></li><li class="non-leaf"><p>model.</p><ul class="non-leaf"><li><a href="#oL7F9qNsbZ"><b>AudioItem</b></a><ul></ul></li><li><a href="#pGZMwx7cYv"><b>ContentMeta</b></a><ul><li><a href="#SyxQW9vo2V">createContentMeta(image, title, subtitle)</a></li></ul></li></ul></li></ul></li><li class="non-leaf"><p>template.</p><ul class="non-leaf"><li class="non-leaf"><p>general.</p><ul class="non-leaf"><li class="non-leaf"><p>body.</p><ul class="non-leaf"><li><a href="#fVpI45P04E"><b>ViewTemplate</b></a><ul><li><a href="#RmGZtgHXZV">getInstructionType()</a></li></ul></li><li class="non-leaf"><p>data.</p><ul class="non-leaf"><li><a href="#dF1UjoPCXB"><b>InputData</b></a><ul></ul></li><li><a href="#leSQXPREhU"><b>ListData</b></a><ul></ul></li><li><a href="#b9sRARShQP"><b>SingleData</b></a><ul></ul></li><li><a href="#4I29uojxCf">ViewData</a></li></ul></li></ul></li><li class="non-leaf"><p>constant.</p><ul class="non-leaf"><li><a href="#iq1GugMLOd">ItemLayout</a></li><li><a href="#WDWziDqM16">MediaType</a></li><li><a href="#UQt4gtryAe">ViewType</a></li></ul></li><li class="non-leaf"><p>model.</p><ul class="non-leaf"><li><a href="#r5IBI3NT5e"><b>Action</b></a><ul></ul></li><li><a href="#WSFVhbRcay"><b>Background</b></a><ul></ul></li><li><a href="#09Eitw05YD"><b>BackgroundThumbnail</b></a><ul></ul></li><li><a href="#BH9X8pcbB5"><b>Content</b></a><ul></ul></li><li><a href="#n5D9FjxWPB"><b>IconThumbnail</b></a><ul></ul></li><li><a href="#sQ5r2VQuwa"><b>Item</b></a><ul></ul></li><li><a href="#q55ZJ0zugY"><b>MediaThumbnail</b></a><ul></ul></li><li><a href="#SMzebikNey"><b>Meta</b></a><ul></ul></li><li><a href="#0yiDc4joln"><b>TemplateButton</b></a><ul></ul></li><li><a href="#VnzplVkzm6"><b>TemplateMedia</b></a><ul></ul></li><li><a href="#EOEGCQaLmX"><b>TemplateText</b></a><ul></ul></li></ul></li><li class="non-leaf"><p>util.</p><ul class="non-leaf"><li><a href="#BKjbU7auKE"><b>TemplateActionUtils</b></a><ul><li><a href="#3tZgXMFDUE">generateUtteranceActionUrl(token, utterance)</a></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="non-leaf"><p>referinfo.</p><ul class="non-leaf"><li><a href="#SR4xc4eWAs"><b>DomainInfo</b></a><ul></ul></li><li><a href="#N9JKzBuCGV">ReferenceInfo</a></li><li class="non-leaf"><p>talktemp.</p><ul class="non-leaf"><li><a href="#s36HdzSIKd"><b>TalkContentTemplate</b></a><ul></ul></li><li><a href="#CddXef8043"><b>TalkTemplate</b></a><ul><li><a href="#9Dw1uWsu33">createTalkTemplate()</a></li></ul></li><li class="non-leaf"><p>content.</p><ul class="non-leaf"><li><a href="#j9MfdyZDlT"><b>Feed</b></a><ul><li><a href="#Pi3JuOKKJz">createFeed(title)</a></li></ul></li><li><a href="#nM5kxdZu7c"><b>Music</b></a><ul></ul></li><li><a href="#ZaXKC0tNwe">TalkContent</a></li><li><a href="#VH1hZmNcha"><b>Text</b></a><ul></ul></li></ul></li></ul></li></ul></li></ul></li><li class="non-leaf"><p>validator.</p><ul class="non-leaf"><li><a href="#UCD81jSzSk"><b>ValidatorResult</b></a><ul><li><a href="#608o9Jvq9W">create(value)</a></li><li><a href="#zyx0hKTVkR">toString()</a></li></ul></li></ul></li></ul></li><li class="non-leaf"><p>exception.</p><ul class="non-leaf"><li><a href="#w1LvOCLUS7">CommonStatus</a><ul></ul></li><li><a href="#ZkUVeFomuz"><b>DaNormalException</b></a><ul><li><a href="#AgsW5WvMi6">DaNormalException(status)</a></li><li><a href="#sJg3RLVvHR">DaNormalException(status, comment)</a></li></ul></li><li><a href="#JRnrQlNDKO">DaStatus</a><ul></ul></li><li><a href="#K4aW1tXrsP"><b>DaException</b></a><ul><li><a href="#CuxkAiwQKE">DaException(status)</a></li><li><a href="#iFRnV6nKI3">DaException(status, comment)</a></li><li><a href="#TxcspTXtv9">DaException(status, args)</a></li><li><a href="#JcS3sWNrkZ">DaException(status, comment, args)</a></li></ul></li><li><a href="#7asuKVPQYR"><b>DaValidatorException</b></a><ul><li><a href="#bg4JEf2XMy">DaValidatorException(status)</a></li><li><a href="#o4vs3cIYI4">DaValidatorException(status, comment)</a></li></ul></li><li><a href="#JRimyAHNP1"><b>GlobalDefaultExceptionHandler</b></a><ul><li><a href="#r246Nv3Vmz">defaultErrorHandler(e)</a></li></ul></li></ul></li><li class="non-leaf"><p>externalsys.</p><ul class="non-leaf"><li><a href="#E8HdfNdqL8"><b>NlgClient</b></a><ul><li><a href="#OkpLP2uANH">getNlgString(template, param)</a></li><li><a href="#DFw1VTqV8A">getNlgString(template, params)</a></li><li><a href="#iJr2hnun9y">hasFinalConsonant(koreanWord)</a></li></ul></li><li class="non-leaf"><p>push.</p><ul class="non-leaf"><li><a href="#jKdhZ2OFs1"><b>DaPushEvent</b></a><ul><li><a href="#9DLvgRiG7k">DaPushEvent(source, daContext)</a></li></ul></li><li class="non-leaf"><p>req.</p><ul class="non-leaf"><li><a href="#mkaCHznYcx"><b>PushInstruction</b></a><ul></ul></li><li><a href="#4jdHbWDyh7"><b>PushReqBodyAnswerInstruction</b></a><ul></ul></li><li><a href="#0V10hfvwMR"><b>PushReqBodyOnlyInstruction</b></a><ul></ul></li></ul></li></ul></li></ul></li><li class="non-leaf"><p>log.</p><ul class="non-leaf"><li><a href="#iJeFLx873F"><b>DaLog</b></a><ul><li><a href="#COz2lUZTQ7">toString()</a></li></ul></li><li><a href="#YhdkoMSWdj">DaLogAction</a></li><li><a href="#jyY0Au8gCC"><b>DaLogStringGenerator</b></a><ul><li><a href="#x5pSOaT5rw">getRequestJsonLog(domain, daContext)</a></li><li><a href="#5ZJ7tepc8l">getResponseJsonLog(domain, daContext, resonseMsg)</a></li><li><a href="#M63WzeRXbX">getCustomActionJsonLog(domain, daContext, action, resonseMsg)</a></li></ul></li><li><a href="#0Z9EcKLYzi"><b>ISO8601DateDecorator</b></a><ul><li><a href="#TZzrIAzg4s">decorate(factory)</a></li></ul></li></ul></li><li class="non-leaf"><p>service.</p><ul class="non-leaf"><li><a href="#UQdpQ47sJX"><b>HttpRequestService</b></a><ul><li><a href="#lnspLhIdRz">getForString(url, params)</a></li><li><a href="#DvIEjhlfdP">getForString(url, params, connReqTimeout, connTimeout, sockTimeout)</a></li><li><a href="#dRL6DdUqxK">getForStringWithoutProxy(url, params)</a></li><li><a href="#WLpEgavadV">getForStringWithoutProxy(url, params, connReqTimeout, connTimeout, sockTimeout)</a></li><li><a href="#Onx3mdNyvr">getForString(url)</a></li><li><a href="#FXr1Wf5Smq">getForString(url, connReqTimeout, connTimeout, sockTimeout)</a></li><li><a href="#cUQTostUTv">getForString(url, headers)</a></li><li><a href="#sQur6nXy43">postForStringWithoutProxy(url, params)</a></li><li><a href="#Wi2G7E2O5k">postForStringByApplicationJson(url, jsonStr)</a></li><li><a href="#0jK9xuyC41">postForStringByApplicationJson(url, jsonStr, headers)</a></li><li><a href="#egQTf16hk5">postForStringByApplicationJsonWithoutProxy(url, jsonStr, headers)</a></li><li><a href="#H46oK104mh">postForStringByApplicationJsonWithoutProxy(url, jsonStr, headers)</a></li></ul></li><li class="non-leaf"><p>action.</p><ul class="non-leaf"><li><a href="#mAw7uw8Dn4">ActionService</a><ul></ul></li></ul></li></ul></li><li class="non-leaf"><p>util.</p><ul class="non-leaf"><li><a href="#FwKZkj46Hx"><b>DaRequestParser</b></a><ul><li><a href="#BSN9i0rAfD">getAudioTokenElements(daRequest)</a></li><li><a href="#UtbZwUDDpg">getAudioTokenElementsForDialogPlayChannel(daRequest)</a></li><li><a href="#CtVsMsvcq2">getAudioPlayerOffset(daRequest)</a></li><li><a href="#lek5dLbflP">getGeolocation(daRequest)</a></li><li><a href="#lJ59cUAnSm">getGdmUtterance(daRequest)</a></li><li><a href="#PbJ5G5qBgD">isMultiIntent(daRequest)</a></li><li><a href="#Y2Yf6yD5zB">isMultiIntentForData(daRequest)</a></li><li><a href="#EIxG8TyIir">isMultiIntentForAction(daRequest)</a></li><li><a href="#BJLz27ibMa">getEventName(daRequest)</a></li><li><a href="#L5CihyNuMT">getIntentName(daRequest)</a></li><li><a href="#xAMdZi36Gp">getSN(daRequest)</a></li><li><a href="#hgYhRn1DaV">getAccountId(daRequest)</a></li><li><a href="#mzVczrkJ53">getAiid(daRequest)</a></li><li><a href="#Fi0ztetdsY">getServiceId(daRequest)</a></li><li><a href="#mJbirActUE">getPhase(daRequest)</a></li><li><a href="#oP0Cda2Hj2">getUtterance(daRequest)</a></li><li><a href="#PGVKnPGjQ2">getKaccountid(daRequest)</a></li></ul></li><li><a href="#SXjROKwtaL"><b>DaTokenGenerator</b></a><ul><li><a href="#f3fnbn3uFx">TOKEN_JOINER</a></li><li><a href="#MWxJdWTNzt">TOKEN_VALUE_JOINER</a></li><li><a href="#Y8V6g3U8Mm">generate(serviceId, botId, tokenValue)</a></li><li><a href="#7IetgzARxJ">generateDummyToken(botid)</a></li></ul></li><li><a href="#p4HcTXvHSp"><b>DaUtils</b></a><ul><li><a href="#WzCjUGBDf3">getRandomIndex(excludeIndex, collectionSize)</a></li><li><a href="#g8SbP70rnS">getDurationMillis(startNanoTime, endNanoTime)</a></li><li><a href="#spFDaihAGX">generatePreventiveTalkDownSentence(sentence)</a></li></ul></li><li><a href="#MS32w4sY1M"><b>DaValidator</b></a><ul><li><a href="#IoW92ogEeX">checkNotEmptyCollection(collection, throwStaus)</a></li><li><a href="#qR2Huz6w82">checkNotEmptyCollection(collection, throwStaus, comment)</a></li><li><a href="#0X2cQhCQpc">checkNotEmptyMap(map, throwStaus)</a></li><li><a href="#fS1ly7boVD">checkNotEmptyMap(map, throwStaus, comment)</a></li><li><a href="#MDrEON0Lpb">checkNotEmptyString(str, throwStatus)</a></li><li><a href="#K7v7PCgbxN">checkNotEmptyString(str, throwStatus, comment)</a></li><li><a href="#MyLSQaUIxC">checkNotNull(object, throwStatus)</a></li><li><a href="#ozdTYi9y7y">checkNotNull(object, throwStatus, comment)</a></li></ul></li><li><a href="#TNzbXdGgt8"><b>JsonUtils</b></a><ul><li><a href="#Rs2AetHBYc">DOT_OF_REGEX</a></li><li><a href="#SWt5XheN5R">GSON</a></li><li><a href="#puca0wcAGZ">getAsJsonObject(source, path)</a></li><li><a href="#JP81qo9SM7">getAsJsonArray(source, path)</a></li><li><a href="#PV0GcSUR74">getAsString(source, path)</a></li><li><a href="#xShi6zPIZb">getAsString(source, path, defaultValue)</a></li><li><a href="#VEmUgExqjS">getAsInt(source, path)</a></li><li><a href="#5OhvZn9LSP">getAsLong(source, path)</a></li><li><a href="#AG9l1SONWf">getAsBoolean(source, path)</a></li><li><a href="#QLi4spTd81">getAsList(source, path, tClass)</a></li><li><a href="#k4XSoceeDy">getAsList(jsonElement, tClass)</a></li></ul></li></ul></li><li class="non-leaf"><p>web.</p><ul class="non-leaf"><li><a href="#yIvB9BBf0a"><b>DaInterceptor</b></a><ul><li><a href="#WfIeDOoP8Y">DaInterceptor(domain, enablePrintLog)</a></li><li><a href="#QtRusbzYxx">preHandle(request, response, handler)</a></li><li><a href="#6UaE2djDaP">postHandle(request, response, handler, modelAndView)</a></li><li><a href="#kCPqWU9rqW">afterCompletion(request, response, handler, ex)</a></li></ul></li><li><a href="#aZtRjKIhIj"><b>HttpInterceptorConfig</b></a><ul><li><a href="#DNwduhYSz9">addInterceptors(registry)</a></li></ul></li><li><a href="#1r0CzO6KfQ"><b>HttpResponseAdvice</b></a><ul><li><a href="#SL8c6sI2e4">supports(returnType, converterType)</a></li><li><a href="#MhOr2gUK36">beforeBodyWrite(object, methodParameter, mediaType, aClass, serverHttpRequest, serverHttpResponse)</a></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></nav><div class="contents"><h1>Documentation</h1><hr />
+<p>at filename: DaConfig.java, in package: com.kakao.search.da.config</p>
+<div><h3>package: com.kakao.search.da.config</h3><p>total 1 number of definitions are contained</p><a id="Tx4lIZ2x41"></a><h3 class="type-def"><span style="color: blue;">class</span> DaConfig</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.config</b>
+<div></div></div>
+<hr />
+<p>at filename: DaConstant.java, in package: com.kakao.search.da.constant</p>
+<div><h3>package: com.kakao.search.da.constant</h3><p>total 1 number of definitions are contained</p><a id="LgbcJBQ0t2"></a><h3 class="type-def"><span style="color: blue;">class</span> DaConstant</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.constant</b>
+<div><a id="lvDuM1nTk0"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> DEFAULT_SERVICE_ID</p><h4>com.kakao.search.da.constant.DaConstant</h4></div></div>
+<hr />
+<p>at filename: PlayAudioConstant.java, in package: com.kakao.search.da.constant</p>
+<div><h3>package: com.kakao.search.da.constant</h3><p>total 1 number of definitions are contained</p><a id="Ab54YZTUFU"></a><h3 class="type-def"><span style="color: blue;">class</span> PlayAudioConstant</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.constant</b>
+<div><a id="Y9Av8T6Pcr"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> DEFAULT_FORMAT</p><h4>com.kakao.search.da.constant.PlayAudioConstant</h4><a id="ZT204SbSIw"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> ENQUEUE_PLAY_AUDIO_ACTION</p><h4>com.kakao.search.da.constant.PlayAudioConstant</h4><a id="El7RNyj4YW"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> PLAY_IN_BACKGROUND_ALLOW</p><h4>com.kakao.search.da.constant.PlayAudioConstant</h4><a id="ovfmHQJg26"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> PLAY_IN_BACKGROUND_DISALLOW</p><h4>com.kakao.search.da.constant.PlayAudioConstant</h4><a id="WeXKnrY9jr"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> REPLACE_ALL_PLAY_AUDIO_ACTION</p><h4>com.kakao.search.da.constant.PlayAudioConstant</h4><a id="z3X8g70h5Z"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> REPLACE_ENQUEUE_PLAY_AUDIO_ACTION</p><h4>com.kakao.search.da.constant.PlayAudioConstant</h4></div></div>
+<hr />
+<p>at filename: State.java, in package: com.kakao.search.da.constant</p>
+<div><h3>package: com.kakao.search.da.constant</h3><p>total 1 number of definitions are contained</p><a id="TBNEEISuOq"></a><h3 class="type-def"><span style="color: blue;">class</span> State</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.constant</b>
+<div><a id="5hYceowWSy"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> AUDIOPLAYER_CONTENT_STATE</p><h4>com.kakao.search.da.constant.State</h4><a id="BPjebneaFF"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> AUDIOPLAYER_PLAY_STATE</p><h4>com.kakao.search.da.constant.State</h4><a id="9M3bxcAnXX"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> GEOLOCATION_POSITION</p><h4>com.kakao.search.da.constant.State</h4><a id="QNMI7Ykdhr"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> SPEAKER_VOLUME</p><h4>com.kakao.search.da.constant.State</h4></div></div>
+<hr />
+<p>at filename: DaContext.java, in package: com.kakao.search.da.context</p>
+<div><h3>package: com.kakao.search.da.context</h3><p>total 1 number of definitions are contained</p><a id="rftFSAIY56"></a><h3 class="type-def"><span style="color: blue;">class</span> DaContext</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.context</b>
+<div><a id="qvZmLkI03H"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaContext</span> createRequestContext(HttpServletRequest request)</p><pre></pre><h4>com.kakao.search.da.context.DaContext</h4></div></div>
+<hr />
+<p>at filename: DaContextHolder.java, in package: com.kakao.search.da.context</p>
+<div><h3>package: com.kakao.search.da.context</h3><p>total 1 number of definitions are contained</p><a id="S8bhU4dpWB"></a><h3 class="type-def"><span style="color: blue;">class</span> DaContextHolder</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.context</b>
+<div><a id="eY4OL08bDD"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> clearDaContext()</p><pre></pre><h4>com.kakao.search.da.context.DaContextHolder</h4><a id="ITuqaCc9o4"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaContext</span> getDaContext()</p><pre></pre><h4>com.kakao.search.da.context.DaContextHolder</h4><a id="4ZLM6c2YFB"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> setDaContext(DaContext daContext)</p><pre></pre><h4>com.kakao.search.da.context.DaContextHolder</h4></div></div>
+<hr />
+<p>at filename: IdName.java, in package: com.kakao.search.da.dto</p>
+<div><h3>package: com.kakao.search.da.dto</h3><p>total 1 number of definitions are contained</p><a id="hVHPjTayaQ"></a><h3 class="type-def"><span style="color: blue;">class</span> IdName</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto</b>
+<div><a id="YybnxjFVDJ"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">IdName</span> createIdName(String id, String name)</p><pre></pre><h4>com.kakao.search.da.dto.IdName</h4></div></div>
+<hr />
+<p>at filename: Token.java, in package: com.kakao.search.da.dto</p>
+<div><h3>package: com.kakao.search.da.dto</h3><p>total 1 number of definitions are contained</p><a id="dJWyuDDNC8"></a><h3 class="type-def"><span style="color: blue;">class</span> Token</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto</b>
+<div><a id="easmY2PPwh"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> TOKEN_SEPERATOR</p><h4>com.kakao.search.da.dto.Token</h4><a id="Dul8mjz6zv"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> setToken(String serviceId, String botId, T tokenValue)</p><pre></pre><h4>com.kakao.search.da.dto.Token</h4></div></div>
+<hr />
+<p>at filename: TokenValue.java, in package: com.kakao.search.da.dto</p>
+<div><h3>package: com.kakao.search.da.dto</h3><p>total 1 number of definitions are contained</p><a id="GDv2H9DM8C"></a><h3 class="type-def"><span style="color: blue;">interface</span> TokenValue</h3>
+<h4>com.kakao.search.da.dto</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: DaRequest.java, in package: com.kakao.search.da.dto.request</p>
+<div><h3>package: com.kakao.search.da.dto.request</h3><p>total 1 number of definitions are contained</p><a id="kjWy7uSx1H"></a><h3 class="type-def"><span style="color: blue;">class</span> DaRequest</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request</b>
+<div><a id="kMNpeAd6R8"></a><h3 class="type-def"><span style="color: blue;">class</span> Action</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest</b>
+<div></div><a id="lRirrSF6Ba"></a><h3 class="type-def"><span style="color: blue;">class</span> Bot</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest</b>
+<div></div><a id="voqNA2j4pc"></a><h3 class="type-def"><span style="color: blue;">class</span> Context</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest</b>
+<div></div><a id="I5DEvbHfrP"></a><h3 class="type-def"><span style="color: blue;">class</span> Intent</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest</b>
+<div></div><a id="ST7lfWT0Wt"></a><h3 class="type-def"><span style="color: blue;">class</span> UserRequest</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest</b>
+<div><a id="kz0WJA0CE3"></a><h3 class="type-def"><span style="color: blue;">class</span> ChainInfo</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest</b>
+<div></div><a id="9dXIvE31Lh"></a><h3 class="type-def"><span style="color: blue;">class</span> Event</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest</b>
+<div></div><a id="6T4iuAvy90"></a><h3 class="type-def"><span style="color: blue;">class</span> User</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest</b>
+<div></div><a id="XwTe1qs1m0"></a><h3 class="type-def"><span style="color: blue;">class</span> UserProperties</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest</b>
+<div></div><a id="zO9KiYiECo"></a><h3 class="type-def"><span style="color: blue;">class</span> UserReqParams</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest</b>
+<div><a id="qIOCeBXfbK"></a><h3 class="type-def"><span style="color: blue;">class</span> Agent</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="hWmxhdUwNm"></a><h3 class="type-def"><span style="color: blue;">class</span> Capability</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="hh1qpvkMqY"></a><h3 class="type-def"><span style="color: blue;">class</span> Device</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="k9KANsapGr"></a><h3 class="type-def"><span style="color: blue;">class</span> Domain</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="qlVjLWvklz"></a><h3 class="type-def"><span style="color: blue;">class</span> Gdm</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div><a id="bpmUip1csb"></a><h3 class="type-def"><span style="color: blue;">class</span> Handover</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams.Gdm</b>
+<div><a id="9mvXh0wpmN"></a><h3 class="type-def"><span style="color: blue;">class</span> BotIdName</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams.Gdm.Handover</b>
+<div></div></div><a id="pNN1VXGkwq"></a><h3 class="type-def"><span style="color: blue;">class</span> Utterance</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams.Gdm</b>
+<div></div></div><a id="vFiFriz2Lh"></a><h3 class="type-def"><span style="color: blue;">class</span> Meta</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="g9m3le9cdX"></a><h3 class="type-def"><span style="color: blue;">class</span> ParamsUser</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="1NxSOH2G0D"></a><h3 class="type-def"><span style="color: blue;">class</span> Profile</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="Whvw5fkH4j"></a><h3 class="type-def"><span style="color: blue;">class</span> Service</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="lnBEA1ms8V"></a><h3 class="type-def"><span style="color: blue;">class</span> State</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div><a id="KuoVwKFPSy"></a><h3 class="type-def"><span style="color: blue;">class</span> UserReqParamsBody</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request.DaRequest.UserRequest.UserReqParams</b>
+<div></div></div><a id="LyXkhLZwsS"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">boolean</span> getEventDefined()</p><pre></pre><h4>com.kakao.search.da.dto.request.DaRequest.UserRequest</h4></div><a id="K3PzJj6sAi"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> toString()</p><pre></pre><h4>com.kakao.search.da.dto.request.DaRequest</h4></div></div>
+<hr />
+<p>at filename: Geolocation.java, in package: com.kakao.search.da.dto.request</p>
+<div><h3>package: com.kakao.search.da.dto.request</h3><p>total 1 number of definitions are contained</p><a id="CaGZz94gWw"></a><h3 class="type-def"><span style="color: blue;">class</span> Geolocation</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request</b>
+<div><a id="LRnthlXuUt"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Geolocation</span> createGeolocation(double latitude, double longitude)</p><pre></pre><h4>com.kakao.search.da.dto.request.Geolocation</h4></div></div>
+<hr />
+<p>at filename: KeyValueData.java, in package: com.kakao.search.da.dto.request</p>
+<div><h3>package: com.kakao.search.da.dto.request</h3><p>total 1 number of definitions are contained</p><a id="xj3rssatJG"></a><h3 class="type-def"><span style="color: blue;">class</span> KeyValueData</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.request</b>
+<div></div></div>
+<hr />
+<p>at filename: Baggage.java, in package: com.kakao.search.da.dto.response</p>
+<div><h3>package: com.kakao.search.da.dto.response</h3><p>total 1 number of definitions are contained</p><a id="tVJbORz7Ur"></a><h3 class="type-def"><span style="color: blue;">class</span> Baggage</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response</b>
+<div></div></div>
+<hr />
+<p>at filename: DaResult.java, in package: com.kakao.search.da.dto.response</p>
+<div><h3>package: com.kakao.search.da.dto.response</h3><p>total 1 number of definitions are contained</p><a id="yQeaqmiuHo"></a><h3 class="type-def"><span style="color: blue;">class</span> DaResult</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response</b>
+<div><a id="dKDxySf9sW"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaResult</span> createDaResult()</p><pre></pre><h4>com.kakao.search.da.dto.response.DaResult</h4><a id="DymSwPzWKI"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaResult</span> createDaResult(Answer answer)</p><pre></pre><h4>com.kakao.search.da.dto.response.DaResult</h4><a id="cGrETGEvlU"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaResult</span> createDaResult(List&lt;Instruction&gt; instructions)</p><pre></pre><h4>com.kakao.search.da.dto.response.DaResult</h4><a id="fg9QmlBQBa"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaResult</span> createDaResult(Answer answer, List&lt;Instruction&gt; instructions)</p><pre></pre><h4>com.kakao.search.da.dto.response.DaResult</h4><a id="9LHoCKMZU3"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> toString()</p><pre></pre><h4>com.kakao.search.da.dto.response.DaResult</h4></div></div>
+<hr />
+<p>at filename: OutputContext.java, in package: com.kakao.search.da.dto.response</p>
+<div><h3>package: com.kakao.search.da.dto.response</h3><p>total 1 number of definitions are contained</p><a id="gRptOt0DfG"></a><h3 class="type-def"><span style="color: blue;">class</span> OutputContext</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response</b>
+<div><a id="qrlHHMELbo"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">OutputContext</span> createOutputContext(int lifespan, String name, Map&lt;String,Object&gt; params)</p><pre></pre><h4>com.kakao.search.da.dto.response.OutputContext</h4></div></div>
+<hr />
+<p>at filename: Answer.java, in package: com.kakao.search.da.dto.response.answer</p>
+<div><h3>package: com.kakao.search.da.dto.response.answer</h3><p>total 1 number of definitions are contained</p><a id="bZi8F82uxA"></a><h3 class="type-def"><span style="color: blue;">class</span> Answer</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.answer</b>
+<div><a id="rE7FJkyqx3"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Answer</span> createAnswer()</p><pre></pre><h4>com.kakao.search.da.dto.response.answer.Answer</h4><a id="SrWlpNRYBL"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Answer</span> createDefaultAnswer()</p><pre></pre><h4>com.kakao.search.da.dto.response.answer.Answer</h4><a id="bjlTmVlezN"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Answer</span> createErrorAnswer()</p><pre></pre><h4>com.kakao.search.da.dto.response.answer.Answer</h4><a id="ylB3RCHOW2"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> setAnswer(String sentence, String status, String dialog)</p><pre></pre><h4>com.kakao.search.da.dto.response.answer.Answer</h4><a id="ynoGwBFBwH"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> setAnswer(String sentence, String status, String dialog, T body)</p><pre></pre><h4>com.kakao.search.da.dto.response.answer.Answer</h4></div></div>
+<hr />
+<p>at filename: Handover.java, in package: com.kakao.search.da.dto.response.answer</p>
+<div><h3>package: com.kakao.search.da.dto.response.answer</h3><p>total 1 number of definitions are contained</p><a id="7ZNzsWwNVf"></a><h3 class="type-def"><span style="color: blue;">class</span> Handover</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.answer</b>
+<div></div></div>
+<hr />
+<p>at filename: DummyInstructionParam.java, in package: com.kakao.search.da.dto.response.instruction</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction</h3><p>total 1 number of definitions are contained</p><a id="wUi7gLyC0o"></a><h3 class="type-def"><span style="color: blue;">class</span> DummyInstructionParam <span style="color: blue;">implements</span> InstructionParam</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction</b>
+<div><a id="CaFpWzrd2X"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DummyInstructionParam</span> createDummyInstructionParam()</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.DummyInstructionParam</h4></div></div>
+<hr />
+<p>at filename: Instruction.java, in package: com.kakao.search.da.dto.response.instruction</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction</h3><p>total 1 number of definitions are contained</p><a id="ShXpDhL3fF"></a><h3 class="type-def"><span style="color: blue;">class</span> Instruction</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction</b>
+<div><a id="XOlb3dMQVv"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Instruction</span> createInstruction(InstructionBody instructionBody)</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.Instruction</h4></div></div>
+<hr />
+<p>at filename: InstructionBody.java, in package: com.kakao.search.da.dto.response.instruction</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction</h3><p>total 1 number of definitions are contained</p><a id="zMnFsfmLic"></a><h3 class="type-def"><span style="color: blue;">interface</span> InstructionBody</h3>
+<h4>com.kakao.search.da.dto.response.instruction</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: InstructionParam.java, in package: com.kakao.search.da.dto.response.instruction</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction</h3><p>total 1 number of definitions are contained</p><a id="zwcW5V2227"></a><h3 class="type-def"><span style="color: blue;">interface</span> InstructionParam</h3>
+<h4>com.kakao.search.da.dto.response.instruction</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: PlayAudio.java, in package: com.kakao.search.da.dto.response.instruction.audio.body</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.audio.body</h3><p>total 1 number of definitions are contained</p><a id="JV8L3QmQmw"></a><h3 class="type-def"><span style="color: blue;">class</span> PlayAudio <span style="color: blue;">implements</span> InstructionBody&lt;T&gt;</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.audio.body</b>
+<div><a id="EcJHSbZ57N"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">String</span> action</p><h4>com.kakao.search.da.dto.response.instruction.audio.body.PlayAudio</h4><a id="FKqOhnC0xU"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">AudioItem</span> audioItem</p><h4>com.kakao.search.da.dto.response.instruction.audio.body.PlayAudio</h4><a id="rwpa6FrVCm"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">List&lt;AudioControl&gt;</span> controllable</p><h4>com.kakao.search.da.dto.response.instruction.audio.body.PlayAudio</h4><a id="vTJa6QSKG7"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getInstructionType()</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.audio.body.PlayAudio</h4><a id="b1May8nVfD"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">String</span> mood</p><h4>com.kakao.search.da.dto.response.instruction.audio.body.PlayAudio</h4><a id="5oTm2Z4Shh"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">PlayChannel</span> playChannel</p><h4>com.kakao.search.da.dto.response.instruction.audio.body.PlayAudio</h4></div></div>
+<hr />
+<p>at filename: StopAudio.java, in package: com.kakao.search.da.dto.response.instruction.audio.body</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.audio.body</h3><p>total 1 number of definitions are contained</p><a id="GhpKIXX7Ww"></a><h3 class="type-def"><span style="color: blue;">class</span> StopAudio <span style="color: blue;">implements</span> InstructionBody&lt;Object&gt;</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.audio.body</b>
+<div><a id="GG3RmLjEzT"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> fillBody(Object instructionParam)</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.audio.body.StopAudio</h4><a id="WbbzWhRB6S"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getInstructionType()</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.audio.body.StopAudio</h4></div></div>
+<hr />
+<p>at filename: AudioControl.java, in package: com.kakao.search.da.dto.response.instruction.audio.constant</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.audio.constant</h3><p>total 1 number of definitions are contained</p><a id="6RMuoNB8eK"></a><h3 class="type-def"><span style="color: blue;">enum</span> AudioControl</h3>
+<b>enum values</b><ul><li>PLAY</li><li>STOP</li><li>PAUSE</li><li>RESUME</li><li>NEXT</li><li>PREV</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: PlayChannel.java, in package: com.kakao.search.da.dto.response.instruction.audio.constant</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.audio.constant</h3><p>total 1 number of definitions are contained</p><a id="0N8LRpD3Yz"></a><h3 class="type-def"><span style="color: blue;">enum</span> PlayChannel</h3>
+<b>enum values</b><ul><li>dialog</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: AudioItem.java, in package: com.kakao.search.da.dto.response.instruction.audio.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.audio.model</h3><p>total 1 number of definitions are contained</p><a id="oL7F9qNsbZ"></a><h3 class="type-def"><span style="color: blue;">class</span> AudioItem</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.audio.model</b>
+<div></div></div>
+<hr />
+<p>at filename: ContentMeta.java, in package: com.kakao.search.da.dto.response.instruction.audio.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.audio.model</h3><p>total 1 number of definitions are contained</p><a id="pGZMwx7cYv"></a><h3 class="type-def"><span style="color: blue;">class</span> ContentMeta</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.audio.model</b>
+<div><a id="SyxQW9vo2V"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">ContentMeta</span> createContentMeta(String image, String title, String subtitle)</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.audio.model.ContentMeta</h4></div></div>
+<hr />
+<p>at filename: ViewTemplate.java, in package: com.kakao.search.da.dto.response.instruction.template.general.body</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.body</h3><p>total 1 number of definitions are contained</p><a id="fVpI45P04E"></a><h3 class="type-def"><span style="color: blue;">class</span> ViewTemplate <span style="color: blue;">implements</span> InstructionBody&lt;T&gt;</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.body</b>
+<div><a id="rdHEf3zRPT"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">ViewData</span> data</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.ViewTemplate</h4><a id="RmGZtgHXZV"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getInstructionType()</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.template.general.body.ViewTemplate</h4><a id="PbiB6gNSfM"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">String</span> token</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.ViewTemplate</h4><a id="R7uN3r1hqL"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">ViewType</span> type</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.ViewTemplate</h4></div></div>
+<hr />
+<p>at filename: InputData.java, in package: com.kakao.search.da.dto.response.instruction.template.general.body.data</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.body.data</h3><p>total 1 number of definitions are contained</p><a id="dF1UjoPCXB"></a><h3 class="type-def"><span style="color: blue;">class</span> InputData <span style="color: blue;">implements</span> ViewData</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.body.data</b>
+<div></div></div>
+<hr />
+<p>at filename: ListData.java, in package: com.kakao.search.da.dto.response.instruction.template.general.body.data</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.body.data</h3><p>total 1 number of definitions are contained</p><a id="leSQXPREhU"></a><h3 class="type-def"><span style="color: blue;">class</span> ListData <span style="color: blue;">implements</span> ViewData</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.body.data</b>
+<div><a id="uIS81PTk3O"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateMedia</span> background</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="x1kjCb5fJM"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateButton</span> button1</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="JV8DgyNiBN"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateButton</span> button2</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="mkTkTS18M4"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">ItemLayout</span> itemLayout</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="WNS6Hkgu2L"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">List&lt;Item&gt;</span> items</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="m5QQeM3S33"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">Meta</span> meta</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="QBmDdIzxxY"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">List&lt;TemplateButton&gt;</span> quickReplies</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="PhDk17ndZq"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateText</span> source</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="cYL2fRLSco"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateText</span> subtitle</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="DbMTqzSaQ8"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateText</span> title</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="A8L2ZK9LZx"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">int</span> ttl</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4><a id="107zjuL9Hq"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">String</span> utterance</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.ListData</h4></div></div>
+<hr />
+<p>at filename: SingleData.java, in package: com.kakao.search.da.dto.response.instruction.template.general.body.data</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.body.data</h3><p>total 1 number of definitions are contained</p><a id="b9sRARShQP"></a><h3 class="type-def"><span style="color: blue;">class</span> SingleData <span style="color: blue;">implements</span> ViewData</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.body.data</b>
+<div><a id="jsne7aHWo4"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">Background</span> background</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="Ff6C9leIuD"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateButton</span> button1</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="x0o3GjnsKu"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateButton</span> button2</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="espSzzfyDN"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">Content</span> content</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="YlZLCjAj6g"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">Meta</span> meta</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="pI2gqneSVd"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateMedia</span> multimedia</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="9UwklxTyr2"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">List&lt;TemplateButton&gt;</span> quickReplies</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="aom8D09b0B"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateText</span> source</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="gUOpTi9fA7"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateText</span> subtitle</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="EOovBsc2fI"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">TemplateText</span> title</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="Hi7Q1zf9Tm"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">int</span> ttl</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4><a id="rda7mLYVqz"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">String</span> utterance</p><h4>com.kakao.search.da.dto.response.instruction.template.general.body.data.SingleData</h4></div></div>
+<hr />
+<p>at filename: ViewData.java, in package: com.kakao.search.da.dto.response.instruction.template.general.body.data</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.body.data</h3><p>total 1 number of definitions are contained</p><a id="4I29uojxCf"></a><h3 class="type-def"><span style="color: blue;">interface</span> ViewData</h3>
+<h4>com.kakao.search.da.dto.response.instruction.template.general.body.data</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: ItemLayout.java, in package: com.kakao.search.da.dto.response.instruction.template.general.constant</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.constant</h3><p>total 1 number of definitions are contained</p><a id="iq1GugMLOd"></a><h3 class="type-def"><span style="color: blue;">enum</span> ItemLayout</h3>
+<b>enum values</b><ul><li>HORIZONTAL</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: MediaType.java, in package: com.kakao.search.da.dto.response.instruction.template.general.constant</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.constant</h3><p>total 1 number of definitions are contained</p><a id="WDWziDqM16"></a><h3 class="type-def"><span style="color: blue;">enum</span> MediaType</h3>
+<b>enum values</b><ul><li>IMAGE</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: ViewType.java, in package: com.kakao.search.da.dto.response.instruction.template.general.constant</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.constant</h3><p>total 1 number of definitions are contained</p><a id="UQt4gtryAe"></a><h3 class="type-def"><span style="color: blue;">enum</span> ViewType</h3>
+<b>enum values</b><ul><li>KEYWORD_TEXT</li><li>IMAGE_TEXT</li><li>FULL_TEXT</li><li>IMAGE</li><li>LIST</li><li>CAROUSEL</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: Action.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="r5IBI3NT5e"></a><h3 class="type-def"><span style="color: blue;">class</span> Action</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: Background.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="WSFVhbRcay"></a><h3 class="type-def"><span style="color: blue;">class</span> Background</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: BackgroundThumbnail.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="09Eitw05YD"></a><h3 class="type-def"><span style="color: blue;">class</span> BackgroundThumbnail</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: Content.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="BH9X8pcbB5"></a><h3 class="type-def"><span style="color: blue;">class</span> Content</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: IconThumbnail.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="n5D9FjxWPB"></a><h3 class="type-def"><span style="color: blue;">class</span> IconThumbnail</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: Item.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="sQ5r2VQuwa"></a><h3 class="type-def"><span style="color: blue;">class</span> Item</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: MediaThumbnail.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="q55ZJ0zugY"></a><h3 class="type-def"><span style="color: blue;">class</span> MediaThumbnail</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: Meta.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="SMzebikNey"></a><h3 class="type-def"><span style="color: blue;">class</span> Meta</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: TemplateButton.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="0yiDc4joln"></a><h3 class="type-def"><span style="color: blue;">class</span> TemplateButton</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: TemplateMedia.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="VnzplVkzm6"></a><h3 class="type-def"><span style="color: blue;">class</span> TemplateMedia</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: TemplateText.java, in package: com.kakao.search.da.dto.response.instruction.template.general.model</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.model</h3><p>total 1 number of definitions are contained</p><a id="EOEGCQaLmX"></a><h3 class="type-def"><span style="color: blue;">class</span> TemplateText</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.model</b>
+<div></div></div>
+<hr />
+<p>at filename: TemplateActionUtils.java, in package: com.kakao.search.da.dto.response.instruction.template.general.util</p>
+<div><h3>package: com.kakao.search.da.dto.response.instruction.template.general.util</h3><p>total 1 number of definitions are contained</p><a id="BKjbU7auKE"></a><h3 class="type-def"><span style="color: blue;">class</span> TemplateActionUtils</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.instruction.template.general.util</b>
+<div><a id="3tZgXMFDUE"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> generateUtteranceActionUrl(String token, String utterance)</p><pre></pre><h4>com.kakao.search.da.dto.response.instruction.template.general.util.TemplateActionUtils</h4></div></div>
+<hr />
+<p>at filename: DomainInfo.java, in package: com.kakao.search.da.dto.response.referinfo</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo</h3><p>total 1 number of definitions are contained</p><a id="SR4xc4eWAs"></a><h3 class="type-def"><span style="color: blue;">class</span> DomainInfo</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.referinfo</b>
+<div><a id="PR8iMbq2Tl"></a><pre class="code"></pre><p><span style="color: blue;">protected</span> <span style="color: #769AC8;">String</span> token</p><h4>com.kakao.search.da.dto.response.referinfo.DomainInfo</h4></div></div>
+<hr />
+<p>at filename: ReferenceInfo.java, in package: com.kakao.search.da.dto.response.referinfo</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo</h3><p>total 1 number of definitions are contained</p><a id="N9JKzBuCGV"></a><h3 class="type-def"><span style="color: blue;">interface</span> ReferenceInfo</h3>
+<h4>com.kakao.search.da.dto.response.referinfo</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: TalkContentTemplate.java, in package: com.kakao.search.da.dto.response.referinfo.talktemp</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo.talktemp</h3><p>total 1 number of definitions are contained</p><a id="s36HdzSIKd"></a><h3 class="type-def"><span style="color: blue;">class</span> TalkContentTemplate</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.referinfo.talktemp</b>
+<div></div></div>
+<hr />
+<p>at filename: TalkTemplate.java, in package: com.kakao.search.da.dto.response.referinfo.talktemp</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo.talktemp</h3><p>total 1 number of definitions are contained</p><a id="CddXef8043"></a><h3 class="type-def"><span style="color: blue;">class</span> TalkTemplate</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.referinfo.talktemp</b>
+<div><a id="9Dw1uWsu33"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">TalkTemplate</span> createTalkTemplate()</p><pre></pre><h4>com.kakao.search.da.dto.response.referinfo.talktemp.TalkTemplate</h4></div></div>
+<hr />
+<p>at filename: Feed.java, in package: com.kakao.search.da.dto.response.referinfo.talktemp.content</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo.talktemp.content</h3><p>total 1 number of definitions are contained</p><a id="j9MfdyZDlT"></a><h3 class="type-def"><span style="color: blue;">class</span> Feed <span style="color: blue;">implements</span> TalkContent</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.referinfo.talktemp.content</b>
+<div><a id="Pi3JuOKKJz"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Feed</span> createFeed(String title)</p><pre></pre><h4>com.kakao.search.da.dto.response.referinfo.talktemp.content.Feed</h4></div></div>
+<hr />
+<p>at filename: Music.java, in package: com.kakao.search.da.dto.response.referinfo.talktemp.content</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo.talktemp.content</h3><p>total 1 number of definitions are contained</p><a id="nM5kxdZu7c"></a><h3 class="type-def"><span style="color: blue;">class</span> Music</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.referinfo.talktemp.content</b>
+<div></div></div>
+<hr />
+<p>at filename: TalkContent.java, in package: com.kakao.search.da.dto.response.referinfo.talktemp.content</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo.talktemp.content</h3><p>total 1 number of definitions are contained</p><a id="ZaXKC0tNwe"></a><h3 class="type-def"><span style="color: blue;">interface</span> TalkContent</h3>
+<h4>com.kakao.search.da.dto.response.referinfo.talktemp.content</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: Text.java, in package: com.kakao.search.da.dto.response.referinfo.talktemp.content</p>
+<div><h3>package: com.kakao.search.da.dto.response.referinfo.talktemp.content</h3><p>total 1 number of definitions are contained</p><a id="VH1hZmNcha"></a><h3 class="type-def"><span style="color: blue;">class</span> Text</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.response.referinfo.talktemp.content</b>
+<div></div></div>
+<hr />
+<p>at filename: ValidatorResult.java, in package: com.kakao.search.da.dto.validator</p>
+<div><h3>package: com.kakao.search.da.dto.validator</h3><p>total 1 number of definitions are contained</p><a id="UCD81jSzSk"></a><h3 class="type-def"><span style="color: blue;">class</span> ValidatorResult</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.dto.validator</b>
+<div><a id="608o9Jvq9W"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">ValidatorResult</span> create(String value)</p><pre></pre><h4>com.kakao.search.da.dto.validator.ValidatorResult</h4><a id="zyx0hKTVkR"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> toString()</p><pre></pre><h4>com.kakao.search.da.dto.validator.ValidatorResult</h4></div></div>
+<hr />
+<p>at filename: CommonStatus.java, in package: com.kakao.search.da.exception</p>
+<div><h3>package: com.kakao.search.da.exception</h3><p>total 1 number of definitions are contained</p><a id="w1LvOCLUS7"></a><h3 class="type-def"><span style="color: blue;">enum</span> CommonStatus</h3>
+<b>enum values</b><ul><li>OK</li><li>NOT_SUPPORT_YET</li><li>INVALID_PARAMETER</li><li>INVALID_TOKEN</li><li>INVALID_OFFSET</li><li>DIFFERENT_TOKEN</li><li>INVALID_USER_AGENT</li><li>INVALID_USER_STATE_PARAMETER</li><li>SN_PARSING_ERROR</li><li>AIID_PARSING_ERROR</li><li>INVALID_ACTION_PARAMETER</li><li>ENTITY_VALUE_NOT_EXIST</li><li>DA_REQUEST_PARSING_ERROR</li><li>EVENT_NOT_EXIST</li><li>DATE_PARSING_ERROR</li><li>INTENT_NOT_FOUND</li><li>CANNOT_CREATE_INSTRUCTION</li><li>SERVICE_NOT_FOUND</li><li>TASK_NOT_FOUND</li><li>IOEXCEPTION_GET_REQUEST_BODY</li><li>URL_ENCODING_ERROR</li><li>TOKEN_CREATE_ENCODING_ERROR</li><li>TOKEN_DECODING_ERROR</li><li>TOKEN_PARSING_ERROR</li><li>TALKCONTENT_SHOULD_NOT_BE_NULL</li><li>EXTERNAL_API_IO_EXCEPTION</li><li>NLG_API_ERROR</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: DANormalException.java, in package: com.kakao.search.da.exception</p>
+<div><h3>package: com.kakao.search.da.exception</h3><p>total 1 number of definitions are contained</p><a id="ZkUVeFomuz"></a><h3 class="type-def"><span style="color: blue;">class</span> DaNormalException <span style="color: blue;">extends</span> DaException</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.exception</b>
+<div><a id="AgsW5WvMi6"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaNormalException</span> DaNormalException(DaStatus status)</p><pre></pre><h4>com.kakao.search.da.exception.DaNormalException</h4><a id="sJg3RLVvHR"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaNormalException</span> DaNormalException(DaStatus status, String comment)</p><pre></pre><h4>com.kakao.search.da.exception.DaNormalException</h4></div></div>
+<hr />
+<p>at filename: DAStatus.java, in package: com.kakao.search.da.exception</p>
+<div><h3>package: com.kakao.search.da.exception</h3><p>total 1 number of definitions are contained</p><a id="JRnrQlNDKO"></a><h3 class="type-def"><span style="color: blue;">interface</span> DaStatus</h3>
+<h4>com.kakao.search.da.exception</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: DaException.java, in package: com.kakao.search.da.exception</p>
+<div><h3>package: com.kakao.search.da.exception</h3><p>total 1 number of definitions are contained</p><a id="K4aW1tXrsP"></a><h3 class="type-def"><span style="color: blue;">class</span> DaException <span style="color: blue;">extends</span> Exception</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.exception</b>
+<div><a id="CuxkAiwQKE"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaException</span> DaException(DaStatus status)</p><pre></pre><h4>com.kakao.search.da.exception.DaException</h4><a id="iFRnV6nKI3"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaException</span> DaException(DaStatus status, String comment)</p><pre></pre><h4>com.kakao.search.da.exception.DaException</h4><a id="TxcspTXtv9"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaException</span> DaException(DaStatus status, Object[] args)</p><pre></pre><h4>com.kakao.search.da.exception.DaException</h4><a id="JcS3sWNrkZ"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaException</span> DaException(DaStatus status, String comment, Object[] args)</p><pre></pre><h4>com.kakao.search.da.exception.DaException</h4></div></div>
+<hr />
+<p>at filename: DaValidatorException.java, in package: com.kakao.search.da.exception</p>
+<div><h3>package: com.kakao.search.da.exception</h3><p>total 1 number of definitions are contained</p><a id="7asuKVPQYR"></a><h3 class="type-def"><span style="color: blue;">class</span> DaValidatorException <span style="color: blue;">extends</span> DaException</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.exception</b>
+<div><a id="bg4JEf2XMy"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaValidatorException</span> DaValidatorException(DaStatus status)</p><pre></pre><h4>com.kakao.search.da.exception.DaValidatorException</h4><a id="o4vs3cIYI4"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaValidatorException</span> DaValidatorException(DaStatus status, String comment)</p><pre></pre><h4>com.kakao.search.da.exception.DaValidatorException</h4></div></div>
+<hr />
+<p>at filename: GlobalDefaultExceptionHandler.java, in package: com.kakao.search.da.exception</p>
+<div><h3>package: com.kakao.search.da.exception</h3><p>total 1 number of definitions are contained</p><a id="JRimyAHNP1"></a><h3 class="type-def"><span style="color: blue;">class</span> GlobalDefaultExceptionHandler</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.exception</b>
+<div><a id="r246Nv3Vmz"></a><p><span style="color: #FFC433;">@ResponseBody</span> <span style="color: #FFC433;">@ExceptionHandler</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">ModelMap</span> defaultErrorHandler(Exception e)</p><pre></pre><h4>com.kakao.search.da.exception.GlobalDefaultExceptionHandler</h4></div></div>
+<hr />
+<p>at filename: NlgClient.java, in package: com.kakao.search.da.externalsys</p>
+<div><h3>package: com.kakao.search.da.externalsys</h3><p>total 1 number of definitions are contained</p><a id="E8HdfNdqL8"></a><h3 class="type-def"><span style="color: blue;">class</span> NlgClient</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.externalsys</b>
+<div><a id="OkpLP2uANH"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getNlgString(String template, NameValuePair param)</p><pre></pre><h4>com.kakao.search.da.externalsys.NlgClient</h4><a id="DFw1VTqV8A"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getNlgString(String template, List&lt;NameValuePair&gt; params)</p><pre></pre><h4>com.kakao.search.da.externalsys.NlgClient</h4><a id="iJr2hnun9y"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">boolean</span> hasFinalConsonant(String koreanWord)</p><pre></pre><h4>com.kakao.search.da.externalsys.NlgClient</h4></div></div>
+<hr />
+<p>at filename: DaPushEvent.java, in package: com.kakao.search.da.externalsys.push</p>
+<div><h3>package: com.kakao.search.da.externalsys.push</h3><p>total 1 number of definitions are contained</p><a id="jKdhZ2OFs1"></a><h3 class="type-def"><span style="color: blue;">class</span> DaPushEvent <span style="color: blue;">extends</span> ApplicationEvent</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.externalsys.push</b>
+<div><a id="9DLvgRiG7k"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaPushEvent</span> DaPushEvent(Object source, DaContext daContext)</p><pre></pre><h4>com.kakao.search.da.externalsys.push.DaPushEvent</h4></div></div>
+<hr />
+<p>at filename: PushInstruction.java, in package: com.kakao.search.da.externalsys.push.req</p>
+<div><h3>package: com.kakao.search.da.externalsys.push.req</h3><p>total 1 number of definitions are contained</p><a id="mkaCHznYcx"></a><h3 class="type-def"><span style="color: blue;">class</span> PushInstruction</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.externalsys.push.req</b>
+<div></div></div>
+<hr />
+<p>at filename: PushReqBodyAnswerInstruction.java, in package: com.kakao.search.da.externalsys.push.req</p>
+<div><h3>package: com.kakao.search.da.externalsys.push.req</h3><p>total 1 number of definitions are contained</p><a id="4jdHbWDyh7"></a><h3 class="type-def"><span style="color: blue;">class</span> PushReqBodyAnswerInstruction <span style="color: blue;">extends</span> PushReqBodyOnlyInstruction</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.externalsys.push.req</b>
+<div></div></div>
+<hr />
+<p>at filename: PushReqBodyOnlyInstruction.java, in package: com.kakao.search.da.externalsys.push.req</p>
+<div><h3>package: com.kakao.search.da.externalsys.push.req</h3><p>total 1 number of definitions are contained</p><a id="0V10hfvwMR"></a><h3 class="type-def"><span style="color: blue;">class</span> PushReqBodyOnlyInstruction</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.externalsys.push.req</b>
+<div></div></div>
+<hr />
+<p>at filename: DaLog.java, in package: com.kakao.search.da.log</p>
+<div><h3>package: com.kakao.search.da.log</h3><p>total 1 number of definitions are contained</p><a id="iJeFLx873F"></a><h3 class="type-def"><span style="color: blue;">class</span> DaLog</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.log</b>
+<div><a id="COz2lUZTQ7"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> toString()</p><pre></pre><h4>com.kakao.search.da.log.DaLog</h4></div></div>
+<hr />
+<p>at filename: DaLogAction.java, in package: com.kakao.search.da.log</p>
+<div><h3>package: com.kakao.search.da.log</h3><p>total 1 number of definitions are contained</p><a id="YhdkoMSWdj"></a><h3 class="type-def"><span style="color: blue;">enum</span> DaLogAction</h3>
+<b>enum values</b><ul><li>REQUEST</li><li>RESPONSE</li><li>PUSH</li></ul>
+<div></div></div>
+<hr />
+<p>at filename: DaLogStringGenerator.java, in package: com.kakao.search.da.log</p>
+<div><h3>package: com.kakao.search.da.log</h3><p>total 1 number of definitions are contained</p><a id="jyY0Au8gCC"></a><h3 class="type-def"><span style="color: blue;">class</span> DaLogStringGenerator</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.log</b>
+<div><a id="M63WzeRXbX"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getCustomActionJsonLog(String domain, DaContext daContext, String action, String resonseMsg)</p><pre></pre><h4>com.kakao.search.da.log.DaLogStringGenerator</h4><a id="x5pSOaT5rw"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getRequestJsonLog(String domain, DaContext daContext)</p><pre></pre><h4>com.kakao.search.da.log.DaLogStringGenerator</h4><a id="5ZJ7tepc8l"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getResponseJsonLog(String domain, DaContext daContext, String resonseMsg)</p><pre></pre><h4>com.kakao.search.da.log.DaLogStringGenerator</h4></div></div>
+<hr />
+<p>at filename: ISO8601DateDecorator.java, in package: com.kakao.search.da.log</p>
+<div><h3>package: com.kakao.search.da.log</h3><p>total 1 number of definitions are contained</p><a id="0Z9EcKLYzi"></a><h3 class="type-def"><span style="color: blue;">class</span> ISO8601DateDecorator <span style="color: blue;">implements</span> JsonFactoryDecorator</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.log</b>
+<div><a id="TZzrIAzg4s"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">MappingJsonFactory</span> decorate(MappingJsonFactory factory)</p><pre></pre><h4>com.kakao.search.da.log.ISO8601DateDecorator</h4></div></div>
+<hr />
+<p>at filename: HttpRequestService.java, in package: com.kakao.search.da.service</p>
+<div><h3>package: com.kakao.search.da.service</h3><p>total 1 number of definitions are contained</p><a id="UQdpQ47sJX"></a><h3 class="type-def"><span style="color: blue;">class</span> HttpRequestService</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.service</b>
+<div><a id="lnspLhIdRz"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForString(String url, List&lt;NameValuePair&gt; params)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="DvIEjhlfdP"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForString(String url, List&lt;NameValuePair&gt; params, int connReqTimeout, int connTimeout, int sockTimeout)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="Onx3mdNyvr"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForString(String url)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="FXr1Wf5Smq"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForString(String url, int connReqTimeout, int connTimeout, int sockTimeout)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="cUQTostUTv"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForString(String url, Header... headers)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="dRL6DdUqxK"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForStringWithoutProxy(String url, List&lt;NameValuePair&gt; params)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="WLpEgavadV"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> getForStringWithoutProxy(String url, List&lt;NameValuePair&gt; params, int connReqTimeout, int connTimeout, int sockTimeout)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="Wi2G7E2O5k"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> postForStringByApplicationJson(String url, String jsonStr)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="0jK9xuyC41"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> postForStringByApplicationJson(String url, String jsonStr, Header... headers)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="egQTf16hk5"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> postForStringByApplicationJsonWithoutProxy(String url, String jsonStr, Header... headers)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="H46oK104mh"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> postForStringByApplicationJsonWithoutProxy(String url, String jsonStr, List&lt;Header&gt; headers)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4><a id="sQur6nXy43"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">String</span> postForStringWithoutProxy(String url, List&lt;NameValuePair&gt; params)</p><pre></pre><h4>com.kakao.search.da.service.HttpRequestService</h4></div></div>
+<hr />
+<p>at filename: ActionService.java, in package: com.kakao.search.da.service.action</p>
+<div><h3>package: com.kakao.search.da.service.action</h3><p>total 1 number of definitions are contained</p><a id="mAw7uw8Dn4"></a><h3 class="type-def"><span style="color: blue;">interface</span> ActionService</h3>
+<h4>com.kakao.search.da.service.action</h4>
+<div>
+<b>inherit class</b>
+<ul></ul>
+</div></div>
+<hr />
+<p>at filename: DaRequestParser.java, in package: com.kakao.search.da.util</p>
+<div><h3>package: com.kakao.search.da.util</h3><p>total 1 number of definitions are contained</p><a id="FwKZkj46Hx"></a><h3 class="type-def"><span style="color: blue;">class</span> DaRequestParser</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.util</b>
+<div><a id="hgYhRn1DaV"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">int</span> getAccountId(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="mzVczrkJ53"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getAiid(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="CtVsMsvcq2"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">long</span> getAudioPlayerOffset(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="BSN9i0rAfD"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String[]</span> getAudioTokenElements(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="UtbZwUDDpg"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String[]</span> getAudioTokenElementsForDialogPlayChannel(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="BJLz27ibMa"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getEventName(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="lJ59cUAnSm"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">DaRequest.UserRequest.UserReqParams.Gdm.Utterance</span> getGdmUtterance(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="lek5dLbflP"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">Geolocation</span> getGeolocation(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="L5CihyNuMT"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getIntentName(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="PGVKnPGjQ2"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">int</span> getKaccountid(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="mJbirActUE"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getPhase(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="xAMdZi36Gp"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getSN(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="Fi0ztetdsY"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getServiceId(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="oP0Cda2Hj2"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getUtterance(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="PbJ5G5qBgD"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">boolean</span> isMultiIntent(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="EIxG8TyIir"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">boolean</span> isMultiIntentForAction(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4><a id="Y2Yf6yD5zB"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">boolean</span> isMultiIntentForData(DaRequest daRequest)</p><pre></pre><h4>com.kakao.search.da.util.DaRequestParser</h4></div></div>
+<hr />
+<p>at filename: DaTokenGenerator.java, in package: com.kakao.search.da.util</p>
+<div><h3>package: com.kakao.search.da.util</h3><p>total 1 number of definitions are contained</p><a id="SXjROKwtaL"></a><h3 class="type-def"><span style="color: blue;">class</span> DaTokenGenerator</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.util</b>
+<div><a id="f3fnbn3uFx"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">Joiner</span> TOKEN_JOINER</p><h4>com.kakao.search.da.util.DaTokenGenerator</h4><a id="MWxJdWTNzt"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">Joiner</span> TOKEN_VALUE_JOINER</p><h4>com.kakao.search.da.util.DaTokenGenerator</h4><a id="Y8V6g3U8Mm"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> generate(String serviceId, String botId, String tokenValue)</p><pre></pre><h4>com.kakao.search.da.util.DaTokenGenerator</h4><a id="7IetgzARxJ"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> generateDummyToken(String botid)</p><pre></pre><h4>com.kakao.search.da.util.DaTokenGenerator</h4></div></div>
+<hr />
+<p>at filename: DaUtils.java, in package: com.kakao.search.da.util</p>
+<div><h3>package: com.kakao.search.da.util</h3><p>total 1 number of definitions are contained</p><a id="p4HcTXvHSp"></a><h3 class="type-def"><span style="color: blue;">class</span> DaUtils</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.util</b>
+<div><a id="spFDaihAGX"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> generatePreventiveTalkDownSentence(String sentence)</p><pre></pre><h4>com.kakao.search.da.util.DaUtils</h4><a id="g8SbP70rnS"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">long</span> getDurationMillis(long startNanoTime, long endNanoTime)</p><pre></pre><h4>com.kakao.search.da.util.DaUtils</h4><a id="WzCjUGBDf3"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">int</span> getRandomIndex(int excludeIndex, int collectionSize)</p><pre></pre><h4>com.kakao.search.da.util.DaUtils</h4></div></div>
+<hr />
+<p>at filename: DaValidator.java, in package: com.kakao.search.da.util</p>
+<div><h3>package: com.kakao.search.da.util</h3><p>total 1 number of definitions are contained</p><a id="MS32w4sY1M"></a><h3 class="type-def"><span style="color: blue;">class</span> DaValidator</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.util</b>
+<div><a id="IoW92ogEeX"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotEmptyCollection(Collection collection, DaStatus throwStaus)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="qR2Huz6w82"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotEmptyCollection(Collection collection, DaStatus throwStaus, String comment)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="0X2cQhCQpc"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotEmptyMap(Map map, DaStatus throwStaus)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="fS1ly7boVD"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotEmptyMap(Map map, DaStatus throwStaus, String comment)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="MDrEON0Lpb"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotEmptyString(String str, DaStatus throwStatus)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="K7v7PCgbxN"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotEmptyString(String str, DaStatus throwStatus, String comment)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="MyLSQaUIxC"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotNull(Object object, DaStatus throwStatus)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4><a id="ozdTYi9y7y"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">void</span> checkNotNull(Object object, DaStatus throwStatus, String comment)</p><pre></pre><h4>com.kakao.search.da.util.DaValidator</h4></div></div>
+<hr />
+<p>at filename: JsonUtils.java, in package: com.kakao.search.da.util</p>
+<div><h3>package: com.kakao.search.da.util</h3><p>total 1 number of definitions are contained</p><a id="TNzbXdGgt8"></a><h3 class="type-def"><span style="color: blue;">class</span> JsonUtils</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.util</b>
+<div><a id="Rs2AetHBYc"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">String</span> DOT_OF_REGEX</p><h4>com.kakao.search.da.util.JsonUtils</h4><a id="SWt5XheN5R"></a><pre class="code"></pre><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: blue;">final</span> <span style="color: #769AC8;">Gson</span> GSON</p><h4>com.kakao.search.da.util.JsonUtils</h4><a id="AG9l1SONWf"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">boolean</span> getAsBoolean(JsonElement source, String path)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="VEmUgExqjS"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">int</span> getAsInt(JsonElement source, String path)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="JP81qo9SM7"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">JsonArray</span> getAsJsonArray(JsonElement source, String path)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="puca0wcAGZ"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">JsonObject</span> getAsJsonObject(JsonElement source, String path)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="QLi4spTd81"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">List&lt;T&gt;</span> getAsList(JsonElement source, String path, Class&lt;T&gt; tClass)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="k4XSoceeDy"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">List&lt;T&gt;</span> getAsList(JsonElement jsonElement, final Class&lt;T&gt; tClass)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="5OhvZn9LSP"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">long</span> getAsLong(JsonElement source, String path)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="PV0GcSUR74"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getAsString(JsonElement source, String path)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4><a id="xShi6zPIZb"></a><p><span style="color: blue;">public</span> <span style="color: blue;">static</span> <span style="color: #769AC8;">String</span> getAsString(JsonElement source, String path, String defaultValue)</p><pre></pre><h4>com.kakao.search.da.util.JsonUtils</h4></div></div>
+<hr />
+<p>at filename: DaInterceptor.java, in package: com.kakao.search.da.web</p>
+<div><h3>package: com.kakao.search.da.web</h3><p>total 1 number of definitions are contained</p><a id="yIvB9BBf0a"></a><h3 class="type-def"><span style="color: blue;">class</span> DaInterceptor <span style="color: blue;">extends</span> HandlerInterceptorAdapter</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.web</b>
+<div><a id="WfIeDOoP8Y"></a><p><span style="color: blue;">public</span> <span style="color: #769AC8;">DaInterceptor</span> DaInterceptor(String domain, boolean enablePrintLog)</p><pre></pre><h4>com.kakao.search.da.web.DaInterceptor</h4><a id="kCPqWU9rqW"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)</p><pre></pre><h4>com.kakao.search.da.web.DaInterceptor</h4><a id="6UaE2djDaP"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView)</p><pre></pre><h4>com.kakao.search.da.web.DaInterceptor</h4><a id="QtRusbzYxx"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">boolean</span> preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)</p><pre></pre><h4>com.kakao.search.da.web.DaInterceptor</h4></div></div>
+<hr />
+<p>at filename: HttpInterceptorConfig.java, in package: com.kakao.search.da.web</p>
+<div><h3>package: com.kakao.search.da.web</h3><p>total 1 number of definitions are contained</p><a id="aZtRjKIhIj"></a><h3 class="type-def"><span style="color: blue;">class</span> HttpInterceptorConfig <span style="color: blue;">extends</span> WebMvcConfigurerAdapter</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.web</b>
+<div><a id="DNwduhYSz9"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">void</span> addInterceptors(InterceptorRegistry registry)</p><pre></pre><h4>com.kakao.search.da.web.HttpInterceptorConfig</h4></div></div>
+<hr />
+<p>at filename: HttpResponseAdvice.java, in package: com.kakao.search.da.web</p>
+<div><h3>package: com.kakao.search.da.web</h3><p>total 1 number of definitions are contained</p><a id="1r0CzO6KfQ"></a><h3 class="type-def"><span style="color: blue;">class</span> HttpResponseAdvice <span style="color: blue;">implements</span> ResponseBodyAdvice&lt;Object&gt;</h3>
+<pre class="code"></pre>
+<b>com.kakao.search.da.web</b>
+<div><a id="MhOr2gUK36"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">Object</span> beforeBodyWrite(Object object, MethodParameter methodParameter, MediaType mediaType, Class&lt;?extendsHttpMessageConverter&lt;?&gt;&gt; aClass, ServerHttpRequest serverHttpRequest, ServerHttpResponse serverHttpResponse)</p><pre></pre><h4>com.kakao.search.da.web.HttpResponseAdvice</h4><a id="SL8c6sI2e4"></a><p><span style="color: #FFC433;">@Override</span> <span style="color: blue;">public</span> <span style="color: #769AC8;">boolean</span> supports(MethodParameter returnType, Class&lt;?extendsHttpMessageConverter&lt;?&gt;&gt; converterType)</p><pre></pre><h4>com.kakao.search.da.web.HttpResponseAdvice</h4></div></div>
+</div></body></html>

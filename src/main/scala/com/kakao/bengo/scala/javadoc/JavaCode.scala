@@ -43,7 +43,7 @@ object JavaCode {
   } yield name
 
   def parseEnum(modifier: JavaModifier): TokenListState[JavaEnumClass] = {
-    def parseEnumInside(name: String): TokenListState[JavaEnumClass] = TokenListState(state => {
+    def parseEnumInside(name: String, implements: List[String]): TokenListState[JavaEnumClass] = TokenListState(state => {
       def loop(acc: List[String]): TokenListState[JavaEnumClass] = TokenListState {
         case JavaSToken(TOKEN, tokenName) :: tail => (for {
           _ <- parseParenthesis(LPAR, RPAR)
@@ -53,9 +53,9 @@ object JavaCode {
               loop(acc :+ tokenName).run(t)
             case JavaSToken(SEMICOLON, _) :: t => (for {
               defs <- parseClassInside(modifier.fullPath, Nil)
-            } yield JavaEnumClass(name, modifier, acc, defs)).run(t)
+            } yield JavaEnumClass(name, modifier, acc, defs, implements)).run(t)
             case JavaSToken(RBRACE, _) :: t =>
-              TokenListState.unit(JavaEnumClass(name, modifier, acc, Nil)).run(t)
+              TokenListState.unit(JavaEnumClass(name, modifier, acc, Nil, implements)).run(t)
             case h :: _ => throw new TokenNotAcceptedException(s"not allowed token: $h")
           }
         } yield enumClass).run(tail)
@@ -67,8 +67,9 @@ object JavaCode {
 
     for {
       name <- takeString
+      implements <- parseTokensFrom(IMPLEMENTS)
       _ <- assertToken(LBRACE)
-      cls <- parseEnumInside(name)
+      cls <- parseEnumInside(name, implements)
     } yield cls
   }
 
@@ -255,11 +256,12 @@ object JavaCode {
 
   def parseClass(modifier: JavaModifier): TokenListState[JavaClass] = for {
     name <- takeString
+    generics <- parseParenthesis(LT, GT)
     extendInh <- parseTokensFrom(EXTENDS)
     implementH <- parseTokensFrom(IMPLEMENTS)
     _ <- assertToken(LBRACE)
     defs <- parseClassInside(s"${modifier.fullPath}.$name", Nil)
-  } yield JavaClass(name, modifier, defs, extendInh, implementH)
+  } yield JavaClass(name, modifier.copy(generic = generics), defs, extendInh, implementH)
 
   def parseTokensFrom(targetToken: JavaTokenEnum): TokenListState[List[String]] = TokenListState {
     case JavaSToken(token, _) :: t if token == targetToken =>
@@ -285,15 +287,16 @@ object JavaCode {
 
   def parseInterface(modifier: JavaModifier): TokenListState[JavaInterface] = for {
     name <- takeString
+    generic <- parseParenthesis(LT, GT)
     extendInh <- parseTokensFrom(EXTENDS)
     _ <- assertToken(LBRACE)
     defs <- parseInterfaceDefs(s"${modifier.fullPath}.$name", Nil)
-  } yield JavaInterface(name, modifier, defs, extendInh)
+  } yield JavaInterface(name, modifier.copy(generic = generic), defs, extendInh)
 
   def assertToken(token: JavaTokenEnum): TokenListState[Unit] = TokenListState {
     case JavaSToken(tk, _) :: t if tk == token =>
       TokenListState.unit(()).run(t)
-    case t => throw new TokenNotAcceptedException(s"${t.head.tokenType} => ${t.head.value}")
+    case t => throw new TokenNotAcceptedException(s"${t.head.tokenType} => ${t.head.value}, ${t.tail.take(5)}")
   }
 
   def parseParenthesis(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): TokenListState[String] = TokenListState(tokens => {

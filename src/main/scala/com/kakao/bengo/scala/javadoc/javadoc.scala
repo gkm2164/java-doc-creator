@@ -24,7 +24,7 @@ package object javadoc {
     loop(str, "")
   }
 
-  val asciivalues: IndexedSeq[Int] = (0 to 9) ++ ('a' to 'z') ++ ('A' to 'Z')
+  val asciivalues: IndexedSeq[Char] = ('0' to '9') ++ ('a' to 'z') ++ ('A' to 'Z')
 
   sealed trait JavaDefinition {
     def id: String
@@ -76,7 +76,8 @@ package object javadoc {
 
   case class JavaEnumClass(name: String, modifier: JavaModifier,
                            enumTokens: List[String],
-                           definitions: List[JavaDefinition]) extends JavaTypeDef {
+                           definitions: List[JavaDefinition],
+                           implements: List[String]) extends JavaTypeDef {
     override def show: String =
       s"""<a id="$id"></a><h3 class="type-def">${color("enum", "blue")} $name</h3>
          |<b>enum values</b>${enumTokens.map(x => s"<li>$x</li>").mkString("<ul>", "", "</ul>")}

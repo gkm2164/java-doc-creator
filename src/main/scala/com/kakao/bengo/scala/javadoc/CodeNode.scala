@@ -33,7 +33,7 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
           }
           pw.write("</li>")
 
-        case JavaEnumClass(enumClassName, modifier, _, definitions) if modifier.access == PUBLIC =>
+        case JavaEnumClass(enumClassName, modifier, _, definitions, _) if modifier.access == PUBLIC =>
           pw.write("<li>")
           pw.write(s"""<a href="#${definition.id}">$enumClassName</a>""")
           if (definitions.nonEmpty) {
