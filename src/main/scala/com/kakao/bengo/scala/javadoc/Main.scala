@@ -16,9 +16,17 @@ object Main {
   def main(args: Array[String]): Unit = {
     //    val baseDir = "/Users/ben.go/go-doc-creator/src/main/java"
 //    val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
-    val baseDir = "/Users/ben.go/java/da-core/src/main/java"
+//    val baseDir = "/Users/ben.go/java/da-core/src/main/java"
+//    val outFile = "javadoc.html"
+
+    List(("/Users/ben.go/go-doc-creator/src/main/java", "javadoc-tokenizer.html"),
+      ("/Users/ben.go/java/da-commons/da-intent-handler/src/main/java", "javadoc-da-commons-intent-handler.html"),
+      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html")).foreach{ case (basedir, outfile) => createDoc(basedir, outfile) }
+  }
+
+  def createDoc(baseDir: String, outFile: String): Unit = {
     val node = currentPackage(new File(baseDir))
-    val pw = new PrintWriter("javadoc.html")
+    val pw = new PrintWriter(outFile)
     pw.write("""<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8" /><title>document</title><link type="text/css" rel="stylesheet" href="doc.css" /> </head><body>""")
     pw.write("<nav>")
     node.buildNavTree(pw)
