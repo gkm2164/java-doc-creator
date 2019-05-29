@@ -15,27 +15,38 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     //    val baseDir = "/Users/ben.go/go-doc-creator/src/main/java"
-//    val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
-//    val baseDir = "/Users/ben.go/java/da-core/src/main/java"
-//    val outFile = "javadoc.html"
+    //    val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
+    //    val baseDir = "/Users/ben.go/java/da-core/src/main/java"
+    //    val outFile = "javadoc.html"
 
     List(("/Users/ben.go/go-doc-creator/src/main/java", "javadoc-tokenizer.html"),
       ("/Users/ben.go/java/da-commons/da-intent-handler/src/main/java", "javadoc-da-commons-intent-handler.html"),
-      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html")).foreach{ case (basedir, outfile) => createDoc(basedir, outfile) }
+      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html")).foreach { case (basedir, outfile) => createDoc(basedir, outfile) }
   }
 
   def createDoc(baseDir: String, outFile: String): Unit = {
+    import levsha.text.symbolDsl._
+    import levsha.text.renderHtml
+
     val node = currentPackage(new File(baseDir))
     val pw = new PrintWriter(outFile)
-    pw.write("""<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8" /><title>document</title><link type="text/css" rel="stylesheet" href="doc.css" /> </head><body>""")
-    pw.write("<nav>")
-    node.buildNavTree(pw)
-    pw.write("</nav>")
-    pw.write("<div class=\"contents\">")
-    pw.write("<h1>Documentation</h1>")
-    node.print(pw)
-    pw.write("</div>")
-    pw.write("</body></html>")
+    pw.write("<!DOCTYPE html>")
+    pw.write(renderHtml(
+      'html ('lang /= "ko",
+        'head (
+          'meta ('charset /= "UTF-8"),
+          'title ("document"),
+          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "doc.css")
+        ),
+        'body (
+          'nav (node.buildNavTree),
+          'div ('class /= "contents",
+            'h1 ("Documentation"),
+            node.print
+          )
+        )
+      )
+    ))
     pw.close()
   }
 

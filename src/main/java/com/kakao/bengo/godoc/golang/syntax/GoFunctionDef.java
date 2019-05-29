@@ -17,34 +17,4 @@ public class GoFunctionDef implements GoSomeDef {
         returnType = "";
         args = new ArrayList<>();
     }
-
-    @Override
-    public String getIdenticalName() {
-        return funcName;
-    }
-
-    public String printAsGoStyle() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("func ");
-        if (!receiverName.equals("")) {
-            sb.append("(").append(receiverName).append(" ").append(receiverType).append(") ");
-        }
-
-        sb.append(funcName).append("(");
-
-        if (!args.isEmpty()) {
-            boolean isFirstIter = true;
-            for (GoFuncArg arg: args) {
-                if (!isFirstIter) {
-                    sb.append(", ");
-                }
-                sb.append(arg.name).append(" ").append(arg.typeName);
-                isFirstIter = false;
-            }
-        }
-
-        sb.append(") ").append(returnType);
-
-        return sb.toString();
-    }
 }

@@ -1,6 +1,5 @@
 package com.kakao.bengo.javalang;
 
-import com.kakao.bengo.javalang.exceptions.NoTokenEnumExist;
 import javafx.util.Pair;
 
 import java.util.*;
@@ -25,11 +24,6 @@ public class Tokenizer {
         void setTerminal(JavaTokenEnum e) {
             this.isTerminal = true;
             this.tokenEnum = e;
-        }
-
-        public JavaTokenEnum getTokenEnum() throws NoTokenEnumExist {
-            if (this.isTerminal) return tokenEnum;
-            throw new NoTokenEnumExist("");
         }
 
         Node getOrPut(char ch, Supplier<Node> nodeCreator) {

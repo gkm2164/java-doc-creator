@@ -3,6 +3,9 @@ package com.kakao.bengo.scala.javadoc
 import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.scala.functional.TokenListState
+import levsha.Document.Node
+import levsha.text.symbolDsl._
+import levsha.text.renderHtml
 
 case class JavaCode(packageName: String,
                     imports: List[String],
@@ -13,12 +16,13 @@ case class JavaCode(packageName: String,
 
   def appendDefinition(javaDefinition: JavaDefinition): JavaCode = this.copy(defs = defs :+ javaDefinition)
 
-  def show: String =
-    StringBuilder.newBuilder
-      .append(s"<h3>package: $packageName</h3>")
-      .append(s"<p>total ${defs.length} number of definitions are contained</p>")
-      .append(defs.sortBy(_.name).map(_.show).mkString("\n"))
-      .toString()
+  def show[T]: Node[T] = renderHtml(
+    'div (
+      'h3 (s"package: $packageName"),
+      'p (s"total ${defs.length} number of definitions are contained"),
+      defs.sortBy(_.name).map(_.show)
+    )
+  )
 }
 
 object JavaCode {

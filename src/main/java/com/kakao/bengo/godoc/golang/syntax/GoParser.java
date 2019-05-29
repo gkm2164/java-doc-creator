@@ -344,7 +344,7 @@ public class GoParser {
 
     public static int findDefStop(String code) {
         int start = 0;
-        while (start < code.length() && code.charAt(start++) != '\n') ;
+        while (start < code.length() && code.charAt(start++) != '\n');
 
         final String avoidWord = "interface";
 
