@@ -3,6 +3,7 @@ package com.kakao.bengo.scala.javadoc
 import java.io.{File, FilenameFilter, PrintWriter}
 
 import com.kakao.bengo.javalang.Tokenizer
+import levsha.impl.TextPrettyPrintingConfig
 
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -14,14 +15,10 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    //    val baseDir = "/Users/ben.go/go-doc-creator/src/main/java"
-    //    val baseDir = "/Users/ben.go/java/da-commons/da-intent-handler/src/main/java"
-    //    val baseDir = "/Users/ben.go/java/da-core/src/main/java"
-    //    val outFile = "javadoc.html"
-
     List(("/Users/ben.go/go-doc-creator/src/main/java", "javadoc-tokenizer.html"),
       ("/Users/ben.go/java/da-commons/da-intent-handler/src/main/java", "javadoc-da-commons-intent-handler.html"),
-      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html")).foreach { case (basedir, outfile) => createDoc(basedir, outfile) }
+      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html"))
+      .foreach { case (basedir, outfile) => createDoc(basedir, outfile) }
   }
 
   def createDoc(baseDir: String, outFile: String): Unit = {
@@ -46,7 +43,7 @@ object Main {
           )
         )
       )
-    ))
+      , TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
   }
 

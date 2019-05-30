@@ -5,7 +5,6 @@ import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.scala.functional.TokenListState
 import levsha.Document.Node
 import levsha.text.symbolDsl._
-import levsha.text.renderHtml
 
 case class JavaCode(packageName: String,
                     imports: List[String],
@@ -16,13 +15,12 @@ case class JavaCode(packageName: String,
 
   def appendDefinition(javaDefinition: JavaDefinition): JavaCode = this.copy(defs = defs :+ javaDefinition)
 
-  def show[T]: Node[T] = renderHtml(
+  def show[T]: Node[T] =
     'div (
       'h3 (s"package: $packageName"),
       'p (s"total ${defs.length} number of definitions are contained"),
       defs.sortBy(_.name).map(_.show)
     )
-  )
 }
 
 object JavaCode {

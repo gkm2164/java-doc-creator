@@ -4,4 +4,4 @@ version := "0.1"
 
 scalaVersion := "2.12.8"
 
-libraryDependencies += "com.github.fomkin" %% "levsha-core" % "0.7.1"
+libraryDependencies += "com.github.fomkin" %% "levsha-core" % "0.7.1-4-gcecd3a9"

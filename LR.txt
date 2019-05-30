@@ -1,0 +1,72 @@
+tokens: [Not, Token(x), Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: []
+shift
+tokens: [Token(x), Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Not]
+shift
+tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Token(x), Not]
+reduce => F -> Token("x")
+tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(x), Not]
+reduce => F -> ! F
+tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(!x)]
+reduce => T -> F
+tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T(!x)]
+reduce => E -> T (lookahead 1 token, Plus)
+tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [E(!x)]
+shift
+tokens: [Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Plus, E(!x)]
+shift
+tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Token(y), Plus, E(!x)]
+reduce => F -> Token("y")
+tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(y), Plus, E(!x)]
+reduce => T -> F
+tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T(y), Plus, E(!x)]
+shift
+tokens: [Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Mult, T(y), Plus, E(!x)]
+shift
+tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Token(z), Mult, T(y), Plus, E(!x)]
+reduce => F -> Token("z")
+tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(z), Mult, T(y), Plus, E(!x)]
+reduce => T -> F
+tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T(z), Mult, T(y), Plus, E(!x)]
+reduce => T -> T (* | /) T
+tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T((y * z)), Plus, E(!x)]
+shift
+tokens: [Token(k), Equal, Not, Token(a), Semicolon], stack: [Div, T((y * z)), Plus, E(!x)]
+shift
+tokens: [Equal, Not, Token(a), Semicolon], stack: [Token(k), Div, T((y * z)), Plus, E(!x)]
+reduce => F -> Token("k")
+tokens: [Equal, Not, Token(a), Semicolon], stack: [F(k), Div, T((y * z)), Plus, E(!x)]
+reduce => T -> F
+tokens: [Equal, Not, Token(a), Semicolon], stack: [T(k), Div, T((y * z)), Plus, E(!x)]
+reduce => T -> T (* | /) T
+tokens: [Equal, Not, Token(a), Semicolon], stack: [T(((y * z) / k)), Plus, E(!x)]
+reduce => E -> T (lookahead 1 token, Equal)
+tokens: [Equal, Not, Token(a), Semicolon], stack: [E(((y * z) / k)), Plus, E(!x)]
+reduce => E -> E (+ | -) E
+tokens: [Equal, Not, Token(a), Semicolon], stack: [E((!x + ((y * z) / k)))]
+reduce => C -> E (lookahead 1 token, Equal
+tokens: [Equal, Not, Token(a), Semicolon], stack: [C((!x + ((y * z) / k)))]
+shift
+tokens: [Not, Token(a), Semicolon], stack: [Equal, C((!x + ((y * z) / k)))]
+shift
+tokens: [Token(a), Semicolon], stack: [Not, Equal, C((!x + ((y * z) / k)))]
+shift
+tokens: [Semicolon], stack: [Token(a), Not, Equal, C((!x + ((y * z) / k)))]
+reduce => F -> Token("a")
+tokens: [Semicolon], stack: [F(a), Not, Equal, C((!x + ((y * z) / k)))]
+reduce => F -> ! F
+tokens: [Semicolon], stack: [F(!a), Equal, C((!x + ((y * z) / k)))]
+reduce => T -> F
+tokens: [Semicolon], stack: [T(!a), Equal, C((!x + ((y * z) / k)))]
+reduce => E -> T (lookahead 1 token, Semicolon)
+tokens: [Semicolon], stack: [E(!a), Equal, C((!x + ((y * z) / k)))]
+reduce => C -> E (lookahead 1 token, Semicolon
+tokens: [Semicolon], stack: [C(!a), Equal, C((!x + ((y * z) / k)))]
+reduce => C -> C (==, ||, &&, ...) C
+tokens: [Semicolon], stack: [C(((!x + ((y * z) / k)) == !a))]
+reduce => S -> C (lookahead 1 token, Semicolon)
+tokens: [Semicolon], stack: [S(((!x + ((y * z) / k)) == !a))]
+shift
+tokens: [], stack: [Semicolon, S(((!x + ((y * z) / k)) == !a))]
+reduce => S -> S ;
+tokens: [], stack: [S(((!x + ((y * z) / k)) == !a))]
+((!x + ((y * z) / k)) == !a)

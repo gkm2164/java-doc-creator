@@ -30,29 +30,26 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
             'a ('href /= s"#${definition.id}",
               'b (className)
             ),
-            if (definitions.nonEmpty) 'ul (definitions.map(recur)) else Empty
+            'ul (definitions.map(recur))
           )
         case JavaEnumClass(enumClassName, modifier, _, definitions, _) if modifier.access == PUBLIC =>
           'li (
             'a ('href /= s"#${definition.id}", enumClassName),
-            if (definitions.nonEmpty) 'ul (definitions.map(recur)) else Empty
+            'ul (definitions.map(recur))
           )
         case JavaInterface(interfaceName, modifier, definitions, _) if modifier.access == PUBLIC =>
           'li (
             'a ('href /= s"#${definition.id}", interfaceName),
-            if (definitions.nonEmpty) 'ul (definitions.map(recur)) else Empty
+            'ul (definitions.map(recur))
           )
         case JavaAnnotationInterface(annotationInterfaceName, modifier, definitions, _) if modifier.access == PUBLIC =>
           'li (
             'a ('href /= s"#${definition.id}", annotationInterfaceName),
-            if (definitions.nonEmpty)
-              'ul (definitions.map(recur))
-            else
-              Empty
+            'ul (definitions.map(recur))
           )
         case JavaMethod(modifier, methodName, _, args) if modifier.access == PUBLIC =>
           'li (
-            'a ('href /= s"#${definition.id}", s"$methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})")
+            'a ('href /= s"#${definition.id}", s" $methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})")
           )
         case JavaMember(modifier, memberName, _) if modifier.access == PUBLIC =>
           'li (
