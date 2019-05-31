@@ -1,0 +1,106 @@
+section aside {
+    float: left;
+    display: block;
+    position: fixed;
+    height: 100%;
+    overflow: scroll;
+    width: 320px;
+}
+
+section article {
+    margin-left: 320px;
+    padding-top: 20px;
+    padding-left: 20px;
+    background-color: #2b2b2b;
+    color: #bababa;
+}
+
+section aside nav {
+    padding: 20px;
+    overflow: scroll;
+}
+section aside nav h3 {
+    color: white;
+}
+
+section aside ul {
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+section aside.sidebar-dark {
+    background-color: #3c3f41;
+}
+
+section aside li {
+    /*padding: 0;*/
+    /*margin: 0;*/
+}
+
+li a.package-name {
+    color: gray;
+}
+
+section aside a {
+    color: lightgray;
+}
+
+section aside a:hover {
+    color: whitesmoke;
+}
+
+section aside a.member-name {
+    color: #9473a6;
+}
+
+section aside a.method-name {
+    color: #f9c26b;
+}
+
+span.annotation-use {
+    color: #FFC433;
+}
+
+.member-name {
+    color: #9473a6;
+}
+
+.method-name {
+    color: #f9c26b;
+}
+
+section aside a.package-name {
+    color: gray;
+}
+
+
+span.reserved-keyword {
+    color: #c77532
+}
+
+span.type-keyword {
+    color: #769AC8;
+}
+
+.java-def {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+span.full-path {
+    font-size: 12px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-style: italic;
+}
+
+.clearfix {
+    clear: both;
+}
+
+ul.enum-values {
+    list-style-type: none;
+    color: #9473a6;
+}
+
+.generic-symbol {
+    color: lightgray;
+}

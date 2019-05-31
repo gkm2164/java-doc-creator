@@ -1,72 +1,109 @@
-tokens: [Not, Token(x), Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: []
-shift
-tokens: [Token(x), Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Not]
-shift
-tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Token(x), Not]
-reduce => F -> Token("x")
-tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(x), Not]
-reduce => F -> ! F
-tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(!x)]
-reduce => T -> F
-tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T(!x)]
-reduce => E -> T (lookahead 1 token, Plus)
-tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [E(!x)]
-shift
-tokens: [Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Plus, E(!x)]
-shift
-tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Token(y), Plus, E(!x)]
-reduce => F -> Token("y")
-tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(y), Plus, E(!x)]
-reduce => T -> F
-tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T(y), Plus, E(!x)]
-shift
-tokens: [Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Mult, T(y), Plus, E(!x)]
-shift
-tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [Token(z), Mult, T(y), Plus, E(!x)]
-reduce => F -> Token("z")
-tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [F(z), Mult, T(y), Plus, E(!x)]
-reduce => T -> F
-tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T(z), Mult, T(y), Plus, E(!x)]
-reduce => T -> T (* | /) T
-tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon], stack: [T((y * z)), Plus, E(!x)]
-shift
-tokens: [Token(k), Equal, Not, Token(a), Semicolon], stack: [Div, T((y * z)), Plus, E(!x)]
-shift
-tokens: [Equal, Not, Token(a), Semicolon], stack: [Token(k), Div, T((y * z)), Plus, E(!x)]
-reduce => F -> Token("k")
-tokens: [Equal, Not, Token(a), Semicolon], stack: [F(k), Div, T((y * z)), Plus, E(!x)]
-reduce => T -> F
-tokens: [Equal, Not, Token(a), Semicolon], stack: [T(k), Div, T((y * z)), Plus, E(!x)]
-reduce => T -> T (* | /) T
-tokens: [Equal, Not, Token(a), Semicolon], stack: [T(((y * z) / k)), Plus, E(!x)]
-reduce => E -> T (lookahead 1 token, Equal)
-tokens: [Equal, Not, Token(a), Semicolon], stack: [E(((y * z) / k)), Plus, E(!x)]
-reduce => E -> E (+ | -) E
-tokens: [Equal, Not, Token(a), Semicolon], stack: [E((!x + ((y * z) / k)))]
-reduce => C -> E (lookahead 1 token, Equal
-tokens: [Equal, Not, Token(a), Semicolon], stack: [C((!x + ((y * z) / k)))]
-shift
-tokens: [Not, Token(a), Semicolon], stack: [Equal, C((!x + ((y * z) / k)))]
-shift
-tokens: [Token(a), Semicolon], stack: [Not, Equal, C((!x + ((y * z) / k)))]
-shift
-tokens: [Semicolon], stack: [Token(a), Not, Equal, C((!x + ((y * z) / k)))]
-reduce => F -> Token("a")
-tokens: [Semicolon], stack: [F(a), Not, Equal, C((!x + ((y * z) / k)))]
-reduce => F -> ! F
-tokens: [Semicolon], stack: [F(!a), Equal, C((!x + ((y * z) / k)))]
-reduce => T -> F
-tokens: [Semicolon], stack: [T(!a), Equal, C((!x + ((y * z) / k)))]
-reduce => E -> T (lookahead 1 token, Semicolon)
-tokens: [Semicolon], stack: [E(!a), Equal, C((!x + ((y * z) / k)))]
-reduce => C -> E (lookahead 1 token, Semicolon
-tokens: [Semicolon], stack: [C(!a), Equal, C((!x + ((y * z) / k)))]
-reduce => C -> C (==, ||, &&, ...) C
-tokens: [Semicolon], stack: [C(((!x + ((y * z) / k)) == !a))]
-reduce => S -> C (lookahead 1 token, Semicolon)
-tokens: [Semicolon], stack: [S(((!x + ((y * z) / k)) == !a))]
-shift
-tokens: [], stack: [Semicolon, S(((!x + ((y * z) / k)) == !a))]
-reduce => S -> S ;
-tokens: [], stack: [S(((!x + ((y * z) / k)) == !a))]
+== tokens: [Not, Token(x), Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : []
+   SHIFT : Not
+== tokens: [Token(x), Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [Not]
+   SHIFT : Token(x)
+== tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [Not, Token(x)]
+   REDUCE: Token("x") -> F
+== tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [Not, F(x)]
+   REDUCE: ! F -> F
+== tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [F(!x)]
+   REDUCE: F -> T
+== tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [T(!x)]
+   REDUCE: T (lookahead 1 token, Plus) -> E
+== tokens: [Plus, Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x)]
+   SHIFT : Plus
+== tokens: [Token(y), Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus]
+   SHIFT : Token(y)
+== tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, Token(y)]
+   REDUCE: Token("y") -> F
+== tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, F(y)]
+   REDUCE: F -> T
+== tokens: [Mult, Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T(y)]
+   SHIFT : Mult
+== tokens: [Token(z), Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T(y), Mult]
+   SHIFT : Token(z)
+== tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T(y), Mult, Token(z)]
+   REDUCE: Token("z") -> F
+== tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T(y), Mult, F(z)]
+   REDUCE: F -> T
+== tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T(y), Mult, T(z)]
+   REDUCE: T (* | /) T -> T
+== tokens: [Div, Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T((y * z))]
+   SHIFT : Div
+== tokens: [Token(k), Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T((y * z)), Div]
+   SHIFT : Token(k)
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T((y * z)), Div, Token(k)]
+   REDUCE: Token("k") -> F
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T((y * z)), Div, F(k)]
+   REDUCE: F -> T
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T((y * z)), Div, T(k)]
+   REDUCE: T (* | /) T -> T
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, T(((y * z) / k))]
+   REDUCE: T (lookahead 1 token, Equal) -> E
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [E(!x), Plus, E(((y * z) / k))]
+   REDUCE: E (+ | -) E -> E
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [E((!x + ((y * z) / k)))]
+   REDUCE: E (lookahead 1 token, Equal) -> E
+== tokens: [Equal, Not, Token(a), Semicolon]
+   stack : [C((!x + ((y * z) / k)))]
+   SHIFT : Equal
+== tokens: [Not, Token(a), Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal]
+   SHIFT : Not
+== tokens: [Token(a), Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, Not]
+   SHIFT : Token(a)
+== tokens: [Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, Not, Token(a)]
+   REDUCE: Token("a") -> F
+== tokens: [Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, Not, F(a)]
+   REDUCE: ! F -> F
+== tokens: [Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, F(!a)]
+   REDUCE: F -> T
+== tokens: [Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, T(!a)]
+   REDUCE: T (lookahead 1 token, Semicolon) -> E
+== tokens: [Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, E(!a)]
+   REDUCE: E (lookahead 1 token, Semicolon) -> E
+== tokens: [Semicolon]
+   stack : [C((!x + ((y * z) / k))), Equal, C(!a)]
+   REDUCE: C (==, ||, &&, ...) C -> C
+== tokens: [Semicolon]
+   stack : [C(((!x + ((y * z) / k)) == !a))]
+   REDUCE: C (lookahead 1 token, Semicolon) -> S
+== tokens: [Semicolon]
+   stack : [S(((!x + ((y * z) / k)) == !a))]
+   SHIFT : Semicolon
+== tokens: []
+   stack : [S(((!x + ((y * z) / k)) == !a)), Semicolon]
+   REDUCE: S ; -> S
+== tokens: []
+   stack : [S(((!x + ((y * z) / k)) == !a))]
+
 ((!x + ((y * z) / k)) == !a)

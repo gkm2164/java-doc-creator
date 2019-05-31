@@ -31,16 +31,33 @@ object Main {
     pw.write(renderHtml(
       'html ('lang /= "ko",
         'head (
-          'meta ('charset /= "UTF-8"),
+          'meta ('charset /= "utf-8"),
           'title ("document"),
-          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "doc.css")
+          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/style.css"),
+          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/layout.css"),
+          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/bootstrap.css"),
+          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
+          'script ('src /= "js/jquery.js"),
+          'script ('src /= "js/bootstrap.js"),
+          'script ('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"),
+          'script ('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/java.min.js"),
+          'script ("hljs.initHighlightingOnLoad();")
         ),
         'body (
-          'nav (node.buildNavTree),
-          'div ('class /= "contents",
-            'h1 ("Documentation"),
-            node.print
-          )
+          //          'header ("DA Commons Documentation for Kakao Mini"),
+          'section (
+            'aside ('class /= "sidebar-dark",
+              'nav (
+                'h3 ("Package List"),
+                'ul (node.buildNavTree)
+              )
+            ),
+            'article ('class /= "contents",
+              'h1 (baseDir),
+              node.print
+            )
+          ),
+
         )
       )
       , TextPrettyPrintingConfig.noPrettyPrinting))

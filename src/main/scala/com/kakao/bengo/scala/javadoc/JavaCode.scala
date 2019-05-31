@@ -17,14 +17,11 @@ case class JavaCode(packageName: String,
 
   def show[T]: Node[T] =
     'div (
-      'h3 (s"package: $packageName"),
-      'p (s"total ${defs.length} number of definitions are contained"),
-      defs.sortBy(_.name).map(_.show)
+      defs.sortBy(_.name).map(_.show(Indenter(0)))
     )
 }
 
 object JavaCode {
-
   import com.kakao.bengo.javalang.JavaTokenEnum._
   import com.kakao.bengo.scala.functional.MonadSyntax._
   import com.kakao.bengo.scala.functional.TokenListStateBehavior._
@@ -45,7 +42,7 @@ object JavaCode {
   } yield name
 
   def parseEnum(modifier: JavaModifier): TokenListState[JavaEnumClass] = {
-    def parseEnumInside(name: String, implements: List[String]): TokenListState[JavaEnumClass] = TokenListState(state => {
+    def parseEnumInside(name: String, implements: List[JavaTypeUse]): TokenListState[JavaEnumClass] = TokenListState(state => {
       def loop(acc: List[String]): TokenListState[JavaEnumClass] = TokenListState {
         case JavaSToken(TOKEN, tokenName) :: tail => (for {
           _ <- parseParenthesis(LPAR, RPAR)
@@ -69,7 +66,7 @@ object JavaCode {
 
     for {
       name <- takeString
-      implements <- parseTokensFrom(IMPLEMENTS)
+      implements <- parseTypesFrom(IMPLEMENTS)
       _ <- assertToken(LBRACE)
       cls <- parseEnumInside(name, implements)
     } yield cls
@@ -97,7 +94,9 @@ object JavaCode {
       parseDefs(modifier.setFinal).run(t)
     case JavaSToken(ABSTRACT, _) :: t =>
       parseDefs(modifier.setAbstract).run(t)
-    case JavaSToken(COMMENT_MACRO, v) :: t =>
+    case JavaSToken(COMMENT_MACRO_CODE, v) :: t =>
+      parseDefs(modifier.appendMacro(v)).run(t)
+    case JavaSToken(COMMENT_MACRO_EXPLAIN, v) :: t =>
       parseDefs(modifier.appendMacro(v)).run(t)
     case JavaSToken(CLASS, _) :: t =>
       parseClass(modifier).run(t)
@@ -123,13 +122,6 @@ object JavaCode {
     loop(Nil).run(tokens)
   })
 
-  def parseGenericType: TokenListState[String] = TokenListState {
-    case JavaSToken(LT, _) :: t =>
-      parseParenthesisSkipHead(LT, GT).run(t)
-    case t =>
-      TokenListState.unit("").run(t)
-  }
-
   def parseArrayType(acc: String): TokenListState[String] = TokenListState {
     case JavaSToken(LBRACKET, _) :: JavaSToken(RBRACKET, _) :: t =>
       parseArrayType(acc + "[]").run(t)
@@ -139,16 +131,44 @@ object JavaCode {
       TokenListState.unit(acc).run(t)
   }
 
-  def parseType: TokenListState[String] = for {
-    typename <- takeDotSeparated.map(x => x.mkString("."))
-    genericName <- parseGenericType
+  def parseTypeDesignatorRemains(acc: List[JavaTypeDesignate]): TokenListState[List[JavaTypeDesignate]] = TokenListState {
+    case JavaSToken(COMMA, _) :: t => (for {
+      typeDesignate <- parseTypeDesignator
+      remains <- parseTypeDesignatorRemains(acc :+ typeDesignate)
+    } yield remains).run(t)
+    case t => TokenListState.unit(acc).run(t)
+  }
+
+  def parseGenerics: TokenListState[List[JavaTypeDesignate]] = TokenListState {
+    case JavaSToken(LT, _) :: t => (for {
+      typeDesignate <- parseTypeDesignator
+      list <- parseTypeDesignatorRemains(List(typeDesignate))
+      _ <- assertToken(GT)
+    } yield list).run(t)
+    case t => TokenListState.unit(Nil).run(t)
+  }
+
+  def parseTypeRelation: TokenListState[Option[String]] = TokenListState {
+    case JavaSToken(EXTENDS, _) :: JavaSToken(TOKEN, v) :: t => TokenListState.unit(Some(v)).run(t)
+    case JavaSToken(SUPER, _) :: JavaSToken(TOKEN, v) :: t => TokenListState.unit(Some(v)).run(t)
+    case t => TokenListState.unit(None).run(t)
+  }
+
+  def parseTypeDesignator: TokenListState[JavaTypeDesignate] = for {
+    typename <- takeDotSeparated.map(_.mkString("."))
+    extend <- parseTypeRelation
+    generics <- parseGenerics
+  } yield JavaTypeDesignate(typename, extend, generics)
+
+  def parseType: TokenListState[JavaTypeUse] = for {
+    typeDesignator <- parseTypeDesignator
     arrayNotations <- parseArrayType("")
-  } yield typename + genericName + arrayNotations
+  } yield JavaTypeUse(typeDesignator, arrayNotations)
 
   def takeToken[A](x: A): TokenListState[A] = TokenListState(tokens => (x, tokens.tail)) // 토큰 한개를 흘려보냄
 
   def parseArgs: TokenListState[List[JavaArgument]] = TokenListState(tokens => {
-    def parseArgName(typename: String, arg: JavaArgument): TokenListState[JavaArgument] =
+    def parseArgName(typename: JavaTypeUse, arg: JavaArgument): TokenListState[JavaArgument] =
       TokenListState(tokens => (arg.copy(argumentType = typename, name = tokens.head.value), tokens.tail))
 
     def parseArg(javaArg: JavaArgument): TokenListState[JavaArgument] = TokenListState {
@@ -206,7 +226,7 @@ object JavaCode {
       case h :: _ => throw new TokenNotAcceptedException(h.toString)
     }
 
-    def parseMemberAfterName(modifier: JavaModifier, typename: String, name: String): TokenListState[JavaMembers] = TokenListState {
+    def parseMemberAfterName(modifier: JavaModifier, typename: JavaTypeUse, name: String): TokenListState[JavaMembers] = TokenListState {
       case Nil => throw new TokenNotAcceptedException("nil list!")
       case JavaSToken(LPAR, _) :: t => (for {
         args <- parseArgs
@@ -223,15 +243,15 @@ object JavaCode {
 
     for {
       typename <- parseType
-      name <- takeTokenOrElse(TOKEN, typename)
+      name <- takeTokenOrElse(TOKEN, typename.show)
       after <- parseMemberAfterName(modifier, typename, name)
     } yield after
   }
 
   // LL(1)의 한계...ㅠㅠ, commaSeparatedType := type "," commaSeparatedType
   //                                       | type
-  def separateByType: TokenListState[List[String]] = TokenListState(tokens => {
-    def loop(acc: List[String]): TokenListState[List[String]] = for {
+  def separateByType: TokenListState[List[JavaTypeUse]] = TokenListState(tokens => {
+    def loop(acc: List[JavaTypeUse]): TokenListState[List[JavaTypeUse]] = for {
       typename <- parseType
       types <- TokenListState {
         case JavaSToken(COMMA, _) :: t =>
@@ -258,14 +278,14 @@ object JavaCode {
 
   def parseClass(modifier: JavaModifier): TokenListState[JavaClass] = for {
     name <- takeString
-    generics <- parseParenthesis(LT, GT)
-    extendInh <- parseTokensFrom(EXTENDS)
-    implementH <- parseTokensFrom(IMPLEMENTS)
+    generics <- parseParenthesisList(LT, GT)
+    extendInh <- parseTypesFrom(EXTENDS)
+    implementH <- parseTypesFrom(IMPLEMENTS)
     _ <- assertToken(LBRACE)
     defs <- parseClassInside(s"${modifier.fullPath}.$name", Nil)
   } yield JavaClass(name, modifier.copy(generic = generics), defs, extendInh, implementH)
 
-  def parseTokensFrom(targetToken: JavaTokenEnum): TokenListState[List[String]] = TokenListState {
+  def parseTypesFrom(targetToken: JavaTokenEnum): TokenListState[List[JavaTypeUse]] = TokenListState {
     case JavaSToken(token, _) :: t if token == targetToken =>
       separateByType.run(t)
     case tails => (Nil, tails)
@@ -282,15 +302,15 @@ object JavaCode {
 
   def parseAnnotationInterface(modifier: JavaModifier): TokenListState[JavaAnnotationInterface] = for {
     name <- takeString
-    extendInh <- parseTokensFrom(EXTENDS)
+    extendInh <- parseTypesFrom(EXTENDS)
     _ <- assertToken(LBRACE)
     defs <- parseInterfaceDefs(s"${modifier.fullPath}.$name", Nil)
   } yield JavaAnnotationInterface(name, modifier, defs, extendInh)
 
   def parseInterface(modifier: JavaModifier): TokenListState[JavaInterface] = for {
     name <- takeString
-    generic <- parseParenthesis(LT, GT)
-    extendInh <- parseTokensFrom(EXTENDS)
+    generic <- parseParenthesisList(LT, GT)
+    extendInh <- parseTypesFrom(EXTENDS)
     _ <- assertToken(LBRACE)
     defs <- parseInterfaceDefs(s"${modifier.fullPath}.$name", Nil)
   } yield JavaInterface(name, modifier.copy(generic = generic), defs, extendInh)
@@ -323,21 +343,45 @@ object JavaCode {
     }
   })
 
-  def parseParenthesisSkipHead(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): TokenListState[String] = TokenListState(tokens => {
-    def loop(cnt: Int, acc: String): TokenListState[String] = TokenListState {
+
+  def parseParenthesisList(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): TokenListState[List[String]] = TokenListState(tokens => {
+    def loop(cnt: Int, works: String, acc: List[String]): TokenListState[List[String]] = TokenListState {
+      case Nil =>
+        TokenListState.unit(if (works != "") acc :+ works else acc).run(Nil)
+      case JavaSToken(lp, _) :: t if lp == leftPar =>
+        loop(cnt + 1, works + lp.value, acc).run(t)
+      case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar =>
+        TokenListState.unit(acc).run(t)
+      case JavaSToken(rp, _) :: t if rp == rightPar =>
+        loop(cnt - 1, "", acc :+ works + rp.value).run(t)
+      case JavaSToken(_, v) :: t =>
+        loop(cnt, "", acc :+ v).run(t)
+    }
+
+    tokens match {
+      case JavaSToken(lp, _) :: t if lp == leftPar =>
+        loop(0, "", Nil).run(t)
+      case _ =>
+        TokenListState.unit(Nil).run(tokens)
+    }
+  })
+
+
+  def parseParenthesisSkipHead(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): TokenListState[List[String]] = TokenListState(tokens => {
+    def loop(cnt: Int, acc: List[String]): TokenListState[List[String]] = TokenListState {
       case Nil =>
         TokenListState.unit(acc).run(Nil)
       case JavaSToken(lp, _) :: t if lp == leftPar =>
-        loop(cnt + 1, acc + lp.value).run(t)
+        loop(cnt + 1, acc :+ lp.value).run(t)
       case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar =>
-        TokenListState.unit(acc + rp.value).run(t)
+        TokenListState.unit(acc).run(t)
       case JavaSToken(rp, _) :: t if rp == rightPar =>
-        loop(cnt - 1, acc + rp.value).run(t)
+        loop(cnt - 1, acc :+ rp.value).run(t)
       case JavaSToken(_, v) :: t =>
-        loop(cnt, acc + v).run(t)
+        loop(cnt, acc :+ v).run(t)
     }
 
-    loop(0, leftPar.value).run(tokens)
+    loop(0, Nil).run(tokens)
   })
 
   def parseUntil(until: JavaTokenEnum): TokenListState[String] = TokenListState(tokens => {
