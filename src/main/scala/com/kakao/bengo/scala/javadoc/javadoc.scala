@@ -131,9 +131,9 @@ package object javadoc {
       childDefinitions(indenter)
     )
 
-    def showExtends[T]: Node[T] = if (inheritClass.isEmpty) "" else 'span ('span ('class /= "reserved-keyword", " extends "), inheritClass.map(x => escapeLTGT(x.show)).mkString(", "))
+    def showExtends[T]: Node[T] = if (inheritClass.isEmpty) "" else 'span ('span ('class /= "reserved-keyword", " extends "), inheritClass.map(x => x.show).mkString(", "))
 
-    def showImplements[T]: Node[T] = if (implementInterfaces.isEmpty) "" else 'span ('span ('class /= "reserved-keyword", " implements "), implementInterfaces.map(x => escapeLTGT(x.show)).mkString(", "))
+    def showImplements[T]: Node[T] = if (implementInterfaces.isEmpty) "" else 'span ('span ('class /= "reserved-keyword", " implements "), implementInterfaces.map(x => x.show).mkString(", "))
 
     def childDefinitions[T](indenter: Indenter): Node[T] = 'div (definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indenter.inc)))
 
@@ -151,7 +151,7 @@ package object javadoc {
       'h3 ('class /= "java-def", 'span ('class /= "reserved-keyword", "interface "), s" $name"),
       if (inheritClass.nonEmpty) 'div (
         'b ("inherit classes"),
-        'ul (inheritClass.map(x => 'li (escapeLTGT(x.show))))
+        'ul (inheritClass.map(x => 'li (x.show)))
       ) else Empty
     )
 
@@ -180,10 +180,9 @@ package object javadoc {
     override def show[T](indenter: Indenter): Node[T] = 'div ('style /= s"margin-left: ${indenter.px}ch;",
       'a ('id /= id),
       'span ('class /= "full-path", modifier.fullPath),
-      'p ('class /= "java-def", modifier.show, 'span ('class /= "type-keyword", escapeLTGT(memberType.show)), " ", 'span ('class /= "member-name", name)),
+      'p ('class /= "java-def", modifier.show, memberType.show, " ", 'span ('class /= "member-name", name)),
       'pre ('class /= "code", modifier.commentMacros.filter(_.startsWith("//=")).map(_.drop(3)).mkString("\n")),
     )
-
   }
 
   case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: List[JavaArgument]) extends JavaMembers {
@@ -197,7 +196,7 @@ package object javadoc {
       'div ('style /= s"margin-left: ${indenter.px}ch;",
         'a ('id /= id),
         'span ('class /= "full-path", modifier.fullPath),
-        'p ('class /= "java-def", modifier.show, 'span ('class /= "type-keyword", escapeLTGT(returnType.show)),
+        'p ('class /= "java-def", modifier.show, returnType.show,
           if (name == "" || name == returnType.show) "" else 'span ('class /= "method-name", s" $name"), "(",
           args.map(x => renderHtml(x.show, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "), ")"),
         'span (modifier.commentMacros.filter(_.startsWith("//!")).map(_.drop(3)).mkString("\n")),
@@ -206,9 +205,10 @@ package object javadoc {
 
 
   case class JavaTypeDesignate(name: String, extend: Option[String], generics: List[JavaTypeDesignate]) {
-    def show: String = s"$name${if (generics.nonEmpty) "<" + generics.map(_.show).mkString(", ") + ">" else ""}"
+    import levsha.text.renderHtml
+    def show: String = s"${renderHtml(showNode, TextPrettyPrintingConfig.noPrettyPrinting)}${if (generics.nonEmpty) "<" + generics.map(_.show).mkString(", ") + ">" else ""}"
 
-    def describeGenerics[T]: Node[T] = 'span ("<", generics.map(_.show), ">")
+    def describeGenerics[T]: Node[T] = 'span ("<", generics.map(_.showNode), ">")
 
     def showNode[T]: Node[T] = Seq(
       'span ('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty
@@ -229,7 +229,7 @@ package object javadoc {
     def show[T]: Node[T] = 'span (
       if (annotations.nonEmpty) annotations.map(x => 'span ('class /= "annotation-def", s"@$x ")) else Empty,
       if (isFinal) 'span ('class /= "reserved-keyword", "final ") else Empty,
-      'span ('class /= "type-keyword", escapeLTGT(s"${argumentType.show} ")), name
+      'span ('class /= "type-keyword", s"${argumentType.show} "), name
     )
   }
 
