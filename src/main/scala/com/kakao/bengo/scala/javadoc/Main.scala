@@ -15,13 +15,13 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    List(("/Users/ben.go/go-doc-creator/src/main/java", "javadoc-tokenizer.html"),
-      ("/Users/ben.go/java/da-commons/da-intent-handler/src/main/java", "javadoc-da-commons-intent-handler.html"),
-      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html"))
-      .foreach { case (basedir, outfile) => createDoc(basedir, outfile) }
+    List(("/Users/ben.go/go-doc-creator/src/main/java", "javadoc-tokenizer.html", "Doc code generator"),
+      ("/Users/ben.go/java/da-commons/da-intent-handler/src/main/java", "javadoc-da-commons-intent-handler.html", "DA commons 문서"),
+      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html", "DA core 문서"))
+      .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 
-  def createDoc(baseDir: String, outFile: String): Unit = {
+  def createDoc(baseDir: String, outFile: String, name: String): Unit = {
     import levsha.text.symbolDsl._
     import levsha.text.renderHtml
 
@@ -53,7 +53,7 @@ object Main {
               )
             ),
             'article ('class /= "contents",
-              'h1 (baseDir),
+              'h1 (name),
               node.print
             )
           ),
