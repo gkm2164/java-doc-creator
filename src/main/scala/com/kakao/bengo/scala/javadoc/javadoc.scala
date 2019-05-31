@@ -206,13 +206,14 @@ package object javadoc {
 
   case class JavaTypeDesignate(name: String, extend: Option[String], generics: List[JavaTypeDesignate]) {
     import levsha.text.renderHtml
-    def show: String = s"${renderHtml(showNode, TextPrettyPrintingConfig.noPrettyPrinting)}${if (generics.nonEmpty) "<" + generics.map(_.show).mkString(", ") + ">" else ""}"
+    def show: String = renderHtml(showNode, TextPrettyPrintingConfig.noPrettyPrinting)
 
-    def describeGenerics[T]: Node[T] = 'span ("<", generics.map(_.showNode), ">")
+    def describeGenerics[T]: Node[T] = 'span ("<", generics.map(x => renderHtml(x.showNode, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "), ">")
 
-    def showNode[T]: Node[T] = Seq(
-      'span ('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty
-    )
+    def showNode[T]: Node[T] = {
+      if (List("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span('class /= "reserved-keyword", name))
+      else Seq('span ('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty)
+    }
   }
 
   case class JavaTypeUse(typeDesignate: JavaTypeDesignate, arrayNotations: String) {
@@ -229,7 +230,7 @@ package object javadoc {
     def show[T]: Node[T] = 'span (
       if (annotations.nonEmpty) annotations.map(x => 'span ('class /= "annotation-def", s"@$x ")) else Empty,
       if (isFinal) 'span ('class /= "reserved-keyword", "final ") else Empty,
-      'span ('class /= "type-keyword", s"${argumentType.show} "), name
+      'span (s"${argumentType.show} "), name
     )
   }
 
