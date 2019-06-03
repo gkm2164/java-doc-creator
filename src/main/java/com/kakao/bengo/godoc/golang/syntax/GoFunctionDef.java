@@ -8,7 +8,7 @@ public class GoFunctionDef implements GoSomeDef {
     public String receiverType; //리시버 타입 명
     public String funcName; // 함수 명
     public String returnType;
-    public List<GoFuncArg> args;
+    public final List<GoFuncArg> args;
 
     public GoFunctionDef() {
         receiverName = "";

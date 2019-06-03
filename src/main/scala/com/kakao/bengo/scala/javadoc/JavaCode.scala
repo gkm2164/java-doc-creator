@@ -15,13 +15,11 @@ case class JavaCode(packageName: String,
 
   def appendDefinition(javaDefinition: JavaDefinition): JavaCode = this.copy(defs = defs :+ javaDefinition)
 
-  def show[T]: Node[T] =
-    'div (
-      defs.sortBy(_.name).map(_.show(Indenter(0)))
-    )
+  def show[T]: Node[T] = 'div (defs.sortBy(_.name).map(_.show(Indent(0))))
 }
 
 object JavaCode {
+
   import com.kakao.bengo.javalang.JavaTokenEnum._
   import com.kakao.bengo.scala.functional.MonadSyntax._
   import com.kakao.bengo.scala.functional.TokenListStateBehavior._
@@ -38,14 +36,14 @@ object JavaCode {
 
   def parseAnnotation: TokenListState[String] = for {
     name <- parseAnnotationName("")
-    _ <- parseParenthesis(LPAR, RPAR)
+    _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
   } yield name
 
   def parseEnum(modifier: JavaModifier): TokenListState[JavaEnumClass] = {
     def parseEnumInside(name: String, implements: List[JavaTypeUse]): TokenListState[JavaEnumClass] = TokenListState(state => {
       def loop(acc: List[String]): TokenListState[JavaEnumClass] = TokenListState {
         case JavaSToken(TOKEN, tokenName) :: tail => (for {
-          _ <- parseParenthesis(LPAR, RPAR)
+          _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
           enumClass <- TokenListState {
             case Nil => throw new TokenNotAcceptedException("nil list")
             case JavaSToken(COMMA, _) :: t =>
@@ -94,9 +92,7 @@ object JavaCode {
       parseDefs(modifier.setFinal).run(t)
     case JavaSToken(ABSTRACT, _) :: t =>
       parseDefs(modifier.setAbstract).run(t)
-    case JavaSToken(COMMENT_MACRO_CODE, v) :: t =>
-      parseDefs(modifier.appendMacro(v)).run(t)
-    case JavaSToken(COMMENT_MACRO_EXPLAIN, v) :: t =>
+    case JavaSToken(COMMENT_MACRO_CODE | COMMENT_MACRO_EXPLAIN | COMMENT_MACRO_NAME, v) :: t =>
       parseDefs(modifier.appendMacro(v)).run(t)
     case JavaSToken(CLASS, _) :: t =>
       parseClass(modifier).run(t)
@@ -185,7 +181,7 @@ object JavaCode {
     }
 
     def loop(acc: List[JavaArgument]): TokenListState[List[JavaArgument]] = TokenListState {
-      case JavaSToken(RPAR, _) :: t =>
+      case JavaSToken(RIGHT_PARENTHESIS, _) :: t =>
         TokenListState.unit(acc).run(t)
       case JavaSToken(COMMA, _) :: t =>
         loop(acc).run(t)
@@ -228,7 +224,7 @@ object JavaCode {
 
     def parseMemberAfterName(modifier: JavaModifier, typename: JavaTypeUse, name: String): TokenListState[JavaMembers] = TokenListState {
       case Nil => throw new TokenNotAcceptedException("nil list!")
-      case JavaSToken(LPAR, _) :: t => (for {
+      case JavaSToken(LEFT_PARENTHESIS, _) :: t => (for {
         args <- parseArgs
         _ <- dropLater
       } yield JavaMethod(modifier, name, typename, args)).run(t)

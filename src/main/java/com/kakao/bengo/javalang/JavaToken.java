@@ -7,7 +7,7 @@ public class JavaToken {
     private JavaTokenEnum e;
     private String value;
 
-    private static Map<String, JavaTokenEnum> token;
+    private static final Map<String, JavaTokenEnum> token;
 
     static {
         token = new HashMap<>();
@@ -34,10 +34,10 @@ public class JavaToken {
     }
 
     public JavaTokenEnum getE() {
-        return e;
+        return this.e;
     }
 
     public String getValue() {
-        return value;
+        return this.value;
     }
 }

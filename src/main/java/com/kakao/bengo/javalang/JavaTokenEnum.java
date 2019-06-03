@@ -22,8 +22,8 @@ public enum JavaTokenEnum {
     CHAR("", true),
     ANNOTATION("@"),
     ANNOTATION_INTERFACE("@interface"),
-    LPAR("("),
-    RPAR(")"),
+    LEFT_PARENTHESIS("("),
+    RIGHT_PARENTHESIS(")"),
     LBRACKET("["),
     RBRACKET("]"),
     LBRACE("{"),
@@ -37,20 +37,21 @@ public enum JavaTokenEnum {
     SUBSTITUTE("="),
     EQUAL("=="),
     PLUS("+"),
-    PLUSACC("+="),
+    PLUS_ACC("+="),
     INC("++"),
     MINUS("-"),
-    MINUSACC("-="),
+    MINUS_ACC("-="),
     DEC("--"),
     MULTIPLY("*"),
-    MULTIPLYACC("*="),
+    MULTIPLY_ACC("*="),
     SEMICOLON(";"),
     DIVIDE("/"),
-    DIVIDEACC("/="),
+    DIVIDE_ACC("/="),
     COMMENT_BLOCK("/*", "*/", false),
     COMMENT("//", "\n", false),
     COMMENT_MACRO_EXPLAIN("//!", "\n"),
     COMMENT_MACRO_CODE("//=", "\n"),
+    COMMENT_MACRO_NAME("//name", "\n"),
     DOUBLE_QUOTE("\"", "\"", STRING),
     QUOTE("'", "'", CHAR),
     COMMA(","),
@@ -76,8 +77,6 @@ public enum JavaTokenEnum {
         this.saveTo = this;
     }
 
-
-
     JavaTokenEnum(String value, String until, boolean allowEscape) {
         this.value = value;
         this.isKeyword = false;
@@ -95,8 +94,8 @@ public enum JavaTokenEnum {
         this.saveTo = saveTo;
     }
 
-    public String value;
-    boolean isKeyword;
+    public final String value;
+    final boolean isKeyword;
     boolean takeUntil = false;
     String until;
     JavaTokenEnum saveTo;

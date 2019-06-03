@@ -33,12 +33,13 @@ object Main {
         'head (
           'meta ('charset /= "utf-8"),
           'title ("document"),
+          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/animation.css"),
           'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/style.css"),
-          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/layout.css"),
           'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/bootstrap.css"),
           'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
           'script ('src /= "js/jquery.js"),
           'script ('src /= "js/bootstrap.js"),
+          'script ('src /= "js/main.js"),
           'script ('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"),
           'script ('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/java.min.js"),
           'script ("hljs.initHighlightingOnLoad();")
@@ -46,13 +47,14 @@ object Main {
         'body (
           //          'header ("DA Commons Documentation for Kakao Mini"),
           'section (
-            'aside ('class /= "sidebar-dark",
+            'aside ('id /= "sidebar", 'class /= "sidebar-dark",
               'nav (
                 'h3 ("Package List"),
                 'ul (node.buildNavTree)
               )
             ),
-            'article ('class /= "contents",
+            'div ('id /= "split-bar", 'br ('class /= "clearfix")),
+            'article ('id /= "main", 'class /= "contents",
               'h1 (name),
               node.print
             )
@@ -62,6 +64,8 @@ object Main {
       )
       , TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
+
+    node.createHashMap.keys.toList.sorted.foreach(println)
   }
 
   def currentPackage(currentHandle: File): CodeNonLeaf = {

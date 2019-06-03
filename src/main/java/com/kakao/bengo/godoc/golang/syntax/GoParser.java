@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 public class GoParser {
     //= Go 토큰 데이터 타입
     static class GoToken {
-        GoTokenEnum e;
-        String value;
-        int charAt;
-        int lineAt;
+        final GoTokenEnum e;
+        final String value;
+        final int charAt;
+        final int lineAt;
 
         GoToken(GoTokenEnum e, String value, int charAt, int lineAt) {
             this.e = e;
@@ -63,9 +63,9 @@ public class GoParser {
             this.value = v;
         }
 
-        String value;
+        final String value;
 
-        public boolean isOneOf(GoTokenEnum... arr) {
+        boolean isOneOf(GoTokenEnum... arr) {
             for (GoTokenEnum e : arr) {
                 if (this == e) {
                     return true;
@@ -76,8 +76,8 @@ public class GoParser {
         }
     }
 
-    private static HashMap<Character, GoTokenEnum> charTokenMap = new HashMap<>();
-    private static HashSet<Character> specialChars = new HashSet<>();
+    private static final HashMap<Character, GoTokenEnum> charTokenMap = new HashMap<>();
+    private static final HashSet<Character> specialChars = new HashSet<>();
 
     static {
         charTokenMap.put('(', GoTokenEnum.LBRACKET);
@@ -131,23 +131,11 @@ public class GoParser {
         ret.toArray(r);
         return r;
     }
-//
-//    public static void debugToken(GoToken[] tokens) {
-//        int num = 0;
-//        for (GoToken e : tokens) {
-//            System.out.print(num++ + ": " + e.e);
-//            if (e.e == GoTokenEnum.STRING) {
-//                System.out.print("(" + e.value + ")");
-//            }
-//            System.out.println();
-//        }
-//    }
-
     private static class GoTokenIterator implements Iterator<GoToken> {
         private int idx = 0;
         private GoToken[] tokens = null;
 
-        private Logger log = Logger.getLogger("GoTokenIterator");
+        private final Logger log = Logger.getLogger("GoTokenIterator");
 
         GoTokenIterator(GoToken[] tokens) {
             this.tokens = tokens;

@@ -31,9 +31,11 @@ package object javadoc {
 
     def name: String
 
-    def show[T](indenter: Indenter): Node[T]
+    def show[T](indent: Indent): Node[T]
 
     def modifier: JavaModifier
+
+    def representName: String
   }
 
   sealed trait JavaTypeDef extends JavaDefinition {
@@ -44,15 +46,15 @@ package object javadoc {
 
   trait JavaMembers extends JavaDefinition
 
-  case class Indenter(indent: Int, tab: String = "&nbsp;&nbsp;") {
+  case class Indent(indent: Int, tab: String = "&nbsp;&nbsp;") {
 
     implicit class StringExtend(s: String) {
       def repeat(n: Int): String = if (n > 0) s + repeat(n - 1) else ""
     }
 
-    def px: Int = indent * 4
+    def ch: Int = indent * 4
 
-    def inc: Indenter = Indenter(indent + 1, tab)
+    def inc: Indent = Indent(indent + 1, tab)
   }
 
   case class JavaSToken(tokenType: JavaTokenEnum, value: String)
@@ -98,13 +100,15 @@ package object javadoc {
                            implements: List[JavaTypeUse]) extends JavaTypeDef {
     lazy val id: String = (1 to 10).map(_ => ASCIIValues(Random.nextInt(ASCIIValues.length))).mkString("")
 
-    override def show[T](indenter: Indenter): Node[T] =
-      'div ('style /= s"margin-left: ${indenter.px}ch;",
+    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.drop("//name".length).trim).getOrElse(name)
+
+    override def show[T](indent: Indent): Node[T] =
+      'div ('id /= s"def-$id", 'style /= s"margin-left: ${indent.ch}ch;",
         'a ('id /= id),
-        'h3 ('class /= "java-def", 'span ('class /= "reserved-keyword", "enum"), name),
+        'h4 ('class /= "java-def", /*'span ('class /= "reserved-keyword", "enum"), */ name),
         'b ("enum values"),
         'ul ('class /= "enum-values java-def", enumTokens.map(x => 'li (x))),
-        'div (definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indenter.inc))))
+        'div (definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indent.inc))))
 
     override def inheritClass: List[JavaTypeUse] = Nil
 
@@ -120,22 +124,26 @@ package object javadoc {
     lazy val id: String = (1 to 10).map(_ => ASCIIValues(Random.nextInt(ASCIIValues.length))).mkString("")
 
     lazy val exampleCodes: List[String] = modifier.commentMacros.filter(_.startsWith("//="))
+    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
 
-    override def show[T](indenter: Indenter): Node[T] = 'div ('style /= s"margin-left: ${indenter.px}ch;",
+    override def show[T](indent: Indent): Node[T] = 'div ('id /= s"def-$id", 'style /= s"margin-left: ${indent.ch}ch;",
       'a ('id /= id),
-      'h3 ('class /= "java-def", 'span ('class /= "reserved-keyword", "class "), s" $name", if (modifier.generic.nonEmpty) 'span ("<", modifier.generic.map(escapeLTGT), ">") else Empty),
+      if (representName != name) 'h6 ('class /= "class-role", representName) else Empty,
+      'h5 ('class /= "java-def class-def" ,/* 'span ('class /= "reserved-keyword", "class ") ,*/ s" $name", if (modifier.generic.nonEmpty) 'span ("<", modifier.generic.map(escapeLTGT), ">") else Empty),
       showExtends,
       showImplements,
       'p (modifier.commentMacros.filter(_.startsWith("//!")).map(_.drop(3)).mkString("\n")),
-      if (exampleCodes.nonEmpty) 'pre ('code ('class /= "java", modifier.commentMacros.filter(_.startsWith("//=")).map(_.drop(3)).mkString("\n"))) else Empty,
-      childDefinitions(indenter)
+      if (exampleCodes.nonEmpty)
+        'pre ('code ('class /= "java",
+          modifier.commentMacros.filter(_.startsWith("//=")).map(_.drop(3)).mkString("\n"))) else Empty,
+      childDefinitions(indent)
     )
 
     def showExtends[T]: Node[T] = if (inheritClass.isEmpty) "" else 'span ('span ('class /= "reserved-keyword", " extends "), inheritClass.map(x => x.show).mkString(", "))
 
     def showImplements[T]: Node[T] = if (implementInterfaces.isEmpty) "" else 'span ('span ('class /= "reserved-keyword", " implements "), implementInterfaces.map(x => x.show).mkString(", "))
 
-    def childDefinitions[T](indenter: Indenter): Node[T] = 'div (definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indenter.inc)))
+    def childDefinitions[T](indent: Indent): Node[T] = 'div (definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indent.inc)))
 
   }
 
@@ -144,11 +152,13 @@ package object javadoc {
                            inheritClass: List[JavaTypeUse]) extends JavaTypeDef {
     lazy val id: String = (1 to 10).map(_ => ASCIIValues(Random.nextInt(ASCIIValues.length))).mkString("")
 
+    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
+
     override def implementInterfaces: List[JavaTypeUse] = Nil
 
-    override def show[T](indenter: Indenter): Node[T] = 'div ('style /= s"margin-left: ${indenter.px}ch;",
+    override def show[T](indent: Indent): Node[T] = 'div ('id /= s"def-$id", 'style /= s"margin-left: ${indent.ch}ch;",
       'a ('id /= id),
-      'h3 ('class /= "java-def", 'span ('class /= "reserved-keyword", "interface "), s" $name"),
+      'h5 ('class /= "java-def interface-def" /*, 'span ('class /= "reserved-keyword", "interface ")*/ , s" $name"),
       if (inheritClass.nonEmpty) 'div (
         'b ("inherit classes"),
         'ul (inheritClass.map(x => 'li (x.show)))
@@ -161,23 +171,25 @@ package object javadoc {
                                      definitions: List[JavaDefinition],
                                      inheritClass: List[JavaTypeUse]) extends JavaTypeDef {
     lazy val id: String = (1 to 10).map(_ => ASCIIValues(Random.nextInt(ASCIIValues.length))).mkString("")
+    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
 
     override def implementInterfaces: List[JavaTypeUse] = Nil
 
-    override def show[T](indenter: Indenter): Node[T] = 'div ('style /= s"margin-left: ${indenter.px}ch;",
+    override def show[T](indent: Indent): Node[T] = 'div ('id /= s"def-$id", 'style /= s"margin-left: ${indent.ch}ch;",
       'a ('id /= id),
-      'h3 ('class /= "java-def", 'span ('class /= "reserved-keyword", "@interface"), s" $name")
+      'h5 ('class /= "java-def annotation-use", s"@$name"),
     )
   }
 
   case class JavaMember(modifier: JavaModifier, name: String, memberType: JavaTypeUse) extends JavaMembers {
     lazy val id: String = (1 to 10).map(_ => ASCIIValues(Random.nextInt(ASCIIValues.length))).mkString("")
+    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
 
     def setName(n: String): JavaMember = this.copy(name = n)
 
     def setType(t: JavaTypeUse): JavaMember = this.copy(memberType = t)
 
-    override def show[T](indenter: Indenter): Node[T] = 'div ('style /= s"margin-left: ${indenter.px}ch;",
+    override def show[T](indent: Indent): Node[T] = 'div ('id /= s"def-$id", 'style /= s"margin-left: ${indent.ch}ch;",
       'a ('id /= id),
       'span ('class /= "full-path", modifier.fullPath),
       'p ('class /= "java-def", modifier.show, memberType.show, " ", 'span ('class /= "member-name", name)),
@@ -190,10 +202,12 @@ package object javadoc {
 
     import levsha.text.renderHtml
 
-    lazy val exampleCode = modifier.commentMacros.filter(_.startsWith("//="))
+    lazy val exampleCode: List[String] = modifier.commentMacros.filter(_.startsWith("//="))
 
-    override def show[T](indenter: Indenter): Node[T] =
-      'div ('style /= s"margin-left: ${indenter.px}ch;",
+    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
+
+    override def show[T](indent: Indent): Node[T] =
+      'div ('id /= s"def-$id", 'style /= s"margin-left: ${indent.ch}ch;",
         'a ('id /= id),
         'span ('class /= "full-path", modifier.fullPath),
         'p ('class /= "java-def", modifier.show, returnType.show,
@@ -205,27 +219,32 @@ package object javadoc {
 
 
   case class JavaTypeDesignate(name: String, extend: Option[String], generics: List[JavaTypeDesignate]) {
+
     import levsha.text.renderHtml
+
     def show: String = renderHtml(showNode, TextPrettyPrintingConfig.noPrettyPrinting)
 
-    def describeGenerics[T]: Node[T] = 'span ("<", generics.map(x => renderHtml(x.showNode, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "), ">")
+    def genericSymbol[T](word: String): Node[T] = 'span ('class /= "generic-symbol", word)
+
+    def describeGenerics[T]: Node[T] = 'span (
+      genericSymbol("&lt;"),
+      generics.map(x => renderHtml(x.showNode, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "),
+      genericSymbol("&gt;"))
 
     def showNode[T]: Node[T] = {
-      if (List("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span('class /= "reserved-keyword", name))
+      if (List("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span ('class /= "reserved-keyword", name))
       else Seq('span ('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty)
     }
   }
 
   case class JavaTypeUse(typeDesignate: JavaTypeDesignate, arrayNotations: String) {
-
     def show: String = s"${typeDesignate.show}$arrayNotations"
-
   }
 
   case class JavaArgument(annotations: List[String], isFinal: Boolean, name: String, argumentType: JavaTypeUse) {
     def setFinal: JavaArgument = copy(isFinal = true)
 
-    def appendAnnotation(annos: String): JavaArgument = copy(annotations = annotations :+ annos)
+    def appendAnnotation(annotation: String): JavaArgument = copy(annotations = annotations :+ annotation)
 
     def show[T]: Node[T] = 'span (
       if (annotations.nonEmpty) annotations.map(x => 'span ('class /= "annotation-def", s"@$x ")) else Empty,

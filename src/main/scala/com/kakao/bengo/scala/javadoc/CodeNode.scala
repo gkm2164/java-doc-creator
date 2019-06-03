@@ -9,6 +9,8 @@ sealed trait CodeNode {
   def print[T]: Node[T]
 
   def buildNavTree[T]: Node[T]
+
+  def createHashMap: Map[String, List[JavaDefinition]]
 }
 
 case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken]) extends CodeNode {
@@ -23,29 +25,22 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
     import com.kakao.bengo.javalang.JavaTokenEnum._
     def recur[U](definition: JavaDefinition): Node[U] = {
       definition match {
-        case JavaClass(className, modifier, definitions, _, _) if modifier.access == PUBLIC =>
-          'li ('a ('class /= "class-name", 'href /= s"#${definition.id}", 'b (className)),
-            'ul (definitions.sortBy(_.name).map(recur))
-          )
-        case JavaEnumClass(enumClassName, modifier, _, definitions, _) if modifier.access == PUBLIC =>
-          'li ('a ('class /= "class-name", 'href /= s"#${definition.id}", enumClassName),
-            'ul (definitions.sortBy(_.name).map(recur))
-          )
-        case JavaInterface(interfaceName, modifier, definitions, _) if modifier.access == PUBLIC =>
-          'li ('a ('href /= s"#${definition.id}", interfaceName),
-            'ul (definitions.sortBy(_.name).map(recur))
-          )
+        case JavaClass(_, modifier, definitions, _, _) if modifier.access == PUBLIC =>
+          'li ('span ('class /= "class-name", 'onclick /= s"highlightBlock('${definition.id}')", 'b (definition.representName)),
+            'ul (definitions.sortBy(_.name).map(recur)))
+        case JavaEnumClass(_, modifier, _, definitions, _) if modifier.access == PUBLIC =>
+          'li ('span ('class /= "class-name", 'onclick /= s"highlightBlock('${definition.id}')",  definition.representName),
+            'ul (definitions.sortBy(_.name).map(recur)))
+        case JavaInterface(_, modifier, definitions, _) if modifier.access == PUBLIC =>
+          'li ('span ('class /= "class-name", 'onclick /= s"highlightBlock('${definition.id}')", definition.representName),
+            'ul (definitions.sortBy(_.name).map(recur)))
         case JavaAnnotationInterface(annotationInterfaceName, modifier, definitions, _) if modifier.access == PUBLIC =>
-          'li ('a ('href /= s"#${definition.id}", annotationInterfaceName),
-            'ul (definitions.sortBy(_.name).map(recur))
-          )
+          'li ('span ('class /= "class-name", 'onclick /= s"highlightBlock('${definition.id}')", annotationInterfaceName),
+            'ul (definitions.sortBy(_.name).map(recur)))
         case JavaMethod(modifier, methodName, _, args) if modifier.access == PUBLIC =>
-          'li ('a ('class /= "method-name", 'href /= s"#${definition.id}", s" $methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})")
-          )
+          'li ('span ('class /= "method-name", 'onclick /= s"highlightBlock('${definition.id}')", s" $methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})"))
         case JavaMember(modifier, memberName, _) if modifier.access == PUBLIC =>
-          'li (
-            'a ('class /= "member-name", 'href /= s"#${definition.id}", memberName)
-          )
+          'li ('span ('class /= "member-name", 'onclick /= s"highlightBlock('${definition.id}')", memberName))
         case x =>
           println(s"nothing to do with ${x.name}")
           Empty
@@ -54,9 +49,17 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
 
     code.defs.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => recur(x))
   }
+
+  override def createHashMap: Map[String, List[JavaDefinition]] = code.defs.map(x => x.name -> x).groupBy(_._1).mapValues(_.map(_._2))
 }
 
 case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends CodeNode {
+  def createHashMap: Map[String, List[JavaDefinition]] = {
+    val map: Map[String, Map[String, List[JavaDefinition]]] = codeNodes.mapValues(_.createHashMap)
+    map.foldLeft(Map.empty[String, List[JavaDefinition]]) { case (acc, (_, elem)) =>
+        elem.foldLeft(acc) { (acc, m) => acc + ((if (name != "") name + "." else "") + m._1 -> m._2) }
+    }
+  }
 
   override def print[T]: Node[T] = {
     codeNodes.toList.sortBy(_._1).map { case (_, node) =>
@@ -75,7 +78,10 @@ case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends C
 
   def buildNavTreeAcc[T](prefix: String): Node[T] = {
     if (codeNodes.size == 1 && codeNodes.values.head.isInstanceOf[CodeNonLeaf])
-      codeNodes.values.head.asInstanceOf[CodeNonLeaf].buildNavTreeAcc((if (prefix != "") prefix + "." else "") + name)
+      codeNodes.values.headOption.map {
+        case x: CodeNonLeaf => x.buildNavTreeAcc((if (prefix != "") prefix + "." else "") + name)
+        case _ => Empty
+      }.getOrElse(Empty)
     else drawNav(prefix + "." + name)
   }
 

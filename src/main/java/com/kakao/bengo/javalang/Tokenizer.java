@@ -9,12 +9,12 @@ import java.util.stream.Collectors;
 
 public class Tokenizer {
     private static class Node {
-        private String prefix;
+        private final String prefix;
         private boolean isTerminal;
         private JavaTokenEnum tokenEnum;
         private boolean flush;
         private Node fail;
-        private HashMap<Character, Node> next = new HashMap<>();
+        private final HashMap<Character, Node> next = new HashMap<>();
 
         Node(String prefix) {
             this.prefix = prefix;
@@ -34,8 +34,8 @@ public class Tokenizer {
         }
     }
 
-    private Node root = new Node("ROOT");
-    private static Tokenizer tokenizer;
+    private final Node root = new Node("ROOT");
+    private static final Tokenizer tokenizer;
 
 
     static {

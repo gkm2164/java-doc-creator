@@ -1,3 +1,7 @@
+section {
+    display: table;
+}
+
 section aside {
     float: left;
     display: block;
@@ -7,10 +11,20 @@ section aside {
     width: 320px;
 }
 
-section article {
+section div#split-bar {
     margin-left: 320px;
+    position: fixed;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    background: black;
+}
+
+section article {
+    margin-left: 326px;
     padding-top: 20px;
     padding-left: 20px;
+    padding-bottom: 20px;
     background-color: #2b2b2b;
     color: #bababa;
 }
@@ -19,6 +33,7 @@ section aside nav {
     padding: 20px;
     overflow: scroll;
 }
+
 section aside nav h3 {
     color: white;
 }
@@ -41,23 +56,39 @@ li a.package-name {
     color: gray;
 }
 
-section aside a {
+section aside span.class-name {
     color: lightgray;
 }
 
-section aside a:hover {
+section aside span.class-name:hover {
     color: whitesmoke;
 }
 
-section aside a.member-name {
+section aside span.member-name {
     color: #9473a6;
 }
 
-section aside a.method-name {
+section aside span.member-name:hover {
+    color: #bf96d1;
+}
+
+section aside span.method-name {
     color: #f9c26b;
 }
 
-span.annotation-use {
+section aside span.method-name:hover {
+    color: #ffe089;
+}
+
+h5.class-def {
+    color: #769AC8;
+}
+
+h5.interface-def {
+    color: #34ce57;
+}
+
+.annotation-use {
     color: #FFC433;
 }
 
@@ -92,8 +123,16 @@ span.full-path {
     font-style: italic;
 }
 
+
+
 .clearfix {
+    overflow: auto;
+}
+
+.clearfix:after {
+    content: "";
     clear: both;
+    display: table;
 }
 
 ul.enum-values {
@@ -103,4 +142,12 @@ ul.enum-values {
 
 .generic-symbol {
     color: lightgray;
+}
+
+.animation-focus {
+    animation: colorchange 1s;
+}
+
+pre {
+    padding: 10px;
 }
