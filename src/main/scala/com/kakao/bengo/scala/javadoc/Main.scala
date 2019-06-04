@@ -3,29 +3,41 @@ package com.kakao.bengo.scala.javadoc
 import java.io.{File, FilenameFilter, PrintWriter}
 
 import com.kakao.bengo.javalang.Tokenizer
+import com.typesafe.scalalogging.Logger
+import laika.api.Transform
+import laika.format.{HTML, Markdown}
 import levsha.impl.TextPrettyPrintingConfig
 
 import scala.collection.JavaConverters._
 import scala.io.Source
 
 object Main {
+  val log = Logger("go-doc-creator")
   val onlyJavaAndDirFilter: FilenameFilter = (dir: File, name: String) => {
-    println(name)
     dir.isDirectory || (dir.isFile && dir.getName.endsWith(".java"))
   }
 
   def main(args: Array[String]): Unit = {
-    List(("/Users/ben.go/go-doc-creator/src/main/java", "javadoc-tokenizer.html", "Doc code generator"),
-      ("/Users/ben.go/java/da-commons/da-intent-handler/src/main/java", "javadoc-da-commons-intent-handler.html", "DA commons 문서"),
-      ("/Users/ben.go/java/da-core/src/main/java", "javadoc-dacore.html", "DA core 문서"))
+    List(("/Users/ben.go/java/da-commons/da-io", "javadoc-da-commons-io.html", "DA commons 문서"))
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 
-  def createDoc(baseDir: String, outFile: String, name: String): Unit = {
-    import levsha.text.symbolDsl._
-    import levsha.text.renderHtml
+  def runLogging[T](buildNavTree: => T, f: => Unit): T = {
+    f
+    buildNavTree
+  }
 
-    val node = currentPackage(new File(baseDir))
+  def createDoc(baseDir: String, outFile: String, name: String): Unit = {
+    import levsha.text.renderHtml
+    import levsha.text.symbolDsl._
+
+    log.debug("parse introduction markdown")
+    val introString =
+      if (new File(s"$baseDir/INTRODUCTION.md").exists())
+        Transform.from(Markdown).to(HTML).fromFile(s"$baseDir/INTRODUCTION.md").toString()
+      else ""
+
+    val node = goThroughTree(new File(s"$baseDir/src/main/java"))
     val pw = new PrintWriter(outFile)
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
@@ -37,6 +49,7 @@ object Main {
           'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/style.css"),
           'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/bootstrap.css"),
           'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
+
           'script ('src /= "js/jquery.js"),
           'script ('src /= "js/bootstrap.js"),
           'script ('src /= "js/main.js"),
@@ -45,17 +58,16 @@ object Main {
           'script ("hljs.initHighlightingOnLoad();")
         ),
         'body (
-          //          'header ("DA Commons Documentation for Kakao Mini"),
           'section (
             'aside ('id /= "sidebar", 'class /= "sidebar-dark",
               'nav (
-                'h3 ("Package List"),
-                'ul (node.buildNavTree)
+                'h3 ("소스코드 트리"),
+                'ul (runLogging(node.buildNavTree, log.info("build nav tree")))
               )
             ),
             'div ('id /= "split-bar", 'br ('class /= "clearfix")),
             'article ('id /= "main", 'class /= "contents",
-              'h1 (name),
+              'div (introString),
               node.print
             )
           ),
@@ -65,21 +77,22 @@ object Main {
       , TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
 
-    node.createHashMap.keys.toList.sorted.foreach(println)
+    node.createHashMap.keys
   }
 
-  def currentPackage(currentHandle: File): CodeNonLeaf = {
+  def goThroughTree(currentHandle: File): CodeNonLeaf = {
     def loop(currentHandle: File, pkgNameAcc: Seq[String]): CodeNode = {
       if (currentHandle.isFile) {
         val filename = currentHandle.getName
         val packageName = pkgNameAcc.mkString(".")
-        println(s"file name: ${pkgNameAcc.mkString("/")}/$filename")
+        log.info(s"lexing ${pkgNameAcc.mkString("/")}/$filename")
         val src = Source.fromFile(currentHandle.getAbsolutePath)
-        val tokens = Tokenizer.tokenize(src.mkString("")).asScala
-        CodeLeaf(filename, packageName,
-          tokens.map(x => JavaSToken(x.getE, x.getValue)).toList)
+        val sources = src.mkString("")
+        val tokens = Tokenizer.tokenize(sources).asScala
+        log.info(s"parse token - # of tokens ${tokens.length}")
+        CodeLeaf(filename, packageName, tokens.map(x => JavaSToken(x.getE, x.getValue)).toList)
       } else {
-        println(s"package name: ${pkgNameAcc.mkString(".")}.${currentHandle.getName}")
+        log.info(s"entered package ${(pkgNameAcc :+ currentHandle.getName).mkString(".")}")
         CodeNonLeaf(currentHandle.getName,
           currentHandle.listFiles(onlyJavaAndDirFilter).map(x => x.getName -> loop(x, pkgNameAcc :+ currentHandle.getName)).toMap)
       }

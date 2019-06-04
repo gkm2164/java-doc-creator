@@ -8,12 +8,19 @@ import levsha.text.symbolDsl._
 
 case class JavaCode(packageName: String,
                     imports: List[String],
+                    annotationsBuf: List[JavaAnnotationCall],
                     defs: List[JavaDefinition]) {
+  def appendAnnotationBuf(annotation: JavaAnnotationCall): JavaCode = copy(annotationsBuf = annotationsBuf :+ annotation)
+
   def setPackageName(str: String): JavaCode = copy(packageName = str)
 
   def appendImport(imp: String): JavaCode = this.copy(imports = imports :+ imp)
 
   def appendDefinition(javaDefinition: JavaDefinition): JavaCode = this.copy(defs = defs :+ javaDefinition)
+
+  def copyWithoutAnnotations: JavaCode = JavaCode(packageName, imports, Nil, defs)
+
+  import writer._
 
   def show[T]: Node[T] = 'div (defs.sortBy(_.name).map(_.show(Indent(0))))
 }
@@ -24,7 +31,7 @@ object JavaCode {
   import com.kakao.bengo.scala.functional.MonadSyntax._
   import com.kakao.bengo.scala.functional.TokenListStateBehavior._
 
-  def emptyCode: JavaCode = JavaCode("", Nil, Nil)
+  def emptyCode: JavaCode = JavaCode("", Nil, Nil, Nil)
 
   def parseAnnotationName(base: String): TokenListState[String] = TokenListState {
     case Nil => (base, Nil)
@@ -34,15 +41,20 @@ object JavaCode {
       TokenListState.unit(base + n).run(t)
   }
 
-  def parseAnnotation: TokenListState[String] = for {
+  def parseAnnotation: TokenListState[JavaAnnotationCall] = for {
     name <- parseAnnotationName("")
-    _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
-  } yield name
+    defs <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
+  } yield JavaAnnotationCall(name, defs)
 
   def parseEnum(modifier: JavaModifier): TokenListState[JavaEnumClass] = {
     def parseEnumInside(name: String, implements: List[JavaTypeUse]): TokenListState[JavaEnumClass] = TokenListState(state => {
       def loop(acc: List[String]): TokenListState[JavaEnumClass] = TokenListState {
-        case JavaSToken(TOKEN, tokenName) :: tail => (for {
+        case JavaSToken(ANNOTATION, _) :: tail => (for {
+          _ <- parseAnnotation
+          cls <- loop(acc)
+        } yield cls).run(tail)
+        case JavaSToken(TOKEN, tokenName) :: tail =>
+          (for {
           _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
           enumClass <- TokenListState {
             case Nil => throw new TokenNotAcceptedException("nil list")
@@ -50,12 +62,13 @@ object JavaCode {
               loop(acc :+ tokenName).run(t)
             case JavaSToken(SEMICOLON, _) :: t => (for {
               defs <- parseClassInside(modifier.fullPath, Nil)
-            } yield JavaEnumClass(name, modifier, acc, defs, implements)).run(t)
+            } yield JavaEnumClass(name, modifier, acc :+ tokenName, defs, implements)).run(t)
             case JavaSToken(RBRACE, _) :: t =>
-              TokenListState.unit(JavaEnumClass(name, modifier, acc, Nil, implements)).run(t)
+              TokenListState.unit(JavaEnumClass(name, modifier, acc :+ tokenName, Nil, implements)).run(t)
             case h :: _ => throw new TokenNotAcceptedException(s"not allowed token: $h")
           }
         } yield enumClass).run(tail)
+
         case t => throw new TokenNotAcceptedException(s"unknown token: ${t.head}")
       }
 
@@ -72,7 +85,9 @@ object JavaCode {
 
   def parseDefs(modifier: JavaModifier): TokenListState[JavaDefinition] = TokenListState {
     case Nil => throw new TokenNotAcceptedException("token is empty")
-    case JavaSToken(ANNOTATION, _) :: t => (for {
+    case JavaSToken(ANNOTATION, _) :: t =>
+      println("seems to meet annotation")
+      (for {
       annotation <- parseAnnotation
       defs <- parseDefs(modifier.appendAnnotation(annotation))
     } yield defs).run(t)
@@ -101,7 +116,9 @@ object JavaCode {
     case JavaSToken(INTERFACE, _) :: t =>
       parseInterface(modifier).run(t)
     case JavaSToken(ANNOTATION_INTERFACE, _) :: t =>
+      println(modifier)
       parseAnnotationInterface(modifier).run(t)
+    case JavaSToken(DEFAULT, _) :: t => parseDefs(modifier).run(t)
     case tokens =>
       parseMembers(modifier).run(tokens)
   }
@@ -144,9 +161,9 @@ object JavaCode {
     case t => TokenListState.unit(Nil).run(t)
   }
 
-  def parseTypeRelation: TokenListState[Option[String]] = TokenListState {
-    case JavaSToken(EXTENDS, _) :: JavaSToken(TOKEN, v) :: t => TokenListState.unit(Some(v)).run(t)
-    case JavaSToken(SUPER, _) :: JavaSToken(TOKEN, v) :: t => TokenListState.unit(Some(v)).run(t)
+  def parseTypeRelation: TokenListState[Option[(String, String)]] = TokenListState {
+    case JavaSToken(EXTENDS, _) :: JavaSToken(TOKEN, v) :: t => TokenListState.unit(Some(("extends", v))).run(t)
+    case JavaSToken(SUPER, _) :: JavaSToken(TOKEN, v) :: t => TokenListState.unit(Some("super", v)).run(t)
     case t => TokenListState.unit(None).run(t)
   }
 
@@ -396,20 +413,20 @@ object JavaCode {
   def parseCode(bowl: JavaCode): TokenListState[JavaCode] = TokenListState {
     case Nil => (bowl, Nil)
     case JavaSToken(ANNOTATION, _) :: t => (for {
-      _ <- parseAnnotation
-      code <- parseCode(bowl)
+      annotation <- parseAnnotation
+      code <- parseCode(bowl.appendAnnotationBuf(annotation))
     } yield code).run(t)
     case JavaSToken(PACKAGE, _) :: t => (for {
       pkgName <- parseUntil(SEMICOLON)
-      code <- parseCode(bowl.setPackageName(pkgName))
+      code <- parseCode(bowl.setPackageName(pkgName).copyWithoutAnnotations)
     } yield code).run(t)
     case JavaSToken(IMPORT, _) :: t => (for {
       importName <- parseUntil(SEMICOLON)
-      code <- parseCode(bowl.appendImport(importName))
+      code <- parseCode(bowl.appendImport(importName).copyWithoutAnnotations)
     } yield code).run(t)
     case tokens => (for {
-      definition <- parseDefs(JavaModifier.empty(bowl.packageName))
-      code <- parseCode(bowl.appendDefinition(definition))
+      definition <- parseDefs(JavaModifier.empty(bowl.packageName, bowl.annotationsBuf))
+      code <- parseCode(bowl.appendDefinition(definition).copyWithoutAnnotations)
     } yield code).run(tokens)
   }
 
