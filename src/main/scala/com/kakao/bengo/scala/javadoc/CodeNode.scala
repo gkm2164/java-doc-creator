@@ -52,7 +52,7 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
     code.defs.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => recur(x))
   }
 
-  override def createHashMap: Map[String, List[JavaDefinition]] = code.defs.map(x => x.name -> x).groupBy(_._1).mapValues(_.map(_._2))
+  override def createHashMap: Map[String, List[JavaDefinition]] = code.defs.map(x => x.name -> x).groupBy(_._1).mapValues(_.map(_._2).toList)
 }
 
 case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends CodeNode {

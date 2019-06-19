@@ -32,10 +32,12 @@ object Main {
     import levsha.text.symbolDsl._
 
     log.debug("parse introduction markdown")
-    val introString =
-      if (new File(s"$baseDir/INTRODUCTION.md").exists())
+    val introString = {
+      val file = new File(s"$baseDir/INTRODUCTION.md")
+      if (file.exists() && file.length() > 0)
         Transform.from(Markdown).to(HTML).fromFile(s"$baseDir/INTRODUCTION.md").toString()
       else ""
+    }
 
     val node = goThroughTree(new File(s"$baseDir/src/main/java"))
     val pw = new PrintWriter(outFile)
@@ -77,7 +79,7 @@ object Main {
       , TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
 
-    node.createHashMap.keys
+    node.createHashMap.keys.foreach(println)
   }
 
   def goThroughTree(currentHandle: File): CodeNonLeaf = {

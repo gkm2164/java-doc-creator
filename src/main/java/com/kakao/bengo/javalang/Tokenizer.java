@@ -1,13 +1,29 @@
 package com.kakao.bengo.javalang;
 
-import javafx.util.Pair;
-
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
 public class Tokenizer {
+    static class Pair<K, V> {
+        K key;
+        V value;
+
+        Pair(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+    }
+
     private static class Node {
         private final String prefix;
         private boolean isTerminal;

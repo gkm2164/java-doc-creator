@@ -6,7 +6,6 @@ import levsha.impl.TextPrettyPrintingConfig
 import levsha.text.symbolDsl._
 
 import scala.annotation.tailrec
-import scala.util.Random
 
 package object javadoc {
 
@@ -27,7 +26,14 @@ package object javadoc {
   }
 
   sealed trait JavaDefinition {
-    def id: String
+    final def id: String = {
+      val ret = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
+      this match {
+        case JavaMethod(_, _, _, args) if args.nonEmpty => ret + "-" + args.map(_.name.toLowerCase).mkString("-")
+        case _ => ret
+
+      }
+    }
 
     def name: String
 
@@ -37,12 +43,12 @@ package object javadoc {
   }
 
   sealed trait JavaTypeDef extends JavaDefinition {
-    def inheritClass: List[JavaTypeUse]
+    def inheritClass: Vector[JavaTypeUse]
 
-    def implementInterfaces: List[JavaTypeUse]
+    def implementInterfaces: Vector[JavaTypeUse]
   }
 
-  trait JavaMembers extends JavaDefinition
+  sealed trait JavaMembers extends JavaDefinition
 
   case class Indent(indent: Int, tab: String = "&nbsp;&nbsp;") {
 
@@ -57,10 +63,10 @@ package object javadoc {
 
   case class JavaSToken(tokenType: JavaTokenEnum, value: String)
 
-  case class JavaModifier(commentMacros: List[String],
-                          annotations: List[JavaAnnotationCall],
+  case class JavaModifier(commentMacros: Vector[String],
+                          annotations: Vector[JavaAnnotationCall],
                           access: JavaTokenEnum,
-                          generic: List[String],
+                          generic: Vector[String],
                           isStatic: Boolean,
                           isFinal: Boolean,
                           isAbstract: Boolean,
@@ -84,7 +90,7 @@ package object javadoc {
 
     def setAccess(access: JavaTokenEnum): JavaModifier = this.copy(access = access)
 
-    def setGeneric(generic: List[String]): JavaModifier = this.copy(generic = generic)
+    def setGeneric(generic: Vector[String]): JavaModifier = this.copy(generic = generic)
 
     def setStatic: JavaModifier = this.copy(isStatic = true)
 
@@ -96,57 +102,48 @@ package object javadoc {
   }
 
   case class JavaEnumClass(name: String, modifier: JavaModifier,
-                           enumTokens: List[String],
-                           definitions: List[JavaDefinition],
-                           implements: List[JavaTypeUse]) extends JavaTypeDef {
-//    lazy val id: String = (1 to 10).map(_ => ASCIIValues(Random.nextInt(ASCIIValues.length))).mkString("")
-    lazy val id = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
+                           enumTokens: Vector[String],
+                           definitions: Vector[JavaDefinition],
+                           implements: Vector[JavaTypeUse]) extends JavaTypeDef {
 
-    lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.drop("//name".length).trim).getOrElse(name)
+    lazy val representName: String =
+      modifier.commentMacros.find(_.startsWith("//name")).map(_.drop("//name".length).trim).getOrElse(name)
 
-    override def inheritClass: List[JavaTypeUse] = Nil
+    override def inheritClass: Vector[JavaTypeUse] = Vector.empty
 
-    override def implementInterfaces: List[JavaTypeUse] = Nil
+    override def implementInterfaces: Vector[JavaTypeUse] = Vector.empty
 
   }
 
   case class JavaClass(name: String, modifier: JavaModifier,
-                       definitions: List[JavaDefinition],
-                       inheritClass: List[JavaTypeUse],
-                       implementInterfaces: List[JavaTypeUse]) extends JavaTypeDef {
+                       definitions: Vector[JavaDefinition],
+                       inheritClass: Vector[JavaTypeUse],
+                       implementInterfaces: Vector[JavaTypeUse]) extends JavaTypeDef {
 
-    lazy val id = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
-
-    lazy val exampleCodes: List[String] = modifier.commentMacros.filter(_.startsWith("//="))
+    lazy val exampleCodes: Vector[String] = modifier.commentMacros.filter(_.startsWith("//="))
     lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
   }
 
   case class JavaInterface(name: String, modifier: JavaModifier,
-                           definition: List[JavaDefinition],
-                           inheritClass: List[JavaTypeUse]) extends JavaTypeDef {
-    lazy val id = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
-
+                           definition: Vector[JavaDefinition],
+                           inheritClass: Vector[JavaTypeUse]) extends JavaTypeDef {
     lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
 
-    override def implementInterfaces: List[JavaTypeUse] = Nil
+    override def implementInterfaces: Vector[JavaTypeUse] = Vector.empty
   }
 
   case class JavaAnnotationInterface(name: String, modifier: JavaModifier,
-                                     definitions: List[JavaDefinition],
-                                     inheritClass: List[JavaTypeUse]) extends JavaTypeDef {
-    lazy val id = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
-
+                                     definitions: Vector[JavaDefinition],
+                                     inheritClass: Vector[JavaTypeUse]) extends JavaTypeDef {
     lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
-    val annotationMeta: Map[String, List[String]] =
+    val annotationMeta: Map[String, Vector[String]] =
       modifier.annotations.groupBy(_.name).mapValues(_.map(_.parameters.replace("(", "").replace(")", "")))
     val decideTarget: Option[String] = annotationMeta.get("Target").map(_.headOption.getOrElse(""))
-    override def implementInterfaces: List[JavaTypeUse] = Nil
+    override def implementInterfaces: Vector[JavaTypeUse] = Vector.empty
 
   }
 
   case class JavaMember(modifier: JavaModifier, name: String, memberType: JavaTypeUse) extends JavaMembers {
-    lazy val id = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
-
     lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
 
     def setName(n: String): JavaMember = this.copy(name = n)
@@ -154,17 +151,15 @@ package object javadoc {
     def setType(t: JavaTypeUse): JavaMember = this.copy(memberType = t)
   }
 
-  case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: List[JavaArgument]) extends JavaMembers {
-    lazy val id = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
-
-    lazy val exampleCode: List[String] = modifier.commentMacros.filter(_.startsWith("//="))
+  case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: Vector[JavaArgument]) extends JavaMembers {
+    lazy val exampleCode: Vector[String] = modifier.commentMacros.filter(_.startsWith("//="))
 
     lazy val representName: String = modifier.commentMacros.find(_.startsWith("//name")).map(_.replace("//name", "")).getOrElse(name)
 
   }
 
 
-  case class JavaTypeDesignate(name: String, extend: Option[(String, String)], generics: List[JavaTypeDesignate]) {
+  case class JavaTypeDesignate(name: String, extend: Option[(String, String)], generics: Vector[JavaTypeDesignate]) {
 
     import levsha.text.renderHtml
 
@@ -178,16 +173,17 @@ package object javadoc {
       genericSymbol("&gt;"))
 
     def showNode[T]: Node[T] = {
-      if (List("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span ('class /= "reserved-keyword", name))
+      if (Vector("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span ('class /= "reserved-keyword", name))
       else Seq('span ('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty)
     }
   }
 
   case class JavaTypeUse(typeDesignate: JavaTypeDesignate, arrayNotations: String) {
+    def name: String = s"${typeDesignate.name}$arrayNotations"
     def show: String = s"${typeDesignate.show}$arrayNotations"
   }
 
-  case class JavaArgument(annotations: List[JavaAnnotationCall], isFinal: Boolean, name: String, argumentType: JavaTypeUse) {
+  case class JavaArgument(annotations: Vector[JavaAnnotationCall], isFinal: Boolean, name: String, argumentType: JavaTypeUse) {
     def setFinal: JavaArgument = copy(isFinal = true)
 
     def appendAnnotation(annotation: JavaAnnotationCall): JavaArgument = copy(annotations = annotations :+ annotation)
@@ -199,30 +195,31 @@ package object javadoc {
     )
   }
 
-  case class JavaPackageDef(annotations: List[String], name: String)
+  case class JavaPackageDef(annotations: Vector[String], name: String)
 
   object JavaTypeUse {
-    def empty: JavaTypeUse = JavaTypeUse(JavaTypeDesignate("", None, Nil), "")
+    def empty: JavaTypeUse = JavaTypeUse(JavaTypeDesignate("", None, Vector.empty), "")
   }
 
   object JavaModifier {
-    def empty(path: String, annotationsBuf: List[JavaAnnotationCall] = Nil): JavaModifier = JavaModifier(Nil, annotationsBuf, PRIVATE, Nil, isStatic = false, isFinal = false, isAbstract = false, path)
+    def empty(path: String, annotationsBuf: Vector[JavaAnnotationCall] = Vector.empty): JavaModifier =
+      JavaModifier(Vector.empty, annotationsBuf, PRIVATE, Vector.empty, isStatic = false, isFinal = false, isAbstract = false, path)
   }
 
   case class JavaAnnotationCall(name: String, parameters: String)
 
-  object ListImplicit {
+  object VectorImplicit {
 
-    implicit class strListExt[+A](list: List[A]) {
-      def addIf[B >: A](p: => Boolean, item: B): List[B] = if (p) list :+ item else list
+    implicit class strVectorExt[+A](list: Vector[A]) {
+      def addIf[B >: A](p: => Boolean, item: B): Vector[B] = if (p) list :+ item else list
 
-      def add[B >: A](item: B): List[B] = list :+ item
+      def add[B >: A](item: B): Vector[B] = list :+ item
     }
 
   }
 
   object JavaArgument {
-    def empty: JavaArgument = JavaArgument(Nil, isFinal = false, "", JavaTypeUse.empty)
+    def empty: JavaArgument = JavaArgument(Vector.empty, isFinal = false, "", JavaTypeUse.empty)
   }
 
 }
