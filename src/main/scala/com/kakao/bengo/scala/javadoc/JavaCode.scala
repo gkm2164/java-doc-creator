@@ -4,8 +4,10 @@ import scala.language.higherKinds
 import cats.data.State
 import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
+import com.kakao.bengo.javalang.JavaTokenEnum._
 import levsha.Document.Node
 import levsha.text.symbolDsl._
+
 
 case class JavaCode(packageName: String,
                     imports: Vector[String],
@@ -27,36 +29,28 @@ case class JavaCode(packageName: String,
 }
 
 object JavaCode {
-  type CodeRecurState[A] = CodeState[CodeState[A]]
-
   type CodeState[A] = State[List[JavaSToken], A]
-
-  implicit class crsExtend[A](codeRecurState: CodeRecurState[A]) {
-    def flatten(tokens: List[JavaSToken]): CodeState[A] =
-      CodeState { x => codeRecurState.runA(tokens).value.run(x).value }
-  }
+  type NextCodeState[A] = List[JavaSToken] => CodeState[A]
 
   def emptyCode: JavaCode = JavaCode("", Vector.empty, Vector.empty, Vector.empty)
 
-  import com.kakao.bengo.javalang.JavaTokenEnum._
+  implicit def nextCodeStateToCodeStateConversion[A](nextCodeState: NextCodeState[A]): CodeState[A] =
+    CodeState { tokens => nextCodeState(tokens).run(tokens).value }
 
-  def parseAnnotationName(base: String): CodeState[String] = {
-    def func(tokens: List[JavaSToken]): CodeState[String] = tokens match {
-      case Nil => for {
-        ret <- State.pure(base)
-      } yield ret
-      case JavaSToken(DOT, _) :: JavaSToken(_, _) :: _ => for {
-        _ <- assertToken(DOT)
-        annName <- takeString
-        annotationName <- parseAnnotationName(base + s".$annName")
-      } yield annotationName
-      case _ => for {
-        annName <- takeString
-      } yield base + annName
-    }
-
-    CodeState { x => func(x).run(x).value }
+  def parseAnnotationName(base: String): CodeState[String] = NextCodeState {
+    case Nil => for {
+      ret <- State.pure(base)
+    } yield ret
+    case JavaSToken(DOT, _) :: JavaSToken(_, _) :: _ => for {
+      _ <- assertToken(DOT)
+      annName <- takeString
+      annotationName <- parseAnnotationName(base + s".$annName")
+    } yield annotationName
+    case _ => for {
+      annName <- takeString
+    } yield base + annName
   }
+
 
   def parseAnnotation: State[List[JavaSToken], JavaAnnotationCall] = for {
     name <- parseAnnotationName("")
@@ -66,27 +60,34 @@ object JavaCode {
   def parseEnum(modifier: JavaModifier): CodeState[JavaEnumClass] = {
     def parseEnum(name: String, implements: Vector[JavaTypeUse]): CodeState[JavaEnumClass] =
       State { state =>
-        def loop(acc: Vector[String]): CodeState[JavaEnumClass] = CodeState {
+        def loop(acc: Vector[String]): CodeState[JavaEnumClass] = NextCodeState {
           case Nil => throw new TokenNotAcceptedException("state is empty")
-          case JavaSToken(ANNOTATION, _) :: t => (for {
+          case JavaSToken(ANNOTATION, _) :: _ => for {
+            _ <- assertToken(ANNOTATION)
             _ <- parseAnnotation
             cls <- loop(acc)
-          } yield cls).run(t).value
-          case JavaSToken(TOKEN, tokenName) :: t => (for {
+          } yield cls
+          case JavaSToken(TOKEN, _) :: _ => for {
+            tokenName <- takeString
             _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
             enumClass <- parseEnumBody(tokenName, Vector.empty)
-          } yield enumClass).run(t).value
+          } yield enumClass
           case h :: _ => throw new TokenNotAcceptedException(s"unknown token: $h")
         }
 
-        def parseEnumBody(tokenName: String, acc: Vector[String]): CodeState[JavaEnumClass] = CodeState {
+        def parseEnumBody(tokenName: String, acc: Vector[String]): CodeState[JavaEnumClass] = NextCodeState {
           case Nil => throw new TokenNotAcceptedException("nil list")
-          case JavaSToken(COMMA, _) :: t => loop(acc :+ tokenName).run(t).value
-          case JavaSToken(SEMICOLON, _) :: t => (for {
+          case JavaSToken(COMMA, _) :: _ => for {
+            _ <- assertToken(COMMA)
+            res <- loop(acc :+ tokenName)
+          } yield res
+          case JavaSToken(SEMICOLON, _) :: _ => for {
+            _ <- assertToken(SEMICOLON)
             defs <- parseClassInside(modifier.fullPath, Vector.empty)
-          } yield JavaEnumClass(name, modifier, acc :+ tokenName, defs, implements)).run(t).value
-          case JavaSToken(RBRACE, _) :: t =>
-            State.pure(JavaEnumClass(name, modifier, acc :+ tokenName, Vector.empty, implements)).run(t).value
+          } yield JavaEnumClass(name, modifier, acc :+ tokenName, defs, implements)
+          case JavaSToken(RBRACE, _) :: _ => for {
+            _ <- assertToken(RBRACE)
+          } yield JavaEnumClass(name, modifier, acc :+ tokenName, Vector.empty, implements)
           case h :: _ => throw new TokenNotAcceptedException(s"not allowed token: $h")
         }
 
@@ -196,13 +197,14 @@ object JavaCode {
     case t => State.pure(acc).run(t).value
   }
 
-  def parseGenerics: CodeState[Vector[JavaTypeDesignate]] = CodeState {
-    case JavaSToken(LT, _) :: t => (for {
+  def parseGenerics: CodeState[Vector[JavaTypeDesignate]] = NextCodeState[Vector[JavaTypeDesignate]] {
+    case JavaSToken(LT, _) :: _ => for {
+      _ <- assertToken(LT)
       typeDesignate <- parseTypeDesignator
       list <- parseTypeDesignatorRemains(Vector(typeDesignate))
       _ <- assertToken(GT)
-    } yield list).run(t).value
-    case t => State.pure(Vector.empty).run(t).value
+    } yield list
+    case _ => State.pure(Vector.empty)
   }
 
   def parseTypeRelation: CodeState[Option[(String, String)]] = CodeState {
@@ -423,24 +425,24 @@ object JavaCode {
   }
 
   def parseParenthesisList(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): CodeState[Vector[String]] = {
-      def loop(cnt: Int, works: String, acc: Vector[String]): CodeState[Vector[String]] = CodeState {
-        case Nil =>
-          State.pure(if (works != "") acc :+ works else acc).run(Nil).value
-        case JavaSToken(lp, _) :: t if lp == leftPar =>
-          loop(cnt + 1, works + lp.value, acc).run(t).value
-        case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar =>
-          State.pure(acc).run(t).value
-        case JavaSToken(rp, _) :: t if rp == rightPar =>
-          loop(cnt - 1, "", acc :+ works + rp.value).run(t).value
-        case JavaSToken(_, v) :: t =>
-          loop(cnt, "", acc :+ v).run(t).value
-      }
-
-      CodeState {
-        case JavaSToken(lp, _) :: t if lp == leftPar => loop(0, "", Vector.empty).run(t).value
-        case tokens => State.pure(Vector.empty).run(tokens).value
-      }
+    def loop(cnt: Int, works: String, acc: Vector[String]): CodeState[Vector[String]] = CodeState {
+      case Nil =>
+        State.pure(if (works != "") acc :+ works else acc).run(Nil).value
+      case JavaSToken(lp, _) :: t if lp == leftPar =>
+        loop(cnt + 1, works + lp.value, acc).run(t).value
+      case JavaSToken(rp, _) :: t if cnt == 0 && rp == rightPar =>
+        State.pure(acc).run(t).value
+      case JavaSToken(rp, _) :: t if rp == rightPar =>
+        loop(cnt - 1, "", acc :+ works + rp.value).run(t).value
+      case JavaSToken(_, v) :: t =>
+        loop(cnt, "", acc :+ v).run(t).value
     }
+
+    CodeState {
+      case JavaSToken(lp, _) :: t if lp == leftPar => loop(0, "", Vector.empty).run(t).value
+      case tokens => State.pure(Vector.empty).run(tokens).value
+    }
+  }
 
   def parseParenthesisSkipHead(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): CodeState[Vector[String]] =
     CodeState[Vector[String]](tokens => {
@@ -470,37 +472,35 @@ object JavaCode {
     loop("").run(tokens).value
   }
 
-  def parseCode(bowl: JavaCode): CodeState[JavaCode] = CodeState { tokens =>
-    def func(tokens: List[JavaSToken]): CodeState[JavaCode] = tokens match {
-      case Nil => for {
-        b <- CodeState.pure(bowl)
-      } yield b
-      case JavaSToken(ANNOTATION, _) :: _ => for {
-        _ <- assertToken(ANNOTATION)
-        annotation <- parseAnnotation
-        code <- parseCode(bowl.appendAnnotationBuf(annotation))
-      } yield code
-      case JavaSToken(PACKAGE, _) :: _ => for {
-        _ <- assertToken(PACKAGE)
-        pkgName <- parseUntil(SEMICOLON)
-        code <- parseCode(bowl.setPackageName(pkgName).copyWithoutAnnotations)
-      } yield code
-      case JavaSToken(IMPORT, _) :: _ => for {
-        _ <- assertToken(IMPORT)
-        importName <- parseUntil(SEMICOLON)
-        code <- parseCode(bowl.appendImport(importName).copyWithoutAnnotations)
-      } yield code
-      case _ => for {
-        definition <- parseDefs(JavaModifier.empty(bowl.packageName, bowl.annotationsBuf))
-        code <- parseCode(bowl.appendDefinition(definition).copyWithoutAnnotations)
-      } yield code
-    }
-
-    func(tokens).run(tokens).value
+  def parseCode(bowl: JavaCode): CodeState[JavaCode] = NextCodeState {
+    case Nil => CodeState.pure(bowl)
+    case JavaSToken(ANNOTATION, _) :: _ => for {
+      _ <- assertToken(ANNOTATION)
+      annotation <- parseAnnotation
+      code <- parseCode(bowl.appendAnnotationBuf(annotation))
+    } yield code
+    case JavaSToken(PACKAGE, _) :: _ => for {
+      _ <- assertToken(PACKAGE)
+      pkgName <- parseUntil(SEMICOLON)
+      code <- parseCode(bowl.setPackageName(pkgName).copyWithoutAnnotations)
+    } yield code
+    case JavaSToken(IMPORT, _) :: _ => for {
+      _ <- assertToken(IMPORT)
+      importName <- parseUntil(SEMICOLON)
+      code <- parseCode(bowl.appendImport(importName).copyWithoutAnnotations)
+    } yield code
+    case _ => for {
+      definition <- parseDefs(JavaModifier.empty(bowl.packageName, bowl.annotationsBuf))
+      code <- parseCode(bowl.appendDefinition(definition).copyWithoutAnnotations)
+    } yield code
   }
 
   def apply(tokens: List[JavaSToken]): JavaCode =
     parseCode(emptyCode).runA(tokens.filterNot(x => List(COMMENT, COMMENT_BLOCK).contains(x.tokenType))).value
+
+  object NextCodeState {
+    def apply[A](f: List[JavaSToken] => CodeState[A]): NextCodeState[A] = f
+  }
 
   object CodeState {
     def pure[A](a: A): CodeState[A] = CodeState { xs => (xs, a) }
