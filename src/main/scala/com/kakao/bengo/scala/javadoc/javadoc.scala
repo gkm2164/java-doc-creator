@@ -42,6 +42,14 @@ package object javadoc {
     def representName: String
   }
 
+  case object JavaDefinitionUnit extends JavaDefinition {
+    override def name: String = ""
+
+    override def modifier: JavaModifier = JavaModifier.empty("", Vector.empty)
+
+    override def representName: String = ""
+  }
+
   sealed trait JavaTypeDef extends JavaDefinition {
     def inheritClass: Vector[JavaTypeUse]
 
@@ -83,10 +91,7 @@ package object javadoc {
 
     def appendMacro(v: String): JavaModifier = this.copy(commentMacros = commentMacros :+ v)
 
-    def appendAnnotation(annotation: JavaAnnotationCall): JavaModifier = {
-      println(annotation)
-      this.copy(annotations = annotations :+ annotation)
-    }
+    def appendAnnotation(annotation: JavaAnnotationCall): JavaModifier = this.copy(annotations = annotations :+ annotation)
 
     def setAccess(access: JavaTokenEnum): JavaModifier = this.copy(access = access)
 

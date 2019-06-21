@@ -18,7 +18,9 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    List(("/Users/ben.go/java/da-commons/da-io", "javadoc-da-commons-io.html", "DA commons 문서"))
+    List(("/Users/ben.go/java/da-commons/da-io", "javadoc-da-commons-io.html", "DA commons 문서"),
+         ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
+      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 

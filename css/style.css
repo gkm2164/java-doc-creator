@@ -51,7 +51,6 @@ section aside .enum-class {
     color: #9473a6;
 }
 
-
 section aside li {
     /*padding: 0;*/
     /*margin: 0;*/
@@ -128,8 +127,6 @@ span.full-path {
     font-style: italic;
 }
 
-
-
 .clearfix {
     overflow: auto;
 }
@@ -158,6 +155,6 @@ pre {
 }
 
 div.definition-box {
-    padding-left: 5px;
+    padding-left: 10px;
     border-left: 1px solid white;
 }
