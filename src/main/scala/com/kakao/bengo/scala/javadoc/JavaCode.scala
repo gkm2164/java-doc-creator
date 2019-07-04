@@ -1,7 +1,7 @@
 package com.kakao.bengo.scala.javadoc
 
 import scala.language.{higherKinds, implicitConversions}
-import cats.data.State
+import cats.data._
 import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
@@ -172,9 +172,6 @@ object JavaCode {
       members <- parseMembers(modifier)
     } yield members
   }
-
-//    func(tokens).run(tokens).value
-//  }
 
   def takeDotSeparated: CodeState[List[String]] = State(tokens => {
     def loop(acc: List[String]): CodeState[List[String]] = State {

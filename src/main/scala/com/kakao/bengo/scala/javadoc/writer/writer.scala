@@ -46,11 +46,11 @@ package object writer {
               'ul ('class /= "enum-values java-def", enumTokens.map(x => 'li (x))),
               'div (definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indent.inc))))
 
-          case JavaInterface(name, modifier, childDefinitions, inheritClass) =>
+          case JavaInterface(name, _, _, inheritClass) =>
             'div ('h5 ('class /= "java-def interface-def", s" $name"),
               if (inheritClass.nonEmpty) 'div ('b ("inherit classes"), 'ul (inheritClass.map(x => 'li (x.show)))) else Empty)
 
-          case a@JavaAnnotationInterface(name, modifier, definitions, inheritClass) =>
+          case a@JavaAnnotationInterface(name, _, definitions, _) =>
             'div ('h5 ('class /= "java-def annotation-use", s"@$name"),
               a.decideTarget.map(x => 'div(attachTo(x))).getOrElse(Empty),
               'div (definitions.map(_.show(indent.inc))))
