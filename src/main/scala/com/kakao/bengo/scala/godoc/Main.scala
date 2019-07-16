@@ -41,7 +41,7 @@ object Main {
 
   import com.kakao.bengo.scala.godoc.doc.writer.GolangWriter._
 
-  def main(args: Array[String]): Unit = {
+  def main2(args: Array[String]): Unit = {
     //Folder 단위로 불러들임.
     val ret = showFolder(if (args.length > 0) args(0) else "/Users/ben.go/go/src/github.daumkakao.com/search-middle/dagore")
 

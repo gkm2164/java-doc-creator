@@ -69,7 +69,7 @@ object JavaCode {
         case JavaSToken(TOKEN, _) :: _ => for {
           tokenName <- takeString
           _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
-          enumClass <- parseEnumBody(tokenName, Vector.empty)
+          enumClass <- parseEnumBody(tokenName, acc)
         } yield enumClass
         case h :: _ => throw new TokenNotAcceptedException(s"unknown token: $h")
       }
@@ -103,8 +103,12 @@ object JavaCode {
       implements <- parseTypesFrom(IMPLEMENTS)
       _ <- assertToken(LBRACE)
       cls <- parseEnum(name, implements)
+      _ = println(cls)
     } yield cls
   }
+
+  // generic definition
+  // <T extends U, V super K, W>
 
   def parseDefs(modifier: JavaModifier): CodeState[JavaDefinition] = NextCodeState[JavaDefinition] {
     case Nil => throw new TokenNotAcceptedException("token is empty")
@@ -132,8 +136,7 @@ object JavaCode {
       defs <- parseDefs(modifier.setStatic)
     } yield defs
     case JavaSToken(LT, _) :: _ => for {
-      _ <- assertToken(LT)
-      genericDef <- parseParenthesisSkipHead(LT, GT)
+      genericDef <- parseGenerics
       defs <- parseDefs(modifier.setGeneric(genericDef))
     } yield defs
     case JavaSToken(FINAL, _) :: _ => for {
@@ -212,10 +215,12 @@ object JavaCode {
     case _ => State.pure(Vector.empty)
   }
 
-  def parseTypeRelation: CodeState[Option[(String, String)]] = CodeState {
-    case JavaSToken(EXTENDS, _) :: JavaSToken(TOKEN, v) :: t => State.pure(Some(("extends", v))).run(t).value
-    case JavaSToken(SUPER, _) :: JavaSToken(TOKEN, v) :: t => State.pure(Some("super", v)).run(t).value
-    case t => State.pure(None).run(t).value
+  def parseTypeRelation: CodeState[Option[(String, JavaTypeDesignate)]] = NextCodeState[Option[(String, JavaTypeDesignate)]] {
+    case JavaSToken(EXTENDS | SUPER, _) :: _ => for {
+      relation <- takeString
+      typeDesig <- parseTypeDesignator
+    } yield Some((relation, typeDesig))
+    case _ => State.pure(None)
   }
 
   def parseTypeDesignator: CodeState[JavaTypeDesignate] = for {
@@ -278,8 +283,8 @@ object JavaCode {
       case JavaSToken(SEMICOLON, _) :: t =>
         State.pure(()).run(t).value
       case JavaSToken(LBRACE, _) :: t => (for {
-          _ <- parseParenthesisSkipHead(LBRACE, RBRACE)
-        } yield ()).run(t).value
+        _ <- parseParenthesisSkipHead(LBRACE, RBRACE)
+      } yield ()).run(t).value
       case JavaSToken(DEFAULT, _) :: t =>
         (for {
           _ <- parseUntil(SEMICOLON)
@@ -308,7 +313,7 @@ object JavaCode {
           _ <- assertToken(a)
         } yield JavaMember(modifier, name, typename)
         case h :: _ => throw new TokenNotAcceptedException(h.toString)
-    }
+      }
 
     for {
       typename <- parseType
@@ -334,8 +339,6 @@ object JavaCode {
     loop(Vector.empty).run(tokens).value
   })
 
-  def takeString: CodeState[String] = CodeState(tokens => (tokens.tail, tokens.head.value))
-
   def parseClassInside(path: String, acc: Vector[JavaDefinition]): CodeState[Vector[JavaDefinition]] = NextCodeState {
     case Nil => throw new TokenNotAcceptedException("")
     case JavaSToken(RBRACE, _) :: _ => for {
@@ -349,7 +352,7 @@ object JavaCode {
 
   def parseClass(modifier: JavaModifier): CodeState[JavaClass] = for {
     name <- takeString
-    generics <- parseParenthesisList(LT, GT)
+    generics <- parseGenerics
     extendInh <- parseTypesFrom(EXTENDS)
     implementH <- parseTypesFrom(IMPLEMENTS)
     _ <- assertToken(LBRACE)
@@ -380,16 +383,11 @@ object JavaCode {
 
   def parseInterface(modifier: JavaModifier): CodeState[JavaInterface] = for {
     name <- takeString
-    generic <- parseParenthesisList(LT, GT)
+    generic <- parseGenerics
     extendInh <- parseTypesFrom(EXTENDS)
     _ <- assertToken(LBRACE)
     defs <- parseInterfaceDefs(s"${modifier.fullPath}.$name", Vector.empty)
   } yield JavaInterface(name, modifier.copy(generic = generic), defs, extendInh)
-
-  def assertToken(token: JavaTokenEnum): CodeState[Unit] = CodeState {
-    case JavaSToken(tk, _) :: t if tk == token => State.pure(()).run(t).value
-    case t => throw new TokenNotAcceptedException(s"expected $token but ${t.head.tokenType} => ${t.head.value}, ${t.tail.take(5)}")
-  }
 
   def assertTokens(tokens: JavaTokenEnum*): CodeState[JavaTokenEnum] = CodeState {
     case JavaSToken(tk, _) :: t if tokens.contains(tk) => State.pure(tk).run(t).value
@@ -436,7 +434,7 @@ object JavaCode {
         _ <- assertToken(lp)
         res <- loop(cnt + 1, works + lp.value, acc)
       } yield res
-      case JavaSToken(rp, _) :: _ if cnt == 0 && rp == rightPar =>for {
+      case JavaSToken(rp, _) :: _ if cnt == 0 && rp == rightPar => for {
         _ <- assertToken(rp)
       } yield acc
       case JavaSToken(rp, _) :: _ if rp == rightPar => for {
@@ -456,6 +454,13 @@ object JavaCode {
       } yield res
       case _ => State.pure(Vector.empty)
     }
+  }
+
+  def takeString: CodeState[String] = CodeState(tokens => (tokens.tail, tokens.head.value))
+
+  def assertToken(token: JavaTokenEnum): CodeState[Unit] = CodeState {
+    case JavaSToken(tk, _) :: t if tk == token => State.pure(()).run(t).value
+    case t => throw new TokenNotAcceptedException(s"expected $token but ${t.head.tokenType} => ${t.head.value}, ${t.tail.take(5)}")
   }
 
   def parseParenthesisSkipHead(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): CodeState[Vector[String]] = {

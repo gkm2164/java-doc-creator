@@ -74,7 +74,7 @@ package object javadoc {
   case class JavaModifier(commentMacros: Vector[String],
                           annotations: Vector[JavaAnnotationCall],
                           access: JavaTokenEnum,
-                          generic: Vector[String],
+                          generic: Vector[JavaTypeDesignate],
                           isStatic: Boolean,
                           isFinal: Boolean,
                           isAbstract: Boolean,
@@ -95,7 +95,7 @@ package object javadoc {
 
     def setAccess(access: JavaTokenEnum): JavaModifier = this.copy(access = access)
 
-    def setGeneric(generic: Vector[String]): JavaModifier = this.copy(generic = generic)
+    def setGeneric(generic: Vector[JavaTypeDesignate]): JavaModifier = this.copy(generic = generic)
 
     def setStatic: JavaModifier = this.copy(isStatic = true)
 
@@ -164,7 +164,7 @@ package object javadoc {
   }
 
 
-  case class JavaTypeDesignate(name: String, extend: Option[(String, String)], generics: Vector[JavaTypeDesignate]) {
+  case class JavaTypeDesignate(name: String, extend: Option[(String, JavaTypeDesignate)], generics: Vector[JavaTypeDesignate]) {
 
     import levsha.text.renderHtml
 

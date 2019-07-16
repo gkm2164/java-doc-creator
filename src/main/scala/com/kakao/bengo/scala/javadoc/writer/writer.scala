@@ -31,7 +31,7 @@ package object writer {
             'div (if (c.representName != name) 'h6 ('class /= "class-role", c.representName) else Empty,
               'h5 ('class /= "java-def class-def",
                 s" $name",
-                if (modifier.generic.nonEmpty) 'span ('span ('class /= "generic-symbol", "&lt;"), modifier.generic.map(escapeLTGT), 'span ('class /= "generic-symbol", "&gt;")) else Empty),
+                if (modifier.generic.nonEmpty) 'span ('span ('class /= "generic-symbol", "&lt;"), modifier.generic.map(_.show), 'span ('class /= "generic-symbol", "&gt;")) else Empty),
               if (inheritClass.nonEmpty) 'span ('span ('class /= "reserved-keyword", " extends "), inheritClass.map(x => x.show).mkString(", "))
               else Empty,
               if (implementInterfaces.nonEmpty) 'span ('span ('class /= "reserved-keyword", " implements "), implementInterfaces.map(x => x.show).mkString(", "))
