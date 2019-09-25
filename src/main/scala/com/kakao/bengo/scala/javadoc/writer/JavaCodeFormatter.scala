@@ -1,6 +1,6 @@
 package com.kakao.bengo.scala.javadoc.writer
 
-import com.kakao.bengo.godoc.exceptions.{TokenNoMoreToConsumeException, TokenNotAcceptedException}
+import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
 import com.kakao.bengo.scala.javadoc.JavaSToken
