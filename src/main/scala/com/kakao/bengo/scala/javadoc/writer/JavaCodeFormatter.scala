@@ -83,12 +83,8 @@ object JavaCodeFormatter {
     } yield ()
 
     def blockStmts: CodeWriter[Unit] = for {
-      _ <- localVarDeclStmt || statement
+      _ <- declaration || statement
       _ <- blockStmts || none
-    } yield ()
-
-    def localVarDeclStmt: CodeWriter[Unit] = for {
-      _ <- primitiveTypes
     } yield ()
 
     def primitiveTypes: CodeWriter[String] = for {
@@ -138,15 +134,40 @@ object JavaCodeFormatter {
 
     def declaration: CodeWriter[Unit] = for {
       _ <- assertToken(FINAL).tell("final ") || none
+      _ <- declDetail
+    } yield ()
+
+    def declDetail: CodeWriter[Unit] = for {
       _ <- primitiveTypes || (for {
+        _ <- typeDef
         _ <- generic
       } yield ())
       _ <- arrayUse || none
+      _ <- identifier
+      _ <- variableInitialize || none
+      _ <- (for {
+        _ <- assertToken(COMMA)
+        _ <- declDetail
+      } yield ()) || none
+      _ <- assertToken(SEMICOLON)
+    } yield ()
+
+    def typeDef: CodeWriter[Unit] = ???
+
+    def variableInitialize: CodeWriter[Unit] = for {
+      _ <- assertToken(SUBSTITUTE)
+      _ <- expression || arrayInitializer
+    } yield ()
+
+    def arrayInitializer: CodeWriter[Unit] = for {
+      _ <- assertToken(LBRACE).tell("{")
+      _ <- tokenSeparatedCtx(variableInitialize, COMMA) || none
+      _ <- assertToken(RBRACE).tell("}")
     } yield ()
 
     def generic: CodeWriter[Unit] = for {
       _ <- consumeToken(LT).tell("<")
-      _ <- commaSeparatedCtx(identifier, COMMA)
+      _ <- tokenSeparatedCtx(identifier, COMMA)
       _ <- consumeToken(GT).tell(">")
     } yield ()
 
@@ -156,17 +177,13 @@ object JavaCodeFormatter {
       _ <- arrayUse || none
     } yield ()
 
-    def unannType: CodeWriter[Unit] = for {
-      _ <- pure()
-    } yield ()
+    def identifier: CodeWriter[Unit] = consumeToken(TOKEN).map(x => x.value)
 
-    def identifier: CodeWriter[Unit] = ???
-
-    def commaSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum): CodeWriter[Unit] = for {
+    def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum): CodeWriter[Unit] = for {
       _ <- chosenParser
       _ <- (for {
         _ <- consumeToken(enum)
-        _ <- commaSeparatedCtx(chosenParser, enum)
+        _ <- tokenSeparatedCtx(chosenParser, enum)
       } yield ()) || none
     } yield ()
 
