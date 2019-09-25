@@ -16,10 +16,34 @@ public enum JavaTokenEnum {
     SUPER("super", true),
     IMPLEMENTS("implements", true),
     DEFAULT("default", true),
+    CONTINUE("continue", true),
+    DO("do", true),
+    SWITCH("switch", true),
+    BREAK("break", true),
     THROWS("throws", true),
+    RETURN("return", true),
+    THROW("throw", true),
+    INSTANCEOF("instanceof", true),
+    NEW("new", true),
+    IF("if", true),
+    ELSE("else", true),
+    TRY("try", true),
+    CATCH("catch", true),
+    FINALLY("finally", true),
+    FOR("for", true),
+    WHILE("while", true),
+    PRIMITIVE_BYTE("byte", true),
+    PRIMITIVE_SHORT("short", true),
+    PRIMITIVE_INT("int", true),
+    PRIMITIVE_LONG("long", true),
+    PRIMITIVE_CHAR("char", true),
+    PRIMITIVE_FLOAT("float", true),
+    PRIMITIVE_DOUBLE("double", true),
+    PRIMITIVE_BOOLEAN("boolean", true),
     TOKEN("", true),
     STRING("", true),
     CHAR("", true),
+    SYNCHRONIZED("synchronized", true),
     ANNOTATION("@"),
     ANNOTATION_INTERFACE("@interface"),
     LEFT_PARENTHESIS("("),
@@ -35,6 +59,7 @@ public enum JavaTokenEnum {
     DOT("."),
     QUESTION_MARK("?"),
     EXCLAMATION_MARK("!"),
+    NOT_EQUAL("!="),
     LAMBDA_BODY_START("->"),
     ETC_ARRAY("..."),
     SUBSTITUTE("="),
@@ -98,7 +123,7 @@ public enum JavaTokenEnum {
     }
 
     public final String value;
-    final boolean isKeyword;
+    public final boolean isKeyword;
     boolean takeUntil = false;
     String until;
     JavaTokenEnum saveTo;

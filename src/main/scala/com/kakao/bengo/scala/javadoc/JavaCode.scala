@@ -5,14 +5,15 @@ import cats.data._
 import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
+import com.kakao.bengo.scala.javadoc.writer.JavaCodeFormatter
 import levsha.Document.Node
 import levsha.text.symbolDsl._
 
 
-case class JavaCode(packageName: String,
-                    imports: Vector[String],
-                    annotationsBuf: Vector[JavaAnnotationCall],
-                    defs: Vector[JavaDefinition]) {
+final case class JavaCode(packageName: String,
+                          imports: Vector[String],
+                          annotationsBuf: Vector[JavaAnnotationCall],
+                          defs: Vector[JavaDefinition]) {
   def appendAnnotationBuf(annotation: JavaAnnotationCall): JavaCode = copy(annotationsBuf = annotationsBuf :+ annotation)
 
   def setPackageName(str: String): JavaCode = copy(packageName = str)
@@ -25,7 +26,7 @@ case class JavaCode(packageName: String,
 
   import writer._
 
-  def show[T]: Node[T] = 'div (defs.sortBy(_.name).map(_.show(Indent(0))))
+  def show[T]: Node[T] = 'div(defs.sortBy(_.name).map(_.show(Indent(0))))
 }
 
 object JavaCode {
@@ -277,13 +278,16 @@ object JavaCode {
       State.pure(default).run(t).value
   }
 
+
   def parseMembers(modifier: JavaModifier): CodeState[JavaMembers] = {
     def dropLater: CodeState[Unit] = CodeState {
       case Nil => throw new TokenNotAcceptedException("nil list!")
       case JavaSToken(SEMICOLON, _) :: t =>
         State.pure(()).run(t).value
       case JavaSToken(LBRACE, _) :: t => (for {
-        _ <- parseParenthesisSkipHead(LBRACE, RBRACE)
+        strs <- parseParenthesisSkipHead(LBRACE, RBRACE)
+        _ = JavaCodeFormatter.printCode(strs)
+        _ = println()
       } yield ()).run(t).value
       case JavaSToken(DEFAULT, _) :: t =>
         (for {
@@ -303,6 +307,7 @@ object JavaCode {
         case JavaSToken(a@LEFT_PARENTHESIS, _) :: _ => for {
           _ <- assertToken(a)
           args <- parseArgs
+          _ = println(s"======= method $name =======")
           _ <- dropLater
         } yield JavaMethod(modifier, name, typename, args)
         case JavaSToken(a@SUBSTITUTE, _) :: _ => for {
@@ -456,34 +461,34 @@ object JavaCode {
     }
   }
 
-  def takeString: CodeState[String] = CodeState(tokens => (tokens.tail, tokens.head.value))
+  def takeString: CodeState[String] = CodeState(tokens => (tokens.tail, if (tokens.head.value.isEmpty) tokens.head.tokenType.value else tokens.head.value))
 
   def assertToken(token: JavaTokenEnum): CodeState[Unit] = CodeState {
     case JavaSToken(tk, _) :: t if tk == token => State.pure(()).run(t).value
     case t => throw new TokenNotAcceptedException(s"expected $token but ${t.head.tokenType} => ${t.head.value}, ${t.tail.take(5)}")
   }
 
-  def parseParenthesisSkipHead(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): CodeState[Vector[String]] = {
-    def loop(cnt: Int, acc: Vector[String]): CodeState[Vector[String]] = NextCodeState[Vector[String]] {
+  def parseParenthesisSkipHead(leftPar: JavaTokenEnum, rightPar: JavaTokenEnum): CodeState[Vector[JavaSToken]] = {
+    def loop(cnt: Int, acc: Vector[JavaSToken]): CodeState[Vector[JavaSToken]] = NextCodeState[Vector[JavaSToken]] {
       case Nil => State.pure(acc)
-      case JavaSToken(lp, _) :: _ if lp == leftPar => for {
+      case (t@JavaSToken(lp, _)) :: _ if lp == leftPar => for {
         _ <- assertToken(lp)
-        res <- loop(cnt + 1, acc :+ lp.value)
+        res <- loop(cnt + 1, acc :+ t)
       } yield res
-      case JavaSToken(rp, _) :: _ if cnt == 0 && rp == rightPar => for {
+      case (t@JavaSToken(rp, _)) :: _ if cnt == 0 && rp == rightPar => for {
         _ <- assertToken(rp)
-      } yield acc
-      case JavaSToken(rp, _) :: _ if rp == rightPar => for {
+      } yield acc :+ t
+      case (t@JavaSToken(rp, _)) :: _ if rp == rightPar => for {
         _ <- assertToken(rp)
-        res <- loop(cnt - 1, acc :+ rp.value)
+        res <- loop(cnt - 1, acc :+ t)
       } yield res
-      case JavaSToken(_, _) :: _ => for {
-        v <- takeString
-        res <- loop(cnt, acc :+ v)
+      case (t@JavaSToken(_, _)) :: _ => for {
+        _ <- takeString
+        res <- loop(cnt, acc :+ t)
       } yield res
     }
 
-    loop(0, Vector.empty)
+    loop(0, Vector(JavaSToken(leftPar, leftPar.value)))
   }
 
   def parseUntil(until: JavaTokenEnum): CodeState[String] = {

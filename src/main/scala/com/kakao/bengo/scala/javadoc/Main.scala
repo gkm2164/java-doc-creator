@@ -18,8 +18,7 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    List(("/Users/ben.go/java/da-commons/da-io", "javadoc-da-commons-io.html", "DA commons 문서"),
-         ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
+    List(("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
       ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
@@ -84,7 +83,9 @@ object Main {
     node.createHashMap.keys.foreach(println)
   }
 
-  def goThroughTree(currentHandle: File): CodeNonLeaf = {
+  case class PrintOption(rawMethodBody: Boolean)
+
+  def goThroughTree(currentHandle: File, printOption: PrintOption = PrintOption(rawMethodBody = false)): CodeNonLeaf = {
     def loop(currentHandle: File, pkgNameAcc: Seq[String]): CodeNode = {
       if (currentHandle.isFile) {
         val filename = currentHandle.getName
@@ -94,7 +95,7 @@ object Main {
         val sources = src.mkString("")
         val tokens = Tokenizer.tokenize(sources).asScala
         log.info(s"parse token - # of tokens ${tokens.length}")
-        CodeLeaf(filename, packageName, tokens.map(x => JavaSToken(x.getE, x.getValue)).toList)
+        CodeLeaf(filename, packageName, tokens.map(x => JavaSToken(x.getE, x.getValue)).toList, printOption)
       } else {
         log.info(s"entered package ${(pkgNameAcc :+ currentHandle.getName).mkString(".")}")
         CodeNonLeaf(currentHandle.getName,

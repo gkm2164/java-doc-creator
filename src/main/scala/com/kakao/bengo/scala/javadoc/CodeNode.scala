@@ -1,5 +1,6 @@
 package com.kakao.bengo.scala.javadoc
 
+import com.kakao.bengo.scala.javadoc.Main.PrintOption
 import com.typesafe.scalalogging.Logger
 import levsha.Document.{Empty, Node}
 import levsha.text.symbolDsl._
@@ -14,7 +15,7 @@ sealed trait CodeNode {
   def createHashMap: Map[String, List[JavaDefinition]]
 }
 
-case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken]) extends CodeNode {
+final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], printOption: PrintOption) extends CodeNode {
   val log: Logger = Logger("CodeLeaf")
   val code: JavaCode = JavaCode(tokens)
 
@@ -55,7 +56,7 @@ case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken])
   override def createHashMap: Map[String, List[JavaDefinition]] = code.defs.map(x => x.name -> x).groupBy(_._1).mapValues(_.map(_._2).toList)
 }
 
-case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends CodeNode {
+final case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) extends CodeNode {
   val log = Logger("CodeNonLeaf")
   def createHashMap: Map[String, List[JavaDefinition]] = {
     val map: Map[String, Map[String, List[JavaDefinition]]] = codeNodes.mapValues(_.createHashMap)

@@ -107,11 +107,12 @@ public class Tokenizer {
     }
 
     private static Pair<JavaToken, Integer> takeUntil(char[] codes, int i, Node elem) {
+        final boolean allowEscape = elem.tokenEnum.allowEscape;
+        final char[] untilChar = elem.tokenEnum.until.toCharArray();
+
         int j = i;
-        boolean allowEscape = elem.tokenEnum.allowEscape;
         boolean escape = false;
-        char[] untilChar = elem.tokenEnum.until.toCharArray();
-        StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder();
         buf.append(elem.prefix);
 
         while (j < codes.length && ((allowEscape && escape) || !eqCharArray(codes, j, untilChar))) {
@@ -124,21 +125,22 @@ public class Tokenizer {
         if (j < codes.length && untilChar.length > 1 || !WHITESPACES.contains(untilChar[0])) {
             buf.append(untilChar);
         }
-        JavaToken ret = new JavaToken(elem.tokenEnum.saveTo, buf.toString());
+        final JavaToken ret = new JavaToken(elem.tokenEnum.saveTo, buf.toString(), j);
         return new Pair<>(ret, j + untilChar.length - 1);
     }
 
     public static List<JavaToken> tokenize(String code) {
+        final char[] codes = code.toCharArray();
+        final List<JavaToken> ret = new ArrayList<>();
+
         Node elem = tokenizer.root;
-        char[] codes = code.toCharArray();
         StringBuilder sb = new StringBuilder();
-        List<JavaToken> ret = new ArrayList<>();
         for (int i = 0; i < codes.length; i++) {
             char ch = codes[i];
             if (elem.next.containsKey(ch)) {
                 elem = elem.next.get(ch);
                 if (elem.flush && sb.length() > 0) {
-                    ret.add(JavaToken.newToken(sb.toString()));
+                    ret.add(JavaToken.newToken(sb.toString(), i));
                     sb = new StringBuilder();
                 }
                 sb.append(ch);
@@ -153,22 +155,21 @@ public class Tokenizer {
                 [공통]. fail로 노드 이동*/
                 if (elem.isTerminal) {
                     if (elem.tokenEnum.takeUntil) {
-                        Pair<JavaToken, Integer> tokenWithIdx = takeUntil(codes, i, elem);
+                        final Pair<JavaToken, Integer> tokenWithIdx = takeUntil(codes, i, elem);
                         ret.add(tokenWithIdx.getKey());
                         i = tokenWithIdx.getValue();
                         elem = tokenizer.root;
                         sb = new StringBuilder();
                         continue;
                     } else {
-                        ret.add(new JavaToken(elem.tokenEnum, elem.prefix));
+                        ret.add(new JavaToken(elem.tokenEnum, elem.prefix, i));
                     }
                     sb = new StringBuilder();
                 }
 
                 if (WHITESPACES.contains(ch)) {
                     if (sb.length() > 0) {
-                        JavaToken jt = JavaToken.newToken(sb.toString());
-                        ret.add(jt);
+                        ret.add(JavaToken.newToken(sb.toString(), i));
 
                     }
                     sb = new StringBuilder();
@@ -191,7 +192,7 @@ public class Tokenizer {
         }
 
         if (sb.length() > 0) {
-            ret.add(JavaToken.newToken(sb.toString()));
+            ret.add(JavaToken.newToken(sb.toString(), codes.length));
         }
 
         return ret;
