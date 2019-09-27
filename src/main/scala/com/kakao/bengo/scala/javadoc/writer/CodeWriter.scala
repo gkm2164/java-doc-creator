@@ -40,21 +40,19 @@ object CodeWriter {
       thisWriter
     }
 
-    def debug(msg: String): CodeWriter[A] = {
+    def debug(msg: String): CodeWriter[A] = tokenList => {
       println("[DEBUG]: " + msg)
-      tokenList => thisWriter.run(tokenList)
+      thisWriter.run(tokenList)
     }
 
-    def tell(something: String): CodeWriter[A] = {
-      tokenList =>
-        sb => {
-          val (nextState, newSb, v) = thisWriter.run(tokenList)(sb)
-          v match {
-            case Right(_) => (nextState, newSb.append(something), v)
-            case Left(_) => (nextState, newSb, v)
-          }
+    def tell(something: String): CodeWriter[A] = tokenList =>
+      sb => {
+        val (nextState, newSb, v) = thisWriter.run(tokenList)(sb)
+        v match {
+          case Right(_) => (nextState, newSb.append(something), v)
+          case Left(_) => (nextState, newSb, v)
         }
-    }
+      }
 
     def run(state: List[JavaSToken]): IndentAwareStringBuilder => CodeWriterValue[A] = thisWriter(state)
 
@@ -97,7 +95,6 @@ object CodeWriter {
     def ||(x: CodeWriter[A]): CodeWriter[A] = orElse(x)
 
     def orElse(otherWriter: CodeWriter[A]): CodeWriter[A] = {
-      println("came to orElse()")
       tokenList =>
         sb => {
           val tmpStringBuilder = new IndentAwareStringBuilder(sb)

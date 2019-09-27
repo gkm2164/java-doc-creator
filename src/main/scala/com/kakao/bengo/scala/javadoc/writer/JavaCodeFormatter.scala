@@ -16,9 +16,11 @@ object JavaCodeFormatter {
 
   def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(new ParseFailException(reason))) }
 
-  def none(from: String = ""): CodeWriter[Unit] = {
-    println(s"fallback of $from")
-    CodeWriter.pure(())
+  def none(from: String = ""): CodeWriter[Unit] = CodeWriter {
+    tks => {
+      println(from)
+      (tks, Right())
+    }
   }
 
   def consumeTokens(enums: List[JavaTokenEnum]): CodeWriter[JavaSToken] = CodeWriter {
@@ -38,12 +40,12 @@ object JavaCodeFormatter {
 
   def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
-    case tokenList@JavaSToken(v, _) :: t =>
+    case tokenList@JavaSToken(v, str) :: t =>
       if (v == enum) {
-        println(s"succeed with: $v")
+        println(s"succeed with: $v($str)")
         (t, Right(()))
       } else {
-        println(s"failed with: $v")
+        println(s"failed with: $v, expected $enum")
         (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
       }
     case tokenList => println(tokenList)
@@ -82,7 +84,8 @@ object JavaCodeFormatter {
   }
 
   def statement: CodeWriter[Unit] = for {
-    _ <- blockStmt(true) || emptyStmt || expressionStmt || switchStmt ||
+    _ <- blockStmt(true).debug("blockStmt") || emptyStmt ||
+      expressionStmt.debug("expressionStmt") || switchStmt ||
       doStmt || breakStmt || continueStmt || returnStmt || forStmt || ifStmt ||
       whileStmt || synchronizedStmt || throwStmt || tryStmt || fail("failed at [statement] block")
   } yield Right()
@@ -96,15 +99,15 @@ object JavaCodeFormatter {
 
   def expressionStmt: CodeWriter[Unit] =
     for {
-      _ <- assignment || preExpression || postExpression || methodInvocation || classInstanceCreation
+      _ <- assignment.debug("assignment") || preExpression || postExpression || methodInvocation || classInstanceCreation
       _ <- assertToken(SEMICOLON).tell(";").enter()
     } yield Right()
 
   def assignment: CodeWriter[Unit] = for {
-    _ <- identifier
+    _ <- identifier.debug("assignment/identifier")
     _ <- arrayRefs || none("assignment/arrayRefs")
-    _ <- consumeTokens(SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC).tell(" = ")
-    _ <- expression
+    _ <- consumeTokens(SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC).tell(" = ").debug("assignment/consumeTokens")
+    _ <- expression.debug("assignment/expression")
   } yield Right()
 
   def arrayRefs: CodeWriter[Unit] = for {
@@ -252,100 +255,73 @@ object JavaCodeFormatter {
 
   def expression: CodeWriter[Unit] = lambda || assignment || conditionalExpression
 
-  def conditionalExpression: CodeWriter[Unit] = for {
-    _ <- conditionalOrExpression
-    _ <- assertToken(QUESTION_MARK)
-    _ <- expression
-    _ <- assertToken(COLON)
-    _ <- conditionalExpression || lambda
-  } yield Right()
+  def conditionalExpression: CodeWriter[Unit] = {
+    def detail: CodeWriter[Unit] = for {
+      _ <- assertToken(QUESTION_MARK)
+      _ <- expression
+      _ <- assertToken(COLON)
+      _ <- conditionalExpression || lambda
+    } yield Right()
 
-  def conditionalOrExpression: CodeWriter[Unit] = for {
-    _ <- conditionalAndExpression || (for {
-      _ <- conditionalAndExpression
-      - <- assertToken(OR)
-      _ <- conditionalOrExpression
-    } yield Right())
-  } yield Right()
+    for {
+      _ <- conditionalOrExpression.debug("conditionalExpression")
+      _ <- detail || none("conditionalExpressionDetail")
+    } yield Right()
+  }
 
-  def conditionalAndExpression: CodeWriter[Unit] = for {
-    _ <- inclusiveOrExpression || (for {
-      _ <- inclusiveOrExpression
-      _ <- assertToken(AND)
-      _ <- conditionalAndExpression
-    } yield Right())
-  } yield Right()
+  def infixOperator(operator: JavaTokenEnum, next: CodeWriter[Unit]): CodeWriter[Unit] = {
+    def detail: CodeWriter[Unit] = for {
+      - <- assertToken(operator)
+      _ <- infixOperator(operator, next)
+    } yield Right()
 
-  def inclusiveOrExpression: CodeWriter[Unit] = for {
-    _ <- exclusiveOrExpression || (for {
-      _ <- exclusiveOrExpression
-      _ <- assertToken(BIT_OR)
-      _ <- inclusiveOrExpression
-    } yield Right())
-  } yield Right()
+    for {
+      _ <- next
+      _ <- detail || none(s"infixOperator($operator)/detail")
+    } yield Right()
+  }
 
-  def exclusiveOrExpression: CodeWriter[Unit] = for {
-    _ <- andExpression || (for {
-      _ <- andExpression
-      _ <- assertToken(BIT_XOR)
-      _ <- exclusiveOrExpression
-    } yield Right())
-  } yield Right()
 
-  def andExpression: CodeWriter[Unit] = for {
-    _ <- equalityExpression || (for {
-      _ <- equalityExpression
-      _ <- assertToken(BIT_AND)
-      _ <- andExpression
-    } yield Right())
-  } yield Right()
+  def infixOperators(operators: List[JavaTokenEnum], next: CodeWriter[Unit]): CodeWriter[Unit] = {
+    def detail: CodeWriter[Unit] = for {
+      - <- assertTokens(operators)
+      _ <- infixOperators(operators, next)
+    } yield Right()
 
-  def equalityExpression: CodeWriter[Unit] = for {
-    _ <- relationalExpression || (for {
-      _ <- relationalExpression
-      _ <- assertToken(EQUAL)
-      _ <- equalityExpression
-    } yield Right())
-  } yield Right()
+    for {
+      _ <- next
+      _ <- detail || none(s"infixOperator($operators)/detail")
+    } yield Right()
+  }
+
+  def conditionalOrExpression: CodeWriter[Unit] = infixOperator(OR, conditionalAndExpression)
+
+  def conditionalAndExpression: CodeWriter[Unit] = infixOperator(AND, inclusiveOrExpression)
+
+  def inclusiveOrExpression: CodeWriter[Unit] = infixOperator(BIT_OR, exclusiveOrExpression)
+
+  def exclusiveOrExpression: CodeWriter[Unit] = infixOperator(BIT_XOR, andExpression)
+
+  def andExpression: CodeWriter[Unit] = infixOperator(BIT_AND, equalityExpression)
+
+  def equalityExpression: CodeWriter[Unit] = infixOperator(EQUAL, relationalExpression)
 
   def relationalExpression: CodeWriter[Unit] = for {
-    _ <- shiftExpression || (for {
-      _ <- shiftExpression
-      _ <- assertTokens(LT | GT | LTE | GTE)
-      _ <- relationalExpression
-    } yield Right()) || (for {
+    _ <- infixOperators(LT | GT | LTE | GTE, shiftExpression) || (for {
       _ <- shiftExpression
       _ <- assertToken(INSTANCEOF)
       _ <- primitiveTypes || customDecl
     } yield Right())
   } yield Right()
 
-  def shiftExpression: CodeWriter[Unit] = for {
-    _ <- additiveExpression || (for {
-      _ <- additiveExpression
-      _ <- assertTokens(LEFT_SHIFT | RIGHT_SHIFT | U_RIGHT_SHIFT)
-      _ <- shiftExpression
-    } yield Right())
-  } yield Right()
+  def shiftExpression: CodeWriter[Unit] = infixOperators(LEFT_SHIFT | RIGHT_SHIFT | U_RIGHT_SHIFT, additiveExpression)
 
-  def additiveExpression: CodeWriter[Unit] = for {
-    _ <- multiplicativeExpression || (for {
-      _ <- multiplicativeExpression
-      _ <- assertTokens(PLUS | MINUS)
-      _ <- additiveExpression
-    } yield Right())
-  } yield Right()
+  def additiveExpression: CodeWriter[Unit] = infixOperators(PLUS | MINUS, multiplicativeExpression)
 
-  def multiplicativeExpression: CodeWriter[Unit] = for {
-    _ <- unaryExpression || (for {
-      _ <- unaryExpression
-      _ <- assertTokens(MULTIPLY | DIVIDE | MODULAR)
-      _ <- multiplicativeExpression
-    } yield Right())
-  } yield Right()
+  def multiplicativeExpression: CodeWriter[Unit] = infixOperators(MULTIPLY | DIVIDE | MODULAR, unaryExpression)
 
   def unaryExpression: CodeWriter[Unit] = for {
-    _ <- preExpression || unaryExpWith(PLUS | MINUS | NEGATE | EXCLAMATION_MARK) || postExpression || castExpression
+    _ <- preExpression || unaryExpWith(PLUS | MINUS | NEGATE | EXCLAMATION_MARK) || postExpression || castExpression || identifier
   } yield Right()
 
   def castExpression: CodeWriter[Unit] = for {
@@ -360,7 +336,11 @@ object JavaCodeFormatter {
     _ <- unaryExpression
   } yield Right()
 
-  def lambda: CodeWriter[Unit] = none("lambda")
+  def lambda: CodeWriter[Unit] = for {
+    _ <- assertToken(LEFT_PARENTHESIS)
+    _ <- assertToken(RIGHT_PARENTHESIS)
+    _ <- assertToken(LAMBDA_BODY_START)
+  } yield Right()
 
   def synchronizedStmt: CodeWriter[Unit] = for {
     _ <- assertToken(SYNCHRONIZED).tell("synchronized")
