@@ -5,8 +5,20 @@ class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = " 
   private var currentIndent: Vector[Int] = Vector(initialIndent)
   private val tabString: String = defaultTabString
 
+  def this(prev: IndentAwareStringBuilder) {
+    this(prev.currentIndent.last, prev.tabString)
+  }
+
   def append[T](value: T): IndentAwareStringBuilder = {
     sb.append(value)
+    this
+  }
+
+  def appendAll(newSB: IndentAwareStringBuilder): IndentAwareStringBuilder = {
+    sb.append(newSB.toString)
+    if (newSB.currentIndent.length > 1) {
+      this.currentIndent ++= newSB.currentIndent.drop(1)
+    }
     this
   }
 

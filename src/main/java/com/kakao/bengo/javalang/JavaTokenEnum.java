@@ -23,6 +23,7 @@ public enum JavaTokenEnum {
     THROWS("throws", true),
     RETURN("return", true),
     THROW("throw", true),
+    CASE("case", true),
     INSTANCEOF("instanceof", true),
     NEW("new", true),
     IF("if", true),
