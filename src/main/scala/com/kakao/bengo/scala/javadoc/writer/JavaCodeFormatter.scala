@@ -5,6 +5,7 @@ import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
 import com.kakao.bengo.scala.javadoc.JavaSToken
 import com.kakao.bengo.scala.javadoc.writer.CodeWriter._
+import com.kakao.bengo.scala.javadoc.writer.JavaCodeFormatter.{additiveExpression, andExpression, conditionalAndExpression, conditionalOrExpression, equalityExpression}
 import com.kakao.bengo.scala.javadoc.writer.exceptions._
 
 object JavaCodeFormatter {
@@ -44,6 +45,20 @@ object JavaCodeFormatter {
       } else {
         println(s"failed with: $v")
         (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
+      }
+    case tokenList => println(tokenList)
+      (tokenList, Left(new ParseFailException("unidentified token has arrived")))
+  }
+
+  def assertTokens(enums: List[JavaTokenEnum]): CodeWriter[Unit] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case tokenList@JavaSToken(v, _) :: t =>
+      if (enums.contains(v)) {
+        println(s"succeed with: $v")
+        (t, Right(()))
+      } else {
+        println(s"failed with: $v")
+        (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
       }
     case tokenList => println(tokenList)
       (tokenList, Left(new ParseFailException("unidentified token has arrived")))
@@ -100,13 +115,13 @@ object JavaCodeFormatter {
   } yield Right()
 
   def preExpression: CodeWriter[Unit] = for {
-    _ <- assertToken(INC)
+    _ <- assertTokens(INC | DEC)
     _ <- identifier
   } yield Right()
 
   def postExpression: CodeWriter[Unit] = for {
     _ <- identifier
-    _ <- assertToken(INC)
+    _ <- assertTokens(INC | DEC)
   } yield Right()
 
   def methodInvocation: CodeWriter[Unit] = for {
@@ -168,7 +183,6 @@ object JavaCodeFormatter {
       assertToken(PRIMITIVE_FLOAT).tell("float ") ||
       assertToken(PRIMITIVE_DOUBLE).tell("double ") ||
       assertToken(PRIMITIVE_BOOLEAN).tell("boolean ")
-    _ = println("??")
   } yield Right()
 
   def finallyStmt: CodeWriter[Unit] = for {
@@ -227,16 +241,124 @@ object JavaCodeFormatter {
     _ <- assertToken(DEFAULT)
     _ <- assertToken(COLON).tell("default:")
     _ <- statements
-  } yield Right(())
+  } yield Right()
 
   def caseStmtDetail: CodeWriter[Unit] = for {
     _ <- assertToken(CASE).tell("case ")
     _ <- expression
     _ <- assertToken(COLON).tell(":")
     _ <- statements
-  } yield Right(())
+  } yield Right()
 
-  def expression: CodeWriter[Unit] = lambda || assignment
+  def expression: CodeWriter[Unit] = lambda || assignment || conditionalExpression
+
+  def conditionalExpression: CodeWriter[Unit] = for {
+    _ <- conditionalOrExpression
+    _ <- assertToken(QUESTION_MARK)
+    _ <- expression
+    _ <- assertToken(COLON)
+    _ <- conditionalExpression || lambda
+  } yield Right()
+
+  def conditionalOrExpression: CodeWriter[Unit] = for {
+    _ <- conditionalAndExpression || (for {
+      _ <- conditionalAndExpression
+      - <- assertToken(OR)
+      _ <- conditionalOrExpression
+    } yield Right())
+  } yield Right()
+
+  def conditionalAndExpression: CodeWriter[Unit] = for {
+    _ <- inclusiveOrExpression || (for {
+      _ <- inclusiveOrExpression
+      _ <- assertToken(AND)
+      _ <- conditionalAndExpression
+    } yield Right())
+  } yield Right()
+
+  def inclusiveOrExpression: CodeWriter[Unit] = for {
+    _ <- exclusiveOrExpression || (for {
+      _ <- exclusiveOrExpression
+      _ <- assertToken(BIT_OR)
+      _ <- inclusiveOrExpression
+    } yield Right())
+  } yield Right()
+
+  def exclusiveOrExpression: CodeWriter[Unit] = for {
+    _ <- andExpression || (for {
+      _ <- andExpression
+      _ <- assertToken(BIT_XOR)
+      _ <- exclusiveOrExpression
+    } yield Right())
+  } yield Right()
+
+  def andExpression: CodeWriter[Unit] = for {
+    _ <- equalityExpression || (for {
+      _ <- equalityExpression
+      _ <- assertToken(BIT_AND)
+      _ <- andExpression
+    } yield Right())
+  } yield Right()
+
+  def equalityExpression: CodeWriter[Unit] = for {
+    _ <- relationalExpression || (for {
+      _ <- relationalExpression
+      _ <- assertToken(EQUAL)
+      _ <- equalityExpression
+    } yield Right())
+  } yield Right()
+
+  def relationalExpression: CodeWriter[Unit] = for {
+    _ <- shiftExpression || (for {
+      _ <- shiftExpression
+      _ <- assertTokens(LT | GT | LTE | GTE)
+      _ <- relationalExpression
+    } yield Right()) || (for {
+      _ <- shiftExpression
+      _ <- assertToken(INSTANCEOF)
+      _ <- primitiveTypes || customDecl
+    } yield Right())
+  } yield Right()
+
+  def shiftExpression: CodeWriter[Unit] = for {
+    _ <- additiveExpression || (for {
+      _ <- additiveExpression
+      _ <- assertTokens(LEFT_SHIFT | RIGHT_SHIFT | U_RIGHT_SHIFT)
+      _ <- shiftExpression
+    } yield Right())
+  } yield Right()
+
+  def additiveExpression: CodeWriter[Unit] = for {
+    _ <- multiplicativeExpression || (for {
+      _ <- multiplicativeExpression
+      _ <- assertTokens(PLUS | MINUS)
+      _ <- additiveExpression
+    } yield Right())
+  } yield Right()
+
+  def multiplicativeExpression: CodeWriter[Unit] = for {
+    _ <- unaryExpression || (for {
+      _ <- unaryExpression
+      _ <- assertTokens(MULTIPLY | DIVIDE | MODULAR)
+      _ <- multiplicativeExpression
+    } yield Right())
+  } yield Right()
+
+  def unaryExpression: CodeWriter[Unit] = for {
+    _ <- preExpression || unaryExpWith(PLUS | MINUS | NEGATE | EXCLAMATION_MARK) || postExpression || castExpression
+  } yield Right()
+
+  def castExpression: CodeWriter[Unit] = for {
+    _ <- assertToken(LEFT_PARENTHESIS)
+    _ <- primitiveTypes || customDecl
+    _ <- assertToken(RIGHT_PARENTHESIS)
+    _ <- unaryExpression || lambda
+  } yield Right()
+
+  def unaryExpWith(enums: List[JavaTokenEnum]): CodeWriter[Unit] = for {
+    _ <- assertTokens(enums)
+    _ <- unaryExpression
+  } yield Right()
 
   def lambda: CodeWriter[Unit] = none("lambda")
 
@@ -255,11 +377,6 @@ object JavaCodeFormatter {
         _ <- declDetail
       } yield Right()
 
-      def customDecl: CodeWriter[Unit] = for {
-        _ <- identifier.debug("inside [declDetail], [identifier]")
-        _ <- generic || none("declDetail/generic")
-      } yield Right()
-
       for {
         _ <- primitiveTypes || customDecl
         _ <- arrayUse || none("declDetail/arrayUse")
@@ -272,15 +389,19 @@ object JavaCodeFormatter {
 
     for {
       _ <- assertToken(FINAL).tell("final").debug("try to assert [FINAL]") ||
-           none("declaration/assertToken(FINAL)").debug("there's no final")
-      _ <- declDetail.debug("??")
+        none("declaration/assertToken(FINAL)").debug("there's no final")
+      _ <- declDetail
     } yield Right()
   }
 
+  def customDecl: CodeWriter[Unit] = for {
+    _ <- identifier.debug("inside [declDetail], [identifier]")
+    _ <- generic || none("declDetail/generic")
+  } yield Right()
 
   def variableInitialize: CodeWriter[Unit] = for {
     _ <- assertToken(SUBSTITUTE)
-    _ <- expression || arrayInitializer
+    _ <- expression.debug("came to [expression]") || arrayInitializer
   } yield Right(())
 
   def arrayInitializer: CodeWriter[Unit] = for {
@@ -311,8 +432,8 @@ object JavaCodeFormatter {
 
     for {
       _ <- chosenParser
-      res <- loop || none("")
-    } yield res
+      _ <- loop || none("tokenSeparatedCtx/loop")
+    } yield Right()
   }
 
   case class IndentCounter(indent: Int) {

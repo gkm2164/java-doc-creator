@@ -1,6 +1,5 @@
 package com.kakao.bengo.scala.javadoc.writer
 
-import cats.data.State
 import com.kakao.bengo.scala.functional.Monad
 import com.kakao.bengo.scala.javadoc.JavaSToken
 import com.kakao.bengo.scala.javadoc.writer.exceptions._
@@ -103,7 +102,6 @@ object CodeWriter {
         sb => {
           val tmpStringBuilder = new IndentAwareStringBuilder(sb)
           val (nextTokenList, newSB, ret) = thisWriter.run(tokenList)(tmpStringBuilder)
-          println("???")
           ret match {
             case Right(_) => (nextTokenList, newSB, ret)
             case Left(_: RecoverableException) => otherWriter.run(tokenList)(sb)
