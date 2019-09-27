@@ -81,6 +81,12 @@ object CodeWriter {
       (nextState, nextSb, v)
     }
 
+    def printDebug(): CodeWriter[A] = tokenList => oldSb => {
+      val (state, sb, v) = thisWriter.run(tokenList)(oldSb)
+      println(s"[DEBUG STRINGBUILDER] ${sb.toString}")
+      (state, sb, v)
+    }
+
     def forceIndent(indent: Int): CodeWriter[A] = tokenList => oldSb => {
       val (nextState, sb, v) = thisWriter.run(tokenList)(oldSb)
       (nextState, sb.set(indent), v)

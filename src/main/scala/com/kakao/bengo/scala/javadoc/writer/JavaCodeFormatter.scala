@@ -100,7 +100,7 @@ object JavaCodeFormatter {
   def expressionStmt: CodeWriter[Unit] =
     for {
       _ <- assignment.debug("assignment") || preExpression || postExpression || methodInvocation || classInstanceCreation
-      _ <- assertToken(SEMICOLON).tell(";").enter()
+      _ <- assertToken(SEMICOLON).tell(";").enter().printDebug()
     } yield Right()
 
   def assignment: CodeWriter[Unit] = for {
