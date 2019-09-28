@@ -45,7 +45,7 @@ object CodeWriter {
       thisWriter.run(tokenList)
     }
 
-    def tell(something: String): CodeWriter[A] = tokenList =>
+    def tell(something: String): CodeWriter[A] = tokenList => {
       sb => {
         val (nextState, newSb, v) = thisWriter.run(tokenList)(sb)
         v match {
@@ -53,6 +53,17 @@ object CodeWriter {
           case Left(_) => (nextState, newSb, v)
         }
       }
+    }
+
+    def print(fmt: A => String): CodeWriter[Unit] = tokenList => {
+      sb => {
+        val (nextState, newSb, v) = thisWriter.run(tokenList)(sb)
+        v match {
+          case Right(str) => (nextState, newSb.append(fmt(str)), Right())
+          case Left(e) => (nextState, newSb, Left(e))
+        }
+      }
+    }
 
     def run(state: List[JavaSToken]): IndentAwareStringBuilder => CodeWriterValue[A] = thisWriter(state)
 
@@ -106,7 +117,7 @@ object CodeWriter {
           val tmpStringBuilder = new IndentAwareStringBuilder(sb)
           val (nextTokenList, newSB, ret) = thisWriter.run(tokenList)(tmpStringBuilder)
           ret match {
-            case Right(_) => (nextTokenList, newSB, ret)
+            case Right(_) => (nextTokenList, sb.appendAll(newSB), ret)
             case Left(_: RecoverableException) => otherWriter.run(tokenList)(sb)
             case Left(e: UnrecoverableException) => throw e
             case _ => throw new RuntimeException()
@@ -137,8 +148,8 @@ object CodeWriter {
   implicit def nextCodeWriterMonadConversion[A](nextCodeWriterMonad: NextCodeWriterMonad[A]): CodeWriter[A] =
     tokens => sb => nextCodeWriterMonad(tokens).run(tokens)(sb)
 
-  object NextCodeWriterMonad {
-    def apply[A](f: List[JavaSToken] => CodeWriter[A]): NextCodeWriterMonad[A] = f
-  }
+    object NextCodeWriterMonad {
+      def apply[A](f: List[JavaSToken] => CodeWriter[A]): NextCodeWriterMonad[A] = f
+    }
 
 }

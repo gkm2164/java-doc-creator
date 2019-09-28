@@ -38,6 +38,12 @@ object JavaCodeFormatter {
     def |(elem: JavaTokenEnum): List[JavaTokenEnum] = thisTokens :+ elem
   }
 
+  def takeToken(enum: JavaTokenEnum): CodeWriter[String] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case tokenList@JavaSToken(v, str) :: t if v == enum => (t, Right(str))
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
+  }
+
   def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
     case tokenList@JavaSToken(v, str) :: t =>
@@ -70,7 +76,7 @@ object JavaCodeFormatter {
     _ <- assertToken(LBRACE).tell("{").tab().enter()
     _ <- blockStmts.debug("try to parse as [blockStmts]") || none("blockStmt/blockStmts")
     _ <- assertToken(RBRACE).untab().enter().tell("}").enterIf(enterAtEndLine)
-  } yield Right(())
+  } yield Right()
 
   def statements: CodeWriter[Unit] = {
     def loop: CodeWriter[Unit] = {
@@ -87,7 +93,7 @@ object JavaCodeFormatter {
     _ <- blockStmt(true).debug("blockStmt") || emptyStmt ||
       expressionStmt.debug("expressionStmt") || switchStmt ||
       doStmt || breakStmt || continueStmt || returnStmt || forStmt || ifStmt ||
-      whileStmt || synchronizedStmt || throwStmt || tryStmt || fail("failed at [statement] block")
+      whileStmt || synchronizedStmt || throwStmt || tryStmt
   } yield Right()
 
   def unaryStmt(token: JavaTokenEnum): CodeWriter[Unit] = {
@@ -170,12 +176,12 @@ object JavaCodeFormatter {
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(false)
     _ <- catchStmts || none("catchStmts/catchStmts")
-  } yield Right(())
+  } yield Right()
 
   def blockStmts: CodeWriter[Unit] = for {
     _ <- declaration.debug("try to parse as [declaration]") || statement.debug("try to parse as [statement]")
     _ <- blockStmts || none("blockStmts/blockStmts")
-  } yield Right(())
+  } yield Right()
 
   def primitiveTypes: CodeWriter[Unit] = for {
     _ <- assertToken(PRIMITIVE_BYTE).tell("byte ") ||
@@ -402,11 +408,11 @@ object JavaCodeFormatter {
     _ <- arrayUse || none("arrayUse/arrayUse")
   } yield Right(())
 
-  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(assertToken(TOKEN), DOT)
+  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeToken(TOKEN).print(tk => s"$tk"), DOT)
 
   def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum): CodeWriter[Unit] = {
     def loop: CodeWriter[Unit] = for {
-      _ <- assertToken(enum).tell(s"${enum.value} ")
+      _ <- assertToken(enum).tell(s"${enum.value}")
       res <- tokenSeparatedCtx(chosenParser, enum)
     } yield res
 

@@ -16,9 +16,7 @@ class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = " 
 
   def appendAll(newSB: IndentAwareStringBuilder): IndentAwareStringBuilder = {
     sb.append(newSB.toString)
-    if (newSB.currentIndent.length > 1) {
-      this.currentIndent ++= newSB.currentIndent.drop(1)
-    }
+    this.currentIndent ++= newSB.currentIndent.drop(1)
     this
   }
 
@@ -49,4 +47,4 @@ class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = " 
 
   override def toString: String = sb.toString()
 }
-  
+
