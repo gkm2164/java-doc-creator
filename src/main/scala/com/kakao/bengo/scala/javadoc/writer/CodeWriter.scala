@@ -41,8 +41,9 @@ object CodeWriter {
     }
 
     def debug(msg: String): CodeWriter[A] = tokenList => {
+      val ret = thisWriter.run(tokenList)
       println("[DEBUG]: " + msg)
-      thisWriter.run(tokenList)
+      ret
     }
 
     def tell(something: String): CodeWriter[A] = tokenList => {

@@ -56,12 +56,23 @@ class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = " 
     this
   }
 
-  override def toString: String = {
+  def write: String = {
     if (sb.nonEmpty) {
       enter()
     }
 
     committedLines.map { case Line(indent, line) => s"${tabString * indent}$line" }.mkString("\n")
   }
+
+  override def toString: String = {
+    val remain = if (sb.nonEmpty) {
+      Vector(Line(currentIndent, sb.toString))
+    } else {
+      Vector()
+    }
+
+    (committedLines ++ remain).map { case Line(indent, line) => s"${tabString * indent}$line" }.mkString("\n")
+  }
+
 }
 

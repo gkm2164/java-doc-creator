@@ -145,7 +145,7 @@ object JavaCodeFormatter {
   def classInstanceCreation: CodeWriter[Unit] = for {
     _ <- assertToken(NEW).tell("new ")
     _ <- identifier
-    _ <- generic
+    _ <- generic || none("classInstanceCreation/generic")
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- tokenSeparatedCtx(expression, COMMA, true) || none("classInstanceCreation/tokenSeparatedCtx(expression, COMMA")
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
@@ -413,7 +413,7 @@ object JavaCodeFormatter {
   def lambda: CodeWriter[Unit] = {
     def lambdaDecl: CodeWriter[Unit] = for {
       _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-      _ <- tokenSeparatedCtx(declaration, COMMA, requireSpace = true)
+      _ <- tokenSeparatedCtx(declaration || takeToken(TOKEN).print(x => s"$x"), COMMA, requireSpace = true)
       _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     } yield Right()
 
@@ -447,7 +447,7 @@ object JavaCodeFormatter {
       for {
         _ <- primitiveTypes || customDecl
         _ <- arrayUse || none("declDetail/arrayUse")
-        _ <- none("?").tell(" ")
+        _ <- none("declaration/declDetail/empty").tell(" ")
         _ <- identifier.tell(" ")
         _ <- variableInitialize || none("declDetail/variableInitialize")
         _ <- loop || none("declDetail/primitiveTypes")
@@ -455,7 +455,7 @@ object JavaCodeFormatter {
     }
 
     for {
-      _ <- assertToken(FINAL).tell("final").debug("try to assert [FINAL]") ||
+      _ <- assertToken(FINAL).tell("final ").debug("try to assert [FINAL]") ||
         none("declaration/assertToken(FINAL)").debug("there's no final")
       _ <- declDetail
     } yield Right()
