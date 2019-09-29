@@ -40,14 +40,20 @@ object JavaCodeFormatter {
 
   def takeToken(enum: JavaTokenEnum): CodeWriter[String] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
-    case tokenList@JavaSToken(v, str) :: t if v == enum => (t, Right(str))
+    case tokenList@JavaSToken(v, str) :: t if v == enum || (enum == TOKEN && v == SUPER) => (t, Right(str))
     case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
+  }
+
+  def takeTokens(enums: List[JavaTokenEnum]): CodeWriter[String] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case tokenList@JavaSToken(v, str) :: t if enums.contains(v) => (t, Right(str))
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should be one of ${enums.mkString(", ")}", tokenList)))
   }
 
   def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
     case tokenList@JavaSToken(v, str) :: t =>
-      if (v == enum) {
+      if (v == enum || (enum == TOKEN && v == SUPER)) {
         println(s"succeed with: $v($str)")
         (t, Right(()))
       } else {
@@ -73,9 +79,9 @@ object JavaCodeFormatter {
   }
 
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = for {
-    _ <- assertToken(LBRACE).tell("{").tab().enter()
+    _ <- assertToken(LBRACE).tell("{").enter().tab()
     _ <- blockStmts.debug("try to parse as [blockStmts]") || none("blockStmt/blockStmts")
-    _ <- assertToken(RBRACE).untab().enter().tell("}").enterIf(enterAtEndLine)
+    _ <- assertToken(RBRACE).untab().tell("}").enterIf(enterAtEndLine)
   } yield Right()
 
   def statements: CodeWriter[Unit] = {
@@ -105,7 +111,7 @@ object JavaCodeFormatter {
 
   def expressionStmt: CodeWriter[Unit] =
     for {
-      _ <- assignment.debug("assignment") || preExpression || postExpression || methodInvocation || classInstanceCreation
+      _ <- assignment.debug("assignment") || preExpression || postExpression || methodInvocation.debug("methodInvocation") || classInstanceCreation
       _ <- assertToken(SEMICOLON).tell(";").enter().printDebug()
     } yield Right()
 
@@ -200,7 +206,7 @@ object JavaCodeFormatter {
   } yield Right(())
 
   def returnStmt: CodeWriter[Unit] = for {
-    _ <- assertToken(RETURN)
+    _ <- assertToken(RETURN).tell("return ")
     _ <- expression
   } yield Right(())
 
@@ -209,7 +215,11 @@ object JavaCodeFormatter {
   } yield Right()
 
   def ifStmt: CodeWriter[Unit] = for {
-    _ <- assertToken(IF)
+    _ <- assertToken(IF).tell("if")
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- expression
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+      _ <- blockStmt(false) || statement
   } yield Right()
 
   def whileStmt: CodeWriter[Unit] = for {
@@ -259,7 +269,7 @@ object JavaCodeFormatter {
     _ <- statements
   } yield Right()
 
-  def expression: CodeWriter[Unit] = lambda || assignment || conditionalExpression
+  def expression: CodeWriter[Unit] = lambda.debug("[lambda] from [expression]") || assignment || conditionalExpression
 
   def conditionalExpression: CodeWriter[Unit] = {
     def detail: CodeWriter[Unit] = for {
@@ -327,7 +337,7 @@ object JavaCodeFormatter {
   def multiplicativeExpression: CodeWriter[Unit] = infixOperators(MULTIPLY | DIVIDE | MODULAR, unaryExpression)
 
   def unaryExpression: CodeWriter[Unit] = for {
-    _ <- preExpression || unaryExpWith(PLUS | MINUS | NEGATE | EXCLAMATION_MARK) || postExpression || castExpression || identifier
+    _ <- preExpression || unaryExpWith(PLUS | MINUS | NEGATE | EXCLAMATION_MARK) || postExpression || castExpression || reference
   } yield Right()
 
   def castExpression: CodeWriter[Unit] = for {
@@ -338,15 +348,38 @@ object JavaCodeFormatter {
   } yield Right()
 
   def unaryExpWith(enums: List[JavaTokenEnum]): CodeWriter[Unit] = for {
-    _ <- assertTokens(enums)
+    _ <- takeTokens(enums).print(x => x)
     _ <- unaryExpression
   } yield Right()
 
-  def lambda: CodeWriter[Unit] = for {
-    _ <- assertToken(LEFT_PARENTHESIS)
-    _ <- assertToken(RIGHT_PARENTHESIS)
-    _ <- assertToken(LAMBDA_BODY_START)
-  } yield Right()
+  def reference: CodeWriter[Unit] = {
+    def funcRef: CodeWriter[Unit] = for {
+      _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+      _ <- tokenSeparatedCtx(expression, COMMA) || none("reference/funcRef/tokenSeparatedCtx(_, COMMA)")
+      _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    } yield Right()
+
+    for {
+      _ <- identifier
+      _ <- arrayRefs || none("reference/arrayRefs")
+      _ <- funcRef || none("reference/funcRef")
+      _ <- reference || none("reference/reference")
+    } yield Right()
+  }
+  
+  def lambda: CodeWriter[Unit] = {
+    def lambdaDecl: CodeWriter[Unit] = for {
+      _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+      _ <- tokenSeparatedCtx(declaration, COMMA)
+      _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    } yield Right()
+
+    for {
+      _ <- lambdaDecl || takeToken(TOKEN).print(x => s"$x")
+      _ <- assertToken(LAMBDA_BODY_START).tell(" -> ")
+      _ <- expression || blockStmt(false)
+    } yield Right()
+  }
 
   def synchronizedStmt: CodeWriter[Unit] = for {
     _ <- assertToken(SYNCHRONIZED).tell("synchronized")

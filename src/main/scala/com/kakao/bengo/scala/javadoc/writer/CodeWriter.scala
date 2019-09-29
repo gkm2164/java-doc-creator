@@ -117,7 +117,7 @@ object CodeWriter {
           val tmpStringBuilder = new IndentAwareStringBuilder(sb)
           val (nextTokenList, newSB, ret) = thisWriter.run(tokenList)(tmpStringBuilder)
           ret match {
-            case Right(_) => (nextTokenList, sb.appendAll(newSB), ret)
+            case Right(_) => (nextTokenList, sb.overwrite(newSB), ret)
             case Left(_: RecoverableException) => otherWriter.run(tokenList)(sb)
             case Left(e: UnrecoverableException) => throw e
             case _ => throw new RuntimeException()
