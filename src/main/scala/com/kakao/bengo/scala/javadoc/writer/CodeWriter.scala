@@ -48,6 +48,7 @@ object CodeWriter {
     def tell(something: String): CodeWriter[A] = tokenList => {
       sb => {
         val (nextState, newSb, v) = thisWriter.run(tokenList)(sb)
+        if (tokenList.nonEmpty) println(s"run with [${tokenList.head.tokenType}]")
         v match {
           case Right(_) => (nextState, newSb.append(something), v)
           case Left(_) => (nextState, newSb, v)

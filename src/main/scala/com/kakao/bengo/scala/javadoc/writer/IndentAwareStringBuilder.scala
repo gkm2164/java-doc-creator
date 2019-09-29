@@ -24,7 +24,6 @@ class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = " 
 
   def overwrite(newSB: IndentAwareStringBuilder): IndentAwareStringBuilder = {
     sb.clear()
-    println(s"Overwrite: [${newSB.sb.toString()}]")
     sb.append(newSB.sb.toString)
     this.committedLines = newSB.committedLines
     this.indentStack = newSB.indentStack
@@ -58,7 +57,7 @@ class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = " 
   }
 
   override def toString: String = {
-    if (sb.length > 0) {
+    if (sb.nonEmpty) {
       enter()
     }
 
