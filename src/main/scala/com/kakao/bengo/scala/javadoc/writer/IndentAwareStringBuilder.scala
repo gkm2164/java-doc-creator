@@ -2,77 +2,55 @@ package com.kakao.bengo.scala.javadoc.writer
 
 case class Line(indent: Int, line: String)
 
-class IndentAwareStringBuilder(initialIndent: Int, defaultTabString: String = "    ") {
-  val sb: StringBuilder = StringBuilder.newBuilder
-  private var committedLines: Vector[Line] = Vector()
-  private var indentStack: Vector[Int] = Vector(initialIndent)
-  private val tabString: String = defaultTabString
+object IndentAwareStringBuilder {
+  def apply(initialIndent: Int): IndentAwareStringBuilder =
+    IndentAwareStringBuilder(initialIndent, "    ", Vector(), Vector(), List(initialIndent))
+}
 
-  private def currentIndent: Int = indentStack.last
-
-  def this(prev: IndentAwareStringBuilder) {
-    this(prev.currentIndent, prev.tabString)
-    this.sb.append(prev.sb.toString())
-    this.committedLines = prev.committedLines
-    this.indentStack = prev.indentStack
-  }
+// This class is immutable
+case class IndentAwareStringBuilder(initialIndent: Int,
+                                    defaultTabString: String,
+                                    stringBuilder: Vector[String],
+                                    committedLines: Vector[Line] = Vector(),
+                                    indentHistory: List[Int] = Nil) {
 
   def append[T](value: T): IndentAwareStringBuilder = {
-    sb.append(value)
-    this
-  }
-
-  def overwrite(newSB: IndentAwareStringBuilder): IndentAwareStringBuilder = {
-    sb.clear()
-    sb.append(newSB.sb.toString)
-    this.committedLines = newSB.committedLines
-    this.indentStack = newSB.indentStack
-    this
+    this.copy(stringBuilder = stringBuilder :+ value.toString)
   }
 
   def tab: IndentAwareStringBuilder = {
-    indentStack :+= (indentStack.last + 1)
-    this
+    this.copy(indentHistory = (indentHistory.head + 1) :: indentHistory)
   }
 
   def untab: IndentAwareStringBuilder = {
-    indentStack = indentStack.dropRight(1)
-    this
+    this.copy(indentHistory = indentHistory.drop(1))
   }
 
   def set(newIndent: Int): IndentAwareStringBuilder = {
-    indentStack :+= newIndent
-    this
+    this.copy(indentHistory = newIndent :: indentHistory)
   }
 
   def unset: IndentAwareStringBuilder = {
-    indentStack = indentStack.dropRight(1)
-    this
+    this.copy(indentHistory = indentHistory.drop(1))
   }
 
   def enter(): IndentAwareStringBuilder = {
-    committedLines :+= Line(currentIndent, sb.toString())
-    sb.clear()
-    this
+    val nextLine = Line(currentIndent, stringBuilder.mkString(""))
+    this.copy(stringBuilder = Vector(),
+      committedLines = committedLines :+ nextLine)
   }
 
-  def write: String = {
-    if (sb.nonEmpty) {
-      enter()
-    }
-
-    committedLines.map { case Line(indent, line) => s"${tabString * indent}$line" }.mkString("\n")
-  }
+  private def currentIndent: Int = indentHistory.head
 
   override def toString: String = {
-    val remain = if (sb.nonEmpty) {
-      Vector(Line(currentIndent, sb.toString))
-    } else {
-      Vector()
-    }
+    val thisStringBuilder =
+      if (stringBuilder.nonEmpty) {
+        enter()
+      } else {
+        this
+      }
 
-    (committedLines ++ remain).map { case Line(indent, line) => s"${tabString * indent}$line" }.mkString("\n")
+    thisStringBuilder.committedLines.map { case Line(indent, line) => s"${defaultTabString * indent}$line" }.mkString("\n")
   }
-
 }
 

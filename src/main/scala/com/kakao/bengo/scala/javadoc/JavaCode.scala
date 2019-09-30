@@ -280,13 +280,13 @@ object JavaCode {
 
 
   def parseMembers(modifier: JavaModifier): CodeState[JavaMembers] = {
-    def dropLater: CodeState[Unit] = CodeState {
+    def dropLater(name: String): CodeState[Unit] = CodeState {
       case Nil => throw new TokenNotAcceptedException("nil list!")
       case JavaSToken(SEMICOLON, _) :: t =>
         State.pure(()).run(t).value
       case JavaSToken(LBRACE, _) :: t => (for {
         strs <- parseParenthesisSkipHead(LBRACE, RBRACE)
-        _ = JavaCodeFormatter.printCode(strs)
+        _ = JavaCodeFormatter.printCode(name, strs)
         _ = println()
       } yield ()).run(t).value
       case JavaSToken(DEFAULT, _) :: t =>
@@ -296,7 +296,7 @@ object JavaCode {
       case JavaSToken(THROWS, _) :: t =>
         (for {
           _ <- separateByType
-          _ <- dropLater
+          _ <- dropLater(name)
         } yield ()).run(t).value
       case h :: _ => throw new TokenNotAcceptedException(s"member: ${h.toString}")
     }
@@ -308,7 +308,7 @@ object JavaCode {
           _ <- assertToken(a)
           args <- parseArgs
           _ = println(s"======= method $name =======")
-          _ <- dropLater
+          _ <- dropLater(name)
         } yield JavaMethod(modifier, name, typename, args)
         case JavaSToken(a@SUBSTITUTE, _) :: _ => for {
           _ <- assertToken(a)

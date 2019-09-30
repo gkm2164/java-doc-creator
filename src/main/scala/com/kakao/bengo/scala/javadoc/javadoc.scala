@@ -66,9 +66,7 @@ package object javadoc {
     def inc: Indent = Indent(indent + 1, tab)
   }
 
-  final case class JavaSToken(tokenType: JavaTokenEnum, value: String) {
-
-  }
+  final case class JavaSToken(tokenType: JavaTokenEnum, value: String)
 
   final case class JavaModifier(commentMacros: Vector[String],
                                 annotations: Vector[JavaAnnotationCall],

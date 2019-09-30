@@ -19,11 +19,11 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     try {
-    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator-kakao", "javadoc-dacore.html", "DA Core 문서"))
+    List(("/Users/ben.go/scala/java-doc-creator", "javadoc-dacore.html", "DA Core 문서"))
 //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
     } catch {
-      case e: Exception => println(e.getMessage())
+      case e: Exception => println(e.getMessage)
     }
   }
 
