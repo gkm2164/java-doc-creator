@@ -48,33 +48,22 @@ object JavaCodeFormatter {
 
   def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
-    case tokenList@JavaSToken(v, _) :: t if v == enum =>
-      if (v == enum) {
-        (t, Right(()))
-      } else {
-        (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
-      }
-    case tokenList =>
-      (tokenList, Left(new TokenNotAllowedException("unidentified token has arrived", tokenList)))
+    case JavaSToken(v, _) :: t if v == enum => (t, Right())
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
   }
 
   def assertTokens(enums: List[JavaTokenEnum]): CodeWriter[Unit] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
-    case tokenList@JavaSToken(v, _) :: t =>
-      if (enums.contains(v)) {
-        (t, Right(()))
-      } else {
-        (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
-      }
-    case tokenList =>
-      (tokenList, Left(new ParseFailException("unidentified token has arrived")))
+    case JavaSToken(v, _) :: t if enums.contains(v) => (t, Right())
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList,
+      Left(new TokenNotAllowedException(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
   }
 
-  def releaseRightShift: CodeWriter[Unit] = CodeWriter {
+  def unrollingRightShift: CodeWriter[Unit] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
     case JavaSToken(shiftType@(RIGHT_SHIFT | U_RIGHT_SHIFT), _) :: t => shiftType match {
       case RIGHT_SHIFT => (JavaSToken(GT, ">") :: t, Right())
-      case U_RIGHT_SHIFT => (JavaSToken(RIGHT_SHIFT, ">") :: t, Right())
+      case U_RIGHT_SHIFT => (JavaSToken(RIGHT_SHIFT, ">>") :: t, Right())
       case _ => (Nil, Left(new ParseFailException("unexpected")))
     }
     case tokenList => (tokenList, Left(new TokenNotAllowedException("token is not '>>'", tokenList)))
@@ -84,7 +73,7 @@ object JavaCodeFormatter {
 
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{").enter().tab()
-    _ <- blockStmts.matchDebug("blockStmts", "blockStmt") || none.matchDebug("none", "not blockStmts")
+    _ <- blockStmts || none
     _ <- assertToken(RBRACE).untab().tell("}").enterIf(enterAtEndLine)
   } yield Right(), "blockStmt")
 
@@ -92,17 +81,16 @@ object JavaCodeFormatter {
     def loop: CodeWriter[Unit] = {
       for {
         _ <- statement
-        _ <- loop || none.matchDebug("none", "not loop")
+        _ <- loop || none
       } yield Right()
     }
 
-    loop || none.matchDebug("none", "not loop")
+    loop || none
   }, "statements")
 
   def statement: CodeWriter[Unit] = tag(for {
-    _ <- blockStmt(true).matchDebug("blockStmt", "statement") || emptyStmt ||
-      expressionStmt.matchDebug("expressionStmt", "statement") || switchStmt ||
-      doStmt || breakStmt || continueStmt || returnStmt || forStmt.matchDebug("forStmt", "statement") || ifStmt ||
+    _ <- blockStmt(true) || emptyStmt || expressionStmt || switchStmt ||
+      doStmt || breakStmt || continueStmt || returnStmt || forStmt || ifStmt ||
       whileStmt || synchronizedStmt || throwStmt || tryStmt || declarationStmt
   } yield Right(), "statement")
 
@@ -112,23 +100,22 @@ object JavaCodeFormatter {
   } yield Right(), s"unaryStmt($token)")
 
   def expressionStmt: CodeWriter[Unit] = tag(for {
-    _ <- assignment.matchDebug("assignment", "expressionStmt") || expression
+    _ <- assignment || expression
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield Right(), "expressionStmt")
 
   def assignment: CodeWriter[Unit] = tag(for {
-    _ <- identifier.matchDebug("identifier", "assignment")
-    _ <- arrayRefs.matchDebug("arrayRefs", "assignment") || none.matchDebug("none", "not arrayRefs")
-    testTokens = SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC
-    _ <- takeTokens(testTokens).print(x => s" $x ").matchDebug(s"takeTokens($testTokens).print", "assignment")
-    _ <- expression.matchDebug("expression", "assignment")
+    _ <- identifier
+    _ <- arrayRefs || none
+    _ <- takeTokens(SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC).print(x => s" $x ")
+    _ <- expression
   } yield Right(), "assignment")
 
   def arrayRefs: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET).tell("[")
     _ <- expression
     _ <- assertToken(RBRACKET).tell("]")
-    _ <- arrayRefs || none.matchDebug("none", "not arrayRefs")
+    _ <- arrayRefs || none
   } yield Right(), "arrayRefs")
 
   def preExpression: CodeWriter[Unit] = tag(for {
@@ -144,9 +131,15 @@ object JavaCodeFormatter {
   def methodInvocation: CodeWriter[Unit] = tag(for {
     _ <- reference
     _ <- assertToken(LEFT_PARENTHESIS)
-    _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none.matchDebug("none", "not tokenSeparatedCtx(expression, COMMA)")
+    _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS)
   } yield Right(), "methodInvocation")
+
+  def parameters: CodeWriter[Unit] = for {
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+  } yield Right()
 
   def classInstanceCreation: CodeWriter[Unit] = tag({
     def arrayInstance: CodeWriter[Unit] = tag(for {
@@ -156,17 +149,11 @@ object JavaCodeFormatter {
       _ <- arrayInitializer || none
     } yield Right(), "arrayInstance")
 
-    def classInstance: CodeWriter[Unit] = tag(for {
-      _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-      _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none.matchDebug("none", "not tokenSeparatedCtx(expression, COMMA)")
-      _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    } yield Right(), "classInstance")
-
     for {
       _ <- assertToken(NEW).tell("new ")
       _ <- primitiveTypes || identifier
-      _ <- generic || none.matchDebug("none", "not generic")
-      _ <- arrayInstance || classInstance
+      _ <- generic || none
+      _ <- arrayInstance || parameters
     } yield Right()
   }, "classInstanceCreation")
 
@@ -197,12 +184,12 @@ object JavaCodeFormatter {
     _ <- declaration
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(false)
-    _ <- catchStmts || none.matchDebug("none", "not catchStmts")
+    _ <- catchStmts || none
   } yield Right()
 
   def blockStmts: CodeWriter[Unit] = for {
-    _ <- statement.matchDebug("statement", "blockStmts")
-    _ <- blockStmts || none.matchDebug("none", "not blockStmts")
+    _ <- statement
+    _ <- blockStmts || none
   } yield Right()
 
   def primitiveTypes: CodeWriter[Unit] = for {
@@ -219,17 +206,17 @@ object JavaCodeFormatter {
   def finallyStmt: CodeWriter[Unit] = for {
     _ <- assertToken(FINALLY).tell(" finally ")
     _ <- blockStmt(false)
-  } yield Right(())
+  } yield Right()
 
   def returnStmt: CodeWriter[Unit] = for {
     _ <- assertToken(RETURN).tell("return ")
     _ <- expression
-  } yield Right(())
+  } yield Right()
 
   def forStmt: CodeWriter[Unit] = {
     def forConditionStmt: CodeWriter[Unit] = {
       def triExpressions: CodeWriter[Unit] = for {
-        _ <- declaration || expression || none.matchDebug("none", "neither declaration nor expression")
+        _ <- declaration || expression || none
         _ <- assertToken(SEMICOLON).tell("; ")
         _ <- conditionalExpression
         _ <- assertToken(SEMICOLON).tell("; ")
@@ -247,11 +234,11 @@ object JavaCodeFormatter {
     }
 
     for {
-      _ <- assertToken(FOR).tell("for ").matchDebug("assertToken(FOR).tell", "forStmt")
-      _ <- assertToken(LEFT_PARENTHESIS).tell("(").matchDebug("assertToken(LEFT_PARENTHESIS).tell", "forStmt")
-      _ <- forConditionStmt.matchDebug("forConditionStmt", "forStmt")
-      _ <- assertToken(RIGHT_PARENTHESIS).tell(") ").matchDebug("assertToken(RIGHT_PARENTHESIS).tell", "forStmt")
-      _ <- (blockStmt(true) || statement).matchDebug("(blockStmt || statement)", "forStmt")
+      _ <- assertToken(FOR).tell("for ")
+      _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+      _ <- forConditionStmt
+      _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
+      _ <- blockStmt(true) || statement
     } yield Right()
   }
 
@@ -261,8 +248,8 @@ object JavaCodeFormatter {
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(false).tell(" ") || statement
-    _ <- elseIfStmts || none.matchDebug("none", "not elseIfStmts")
-    _ <- elseStmt || none.matchDebug("none", "not elseStmt")
+    _ <- elseIfStmts || none
+    _ <- elseStmt || none
     _ <- none.enter()
   } yield Right()
 
@@ -273,7 +260,7 @@ object JavaCodeFormatter {
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(false).tell(" ") || statement.enter()
-    _ <- elseIfStmts || none.matchDebug("none", "not elseIfStmts")
+    _ <- elseIfStmts || none
   } yield Right()
 
   def elseStmt: CodeWriter[Unit] = for {
@@ -283,12 +270,13 @@ object JavaCodeFormatter {
 
   def whileStmt: CodeWriter[Unit] = for {
     _ <- assertToken(WHILE)
-    _ <- assertToken(LEFT_PARENTHESIS).tell("while(")
+    _ <- assertToken(LEFT_PARENTHESIS).tell("while (")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     _ <- blockStmt(true) || statement
-  } yield Right(())
+  } yield Right()
 
+  //noinspection MutatorLikeMethodIsParameterless
   def doStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(DO).tell("do ")
     _ <- blockStmt(false).tell(" ")
@@ -305,14 +293,14 @@ object JavaCodeFormatter {
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- assertToken(LBRACE).tell("{").enter().tab()
-    _ <- caseStmts || none.matchDebug("none", "not caseStmt")
-    _ <- defaultStmt || none.matchDebug("none", "not defaultStmt")
+    _ <- caseStmts || none
+    _ <- defaultStmt || none
     _ <- assertToken(RBRACE).tell("}").untab().enter()
   } yield Right(), "switchStmt")
 
   def caseStmts: CodeWriter[Unit] = tag(for {
     _ <- caseStmtDetail
-    _ <- caseStmts || none.matchDebug("none", "not caseStmt")
+    _ <- caseStmts || none
   } yield Right(), "caseStmts")
 
   def defaultStmt: CodeWriter[Unit] = tag(for {
@@ -339,8 +327,8 @@ object JavaCodeFormatter {
     } yield Right()
 
     for {
-      _ <- conditionalOrExpression.matchDebug("conditionalOrExpression", "conditionalExpression")
-      _ <- detail || none.matchDebug("none", "not detail")
+      _ <- conditionalOrExpression
+      _ <- detail || none
     } yield Right()
   }
 
@@ -352,7 +340,7 @@ object JavaCodeFormatter {
 
     for {
       _ <- next
-      _ <- detail || none.matchDebug("none", "not detail")
+      _ <- detail || none
     } yield Right()
   }
 
@@ -365,7 +353,7 @@ object JavaCodeFormatter {
 
     for {
       _ <- next
-      _ <- detail || none.matchDebug("none", "not detail")
+      _ <- detail || none
     } yield Right()
   }
 
@@ -422,7 +410,7 @@ object JavaCodeFormatter {
 
   def castExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- typeUse.matchDebug("typeUse", "castExpression")
+    _ <- typeUse
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     _ <- unaryExpression || lambda
   } yield Right(), "castExpression")
@@ -433,16 +421,10 @@ object JavaCodeFormatter {
   } yield Right(), s"unaryExpWith($enums)")
 
   def reference: CodeWriter[Unit] = {
-    def funcArg: CodeWriter[Unit] = for {
-      _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-      _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none.matchDebug("none", "not tokenSeparatedCtx(_, COMMA)")
-      _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    } yield Right()
-
     for {
-      _ <- identifier.matchDebug("identifier", "reference")
-      _ <- arrayRefs.matchDebug("arrayRefs", "reference") || none.matchDebug("none", "not arrayRefs")
-      _ <- funcArg.matchDebug("funcRef", "reference") || none.matchDebug("none", "not funcRef")
+      _ <- identifier
+      _ <- arrayRefs || none
+      _ <- parameters || none
     } yield Right()
   }
 
@@ -454,9 +436,9 @@ object JavaCodeFormatter {
     } yield Right(), "lambdaDecl")
 
     def originLambda: CodeWriter[Unit] = tag(for {
-      _ <- (lambdaDecl || takeToken(TOKEN).print(x => s"$x")).matchDebug("lambdaDecl || takeToken(TOKEN)", "originLambda")
+      _ <- lambdaDecl || takeToken(TOKEN).print(x => s"$x")
       _ <- assertToken(LAMBDA_BODY_START).tell(" -> ")
-      _ <- expression.matchDebug("expression", "originLambda") || blockStmt(false)
+      _ <- expression || blockStmt(false)
     } yield Right(), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
@@ -465,7 +447,7 @@ object JavaCodeFormatter {
       _ <- identifier
     } yield Right(), "shortenLambda")
 
-    originLambda.matchDebug("originLambda", "lambda") || shortenLambda
+    originLambda || shortenLambda
   }, "lambda")
 
   def synchronizedStmt: CodeWriter[Unit] = for {
@@ -489,55 +471,51 @@ object JavaCodeFormatter {
       } yield Right()
 
       for {
-        _ <- typeUse.matchDebug("typeUse", "declaration/declDetail").tell(" ")
-        _ <- identifier.matchDebug("identifier", "declaration/declDetail")
-        _ <- variableInitialize.matchDebug("variableInitialize", "declaration/declDetail") ||
-          none.matchDebug("none", "not variableInitialize")
-        _ <- loop || none.matchDebug("none", "not loop")
-      } yield Right(())
+        _ <- typeUse
+        _ <- identifier
+        _ <- variableInitialize || none
+        _ <- loop || none
+      } yield Right()
     }
 
     for {
-      _ <- assertToken(FINAL).tell("final ").matchDebug("assertToken(FINAL).tell", "declaration") ||
-        none.matchDebug("none", "there's no final")
+      _ <- assertToken(FINAL).tell("final ") || none
       _ <- declDetail
     } yield Right()
   }
 
   def typeUse: CodeWriter[Unit] = tag(for {
-    _ <- (primitiveTypes || customDecl).matchDebug("primitiveTypes || customDecl", "typeUse")
-    _ <- arrayUse || none.matchDebug("none", "not arrayUse")
+    _ <- primitiveTypes || customDecl
+    _ <- arrayUse || none
   } yield Right(), "typeUse")
 
   def customDecl: CodeWriter[Unit] = tag(for {
-    _ <- identifier.matchDebug("identifier", "customDecl")
-    _ <- generic || none.matchDebug("none", "not generic")
+    _ <- identifier
+    _ <- generic || none
   } yield Right(), "customDecl")
 
   def variableInitialize: CodeWriter[Unit] = tag(for {
     _ <- assertToken(SUBSTITUTE).tell(" = ")
-    _ <- expression.matchDebug("variableInitialize") || arrayInitializer
+    _ <- expression || arrayInitializer
   } yield Right(), "variableInitialize")
 
   def arrayInitializer: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{")
-    _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, requireSpace = true) ||
-      none.matchDebug("none", "tokenSeparatedCtx(variableInitialize, COMMA)")
+    _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RBRACE).tell("}")
   } yield Right(), "arrayInitializer")
 
   def generic: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(LT).tell("<").matchDebug("assertToken(LT)", "generic")
-    _ <- tokenSeparatedCtx(typeUse || takeToken(QUESTION_MARK).print(x => x), COMMA, requireSpace = true) ||
-      none.matchDebug("none", "not tokenSeparatedCtx(COMMA)")
+    _ <- assertToken(LT).tell("<")
+    _ <- tokenSeparatedCtx(typeUse || takeToken(QUESTION_MARK).print(x => x), COMMA, requireSpace = true) || none
     _ <- assertToken(GT).tell(">") ||
-      releaseRightShift.tell(">").matchDebug("assertToken(GT) || releaseRightShift", "generic")
+      unrollingRightShift.tell(">")
   } yield Right(), "generic")
 
   def arrayUse: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET)
     _ <- assertToken(RBRACKET).tell("[]")
-    _ <- arrayUse || none.matchDebug("none", "not arrayUse")
+    _ <- arrayUse || none
   } yield Right(), "arrayUse")
 
   def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeTokens(TOKEN | CLASS | SUPER).print(tk => s"$tk"), DOT)
@@ -550,24 +528,7 @@ object JavaCodeFormatter {
 
     for {
       _ <- chosenParser
-      _ <- loop || none.matchDebug("none", "not loop")
+      _ <- loop || none
     } yield Right()
   }
-
-  case class IndentCounter(indent: Int) {
-    def addIndent(): IndentCounter = IndentCounter(indent + 1)
-
-    def decIndent(): IndentCounter = IndentCounter(indent - 1)
-
-    def printIndent(sb: StringBuilder = StringBuilder.newBuilder): String = sb.append("    " * indent).toString()
-  }
-
-  case class PrintState(remains: Vector[JavaSToken], indent: IndentCounter) {
-    def addIndent(): PrintState = copy(indent = indent.addIndent())
-
-    def decIndent(): PrintState = copy(indent = indent.decIndent())
-
-    def printIndent(): String = indent.printIndent()
-  }
-
 }
