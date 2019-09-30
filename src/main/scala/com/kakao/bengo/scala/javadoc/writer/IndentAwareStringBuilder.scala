@@ -42,6 +42,17 @@ case class IndentAwareStringBuilder(initialIndent: Int,
 
   private def currentIndent: Int = indentHistory.head
 
+  def debugStringBuilder(last: Int): String = {
+    val thisStringBuilder =
+      if (stringBuilder.nonEmpty) {
+        enter()
+      } else {
+        this
+      }
+
+    thisStringBuilder.committedLines.takeRight(last).map { case Line(indent, line) => s"${defaultTabString * indent}$line" }.mkString("\n")
+  }
+
   override def toString: String = {
     val thisStringBuilder =
       if (stringBuilder.nonEmpty) {

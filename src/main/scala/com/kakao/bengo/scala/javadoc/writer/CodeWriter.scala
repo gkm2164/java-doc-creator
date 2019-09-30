@@ -7,18 +7,26 @@ import com.kakao.bengo.scala.javadoc.writer.exceptions._
 import scala.language.{higherKinds, implicitConversions}
 
 object CodeWriter {
-  type CodeWriter[A] = List[JavaSToken] => IndentAwareStringBuilder => CodeWriterValue[A]
-  type CodeWriterValue[A] = (List[JavaSToken], IndentAwareStringBuilder, Either[Throwable, A])
+
+  type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
+  type CodeWriterValue[A] = (CodeWriterState, Either[Throwable, A])
   type NextCodeWriterMonad[A] = List[JavaSToken] => CodeWriter[A]
 
+  def apply[A](f: List[JavaSToken] => (List[JavaSToken], Either[Throwable, A])): CodeWriter[A] = {
+    case CodeWriterState(tokenList, sb, stack) =>
+      val (nextList, value) = f(tokenList)
+      (CodeWriterState(nextList, sb, stack), value)
+  }
+
   implicit val codeWriterMonad: Monad[CodeWriter] = new Monad[CodeWriter] {
-    override def flatMap[A, B](ma: CodeWriter[A])(f: A => CodeWriter[B]): CodeWriter[B] = tokenList => sb => {
-      val (nextStates, newSb, value) = ma(tokenList)(sb)
+    override def flatMap[A, B](ma: CodeWriter[A])(f: A => CodeWriter[B]): CodeWriter[B] = prevState => {
+      val (newState, value) = ma(prevState)
       value match {
-        case Right(v) => f(v)(nextStates)(newSb)
-        case Left(e) => (nextStates, newSb, Left(e))
+        case Right(v) => f(v)(newState)
+        case Left(e) => (newState, Left(e))
       }
     }
+
 
     override def unit[A](x: A): CodeWriter[A] = CodeWriter.pure(x)
   }
@@ -40,134 +48,119 @@ object CodeWriter {
       thisWriter
     }
 
-    def matchDebug(tag: String, from: String, msg: String = ""): CodeWriter[A] = tokenList => oldSb => {
-      val (nextTokenList, newSb, v) = thisWriter.run(tokenList)(oldSb)
+    def matchDebug(tag: String, msg: String = ""): CodeWriter[A] = prevState => {
+      val (CodeWriterState(nextTokenList, newSb, newStack), v) = thisWriter(prevState)
       val sb = StringBuilder.newBuilder
       sb ++= "match"
-      if (tokenList.nonEmpty) {
-        val JavaSToken(tokenType, value) = tokenList.head
-        sb ++= s""" |$tokenType|\"$value\"| with"""
+      if (nextTokenList.nonEmpty) {
+        val JavaSToken(tokenType, value) = nextTokenList.head
+        sb ++= s""" |$tokenType|"$value"| with"""
       }
 
-      sb ++= s" [$from/$tag]"
+      sb ++= s" [${newStack.mkString("/")}]"
 
       if (msg.nonEmpty) {
         sb ++= s": $msg"
       }
 
-      sb ++= s"[${oldSb.toString}]"
+      sb ++= s"[${newSb.debugStringBuilder(5)}]"
 //
 //      v match {
 //        case Right(_) => println(sb.toString)
 //        case _ =>
 //      }
-      (nextTokenList, newSb, v)
+      (CodeWriterState(nextTokenList, newSb, newStack), v)
     }
 
-    def tell(something: String): CodeWriter[A] = tokenList => {
-      oldSb => {
-        val (nextState, newSb, v) = thisWriter.run(tokenList)(oldSb)
-        v match {
-          case Right(_) => (nextState, newSb.append(something), v)
-          case Left(_) => (nextState, oldSb, v)
-        }
+    def pushTag(tag: String): CodeWriter[A] = {
+      case CodeWriterState(prevTokenList, prevSb, prevStack) => {
+        val (CodeWriterState(nextTokenList, newSb, _), v) = thisWriter.run(prevTokenList, prevSb, tag :: prevStack)
+        (CodeWriterState(nextTokenList, newSb, prevStack), v)
       }
     }
 
-    def print(fmt: A => String): CodeWriter[Unit] = tokenList => {
-      oldSb => {
-        val (nextState, newSb, v) = thisWriter.run(tokenList)(oldSb)
-        v match {
-          case Right(str) => (nextState, newSb.append(fmt(str)), Right())
-          case Left(e) => (nextState, newSb, Left(e))
-        }
+    def run(state: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String]): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack))
+
+    def tell(something: String): CodeWriter[A] = prevState => {
+      val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
+      v match {
+        case Right(_) => (CodeWriterState(nextState, newSb.append(something), newStack), v)
+        case Left(e) => (CodeWriterState(nextState, newSb, newStack), v)
       }
     }
 
-    def tab(): CodeWriter[A] = {
-      state =>
-        oldSb => {
-          val (nextState, newSb, v) = thisWriter.run(state)(oldSb)
-          (nextState, newSb.tab, v)
-        }
+    def print(fmt: A => String): CodeWriter[Unit] = prevState => {
+      val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
+      v match {
+        case Right(str) => (CodeWriterState(nextState, newSb.append(fmt(str)), newStack), Right())
+        case Left(e) => (CodeWriterState(nextState, newSb, newStack), Left(e))
+      }
     }
 
-    def run(state: List[JavaSToken]): IndentAwareStringBuilder => CodeWriterValue[A] = thisWriter(state)
+    def tab(): CodeWriter[A] = prevState => {
+      val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
+      (CodeWriterState(nextState, newSb.tab, newStack), v)
+    }
 
     def untab(): CodeWriter[A] =
-      tokens => oldSb => {
-        val (nextState, sb, v) = thisWriter.run(tokens)(oldSb)
-        (nextState, sb.untab, v)
+      prevState => {
+        val (nextState, v) = thisWriter(prevState)
+        (nextState.copy(stringBuilder = nextState.stringBuilder.untab), v)
       }
 
-    def enter(): CodeWriter[A] = tokens => oldSb => {
-      val (nextState, sb, v) = thisWriter.run(tokens)(oldSb)
-      (nextState, sb.enter(), v)
+    def enter(): CodeWriter[A] = prevState => {
+      val (nextState, v) = thisWriter(prevState)
+      (nextState.copy(stringBuilder = nextState.stringBuilder.enter()), v)
     }
 
-    def enterIf(cond: Boolean): CodeWriter[A] = tokenList => oldSb => {
-      val (nextState, sb, v) = thisWriter.run(tokenList)(oldSb)
-      val nextSb = if (cond) sb.enter() else sb
-      (nextState, nextSb, v)
+    def enterIf(cond: Boolean): CodeWriter[A] = prevState => {
+      val (nextState, v) = thisWriter(prevState)
+      (if (cond) nextState.copy(stringBuilder = nextState.stringBuilder.enter()) else nextState, v)
     }
 
-    def printDebug(): CodeWriter[A] = tokenList => oldSb => {
-      val (state, sb, v) = thisWriter.run(tokenList)(oldSb)
-      (state, sb, v)
-    }
-
-    def forceIndent(indent: Int): CodeWriter[A] = tokenList => oldSb => {
-      val (nextState, sb, v) = thisWriter.run(tokenList)(oldSb)
-      (nextState, sb.set(indent), v)
+    def forceIndent(indent: Int): CodeWriter[A] = prevState => {
+      val (state, v) = thisWriter(prevState)
+      (state.copy(stringBuilder = state.stringBuilder.set(indent)), v)
     }
 
     def recoverIndent(): CodeWriter[A] =
-      tokenList => oldSb => {
-        val (nextState, sb, v) = thisWriter.run(tokenList)(oldSb)
-        (nextState, sb.unset, v)
+      prevState => {
+        val (state, v) = thisWriter(prevState)
+        (state.copy(stringBuilder = state.stringBuilder.unset), v)
       }
 
     def ||(x: CodeWriter[A]): CodeWriter[A] = orElse(x)
 
-    def orElse(otherWriter: CodeWriter[A]): CodeWriter[A] = {
-      tokenList =>
-        sb => {
-          val (nextTokenList, newSB, ret) = thisWriter.run(tokenList)(sb)
-          ret match {
-            case Right(_) => (nextTokenList, newSB, ret)
-            case Left(_: RecoverableException) => otherWriter.run(tokenList)(sb)
-            case Left(e: UnrecoverableException) => throw e
-            case _ => throw new RuntimeException()
-          }
-        }
+    def orElse(otherWriter: CodeWriter[A]): CodeWriter[A] = prevState => {
+      val (nextState, ret) = thisWriter(prevState)
+      ret match {
+        case Right(_) => (nextState, ret)
+        case Left(_: RecoverableException) => otherWriter(prevState)
+        case Left(e: UnrecoverableException) => throw e
+        case _ => throw new RuntimeException()
+      }
     }
 
     def collect(tokens: List[JavaSToken]): String = {
-      val (_, sb, _) = thisWriter.run(tokens)(IndentAwareStringBuilder(0))
+      val (CodeWriterState(_, sb, _), _) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil)
       sb.toString
     }
 
-    def execute(tokens: List[JavaSToken]): IndentAwareStringBuilder => CodeWriterValue[A] = sb => {
-      thisWriter.run(tokens)(sb)
-    }
-
-    def executeA(tokens: List[JavaSToken]): IndentAwareStringBuilder => A =
-      sb => thisWriter.run(tokens)(sb)._3.right.get
   }
 
-  def apply[A](f: List[JavaSToken] => (List[JavaSToken], Either[Throwable, A])): CodeWriter[A] = tokenList => sb => {
-    val (nextList, value) = f(tokenList)
-    (nextList, sb, value)
+  def pure[A](value: A): CodeWriter[A] = state => {
+    (state, Right(value))
   }
 
-  def pure[A](value: A): CodeWriter[A] = tokenList => sb => {
-    (tokenList, sb, Right(value))
-  }
+  case class CodeWriterState(tokens: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String])
 
-  implicit def nextCodeWriterMonadConversion[A](nextCodeWriterMonad: NextCodeWriterMonad[A]): CodeWriter[A] =
-    tokens => sb => nextCodeWriterMonad(tokens).run(tokens)(sb)
+  implicit def nextCodeWriterMonadConversion[A](nextCodeWriterMonad: NextCodeWriterMonad[A]): CodeWriter[A] = {
+
+    case CodeWriterState(tokens, stringBuilder, stack) => nextCodeWriterMonad(tokens).run(tokens, stringBuilder, stack)
+  }
 
   object NextCodeWriterMonad {
     def apply[A](f: List[JavaSToken] => CodeWriter[A]): NextCodeWriterMonad[A] = f
   }
+
 }
