@@ -1,6 +1,7 @@
 package com.kakao.bengo.scala
 
 import com.kakao.bengo.javalang.JavaTokenEnum
+import com.kakao.bengo.scala.javadoc.codeformatter.JavaCodeFormatter
 import levsha.Document.{Empty, Node}
 import levsha.impl.TextPrettyPrintingConfig
 import levsha.text.symbolDsl._
@@ -34,7 +35,7 @@ package object javadoc {
     final def id: String = {
       val ret = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
       this match {
-        case JavaMethod(_, _, _, args) if args.nonEmpty => ret + "-" + args.map(_.name.toLowerCase).mkString("-")
+        case JavaMethod(_, _, _, args, _) if args.nonEmpty => ret + "-" + args.map(_.name.toLowerCase).mkString("-")
         case _ => ret
 
       }
@@ -146,8 +147,10 @@ package object javadoc {
     def setType(t: JavaTypeUse): JavaMember = this.copy(memberType = t)
   }
 
-  final case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: Vector[JavaArgument]) extends JavaMembers {
+  final case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: Vector[JavaArgument], codes: Vector[JavaSToken]) extends JavaMembers {
     lazy val exampleCode: Vector[String] = modifier.commentMacros.filter(_.startsWith("//="))
+
+    println(JavaCodeFormatter.printCode(name, codes))
   }
 
   final case class JavaTypeDesignate(name: String, extend: Option[(String, JavaTypeDesignate)], generics: Vector[JavaTypeDesignate]) {

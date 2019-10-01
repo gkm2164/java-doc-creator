@@ -104,7 +104,6 @@ object JavaCode {
       implements <- parseTypesFrom(IMPLEMENTS)
       _ <- assertToken(LBRACE)
       cls <- parseEnum(name, implements)
-      _ = println(cls)
     } yield cls
   }
 
@@ -286,42 +285,36 @@ object JavaCode {
 
 
   def parseMembers(modifier: JavaModifier): CodeState[JavaMembers] = {
-    def dropLater(name: String): CodeState[Unit] = CodeState {
+    def parseCodes(name: String): CodeState[Vector[JavaSToken]] = CodeState {
       case Nil => throw new TokenNotAcceptedException("nil list!")
-      case JavaSToken(SEMICOLON, _) :: t =>
-        State.pure(()).run(t).value
-      case JavaSToken(LBRACE, _) :: t => (for {
-        strs <- parseParenthesisSkipHead(LBRACE, RBRACE)
-        _ = JavaCodeFormatter.printCode(name, strs)
-        _ = println()
-      } yield ()).run(t).value
-      case JavaSToken(DEFAULT, _) :: t =>
-        (for {
-          _ <- parseUntil(SEMICOLON)
-        } yield ()).run(t).value
-      case JavaSToken(THROWS, _) :: t =>
-        (for {
-          _ <- separateByType
-          _ <- dropLater(name)
-        } yield ()).run(t).value
+      case JavaSToken(SEMICOLON, _) :: t => State.pure(Vector()).run(t).value
+      case (tk@JavaSToken(LBRACE, _)) :: t => (for {
+        codes <- parseParenthesisSkipHead(LBRACE, RBRACE)
+      } yield codes).run(t).value
+      case JavaSToken(DEFAULT, _) :: t => (for {
+        _ <- parseUntil(SEMICOLON)
+      } yield Vector()).run(t).value
+      case JavaSToken(THROWS, _) :: t => (for {
+        _ <- separateByType
+        codes <- parseCodes(name)
+      } yield codes).run(t).value
       case h :: _ => throw new TokenNotAcceptedException(s"member: ${h.toString}")
     }
 
     def parseMemberAfterName(modifier: JavaModifier, typename: JavaTypeUse, name: String): CodeState[JavaMembers] =
       NextCodeState[JavaMembers] {
         case Nil => throw new TokenNotAcceptedException("nil list!")
-        case JavaSToken(a@LEFT_PARENTHESIS, _) :: _ => for {
-          _ <- assertToken(a)
+        case JavaSToken(LEFT_PARENTHESIS, _) :: _ => for {
+          _ <- assertToken(LEFT_PARENTHESIS)
           args <- parseArgs
-          _ = println(s"======= method $name =======")
-          _ <- dropLater(name)
-        } yield JavaMethod(modifier, name, typename, args)
-        case JavaSToken(a@SUBSTITUTE, _) :: _ => for {
-          _ <- assertToken(a)
+          codes <- parseCodes(name)
+        } yield JavaMethod(modifier, name, typename, args, codes)
+        case JavaSToken(SUBSTITUTE, _) :: _ => for {
+          _ <- assertToken(SUBSTITUTE)
           _ <- parseUntilDepth(SEMICOLON, LBRACE, RBRACE)
         } yield JavaMember(modifier, name, typename)
-        case JavaSToken(a@SEMICOLON, _) :: _ => for {
-          _ <- assertToken(a)
+        case JavaSToken(SEMICOLON, _) :: _ => for {
+          _ <- assertToken(SEMICOLON)
         } yield JavaMember(modifier, name, typename)
         case h :: t => throw new TokenNotAcceptedException(s"$h, $t")
       }

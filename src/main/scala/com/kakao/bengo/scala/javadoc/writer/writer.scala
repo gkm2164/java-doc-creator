@@ -58,7 +58,7 @@ package object writer {
               a.decideTarget.map(x => 'div(attachTo(x))).getOrElse(Empty),
               'div(definitions.map(_.show(indent.inc))))
 
-          case m@JavaMethod(modifier, name, returnType, args) =>
+          case m@JavaMethod(modifier, name, returnType, args, _) =>
             'div('span('class /= "full-path", modifier.fullPath),
               'p('class /= "java-def", modifier.show, returnType.show,
                 if (name == "" || name == returnType.show) "" else 'span('class /= "method-name", s" $name"), "(",

@@ -9,13 +9,13 @@ import scala.language.{higherKinds, implicitConversions}
 package object monad {
   type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
   type CodeWriterValue[A] = (CodeWriterState, Either[Throwable, A])
-  type NextCodeWriterMonad[A] = List[JavaSToken] => CodeWriter[A]
+  type NextCodeWriterMonad[A] = List[(JavaSToken, Int)] => CodeWriter[A]
 
-  case class DebugOption(stackTrace: Boolean, maxStackSize: Int = 1)
+  case class DebugOption(stackTrace: Boolean, maxStackSize: Int = 1, onlySuccess: Boolean = true)
 
   case class CodeWriterConfig(debug: Option[DebugOption] = None)
 
-  case class CodeWriterStackElem(token: JavaSToken, context: String) {
+  case class CodeWriterStackElem(idx: Int, token: JavaSToken, context: String) {
     private def capWithDoubleQuote(str: String): String =
       if (token.tokenType == JavaTokenEnum.STRING ||
           token.tokenType == JavaTokenEnum.CHAR) str
@@ -24,11 +24,11 @@ package object monad {
     override def toString: String = {
       val JavaSToken(enum, value) = token
 
-      s"""$context:$enum(${capWithDoubleQuote(value)})"""
+      s"""$context:$idx=$enum(${capWithDoubleQuote(value)})"""
     }
   }
 
-  case class CodeWriterState(tokens: List[JavaSToken],
+  case class CodeWriterState(tokens: List[(JavaSToken, Int)],
                              stringBuilder: IndentAwareStringBuilder,
                              stack: List[CodeWriterStackElem],
                              config: CodeWriterConfig)
@@ -39,7 +39,7 @@ package object monad {
       (state, Right(value))
     }
 
-    def apply[A](f: List[JavaSToken] => (List[JavaSToken], Either[Throwable, A])): CodeWriter[A] = {
+    def apply[A](f: List[(JavaSToken, Int)] => (List[(JavaSToken, Int)], Either[Throwable, A])): CodeWriter[A] = {
       case CodeWriterState(tokenList, sb, stack, config) =>
         val (nextList, value) = f(tokenList)
         (CodeWriterState(nextList, sb, stack, config), value)

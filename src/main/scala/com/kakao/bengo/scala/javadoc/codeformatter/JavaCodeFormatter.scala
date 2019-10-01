@@ -10,11 +10,11 @@ object JavaCodeFormatter {
   private val CommentTokens: Seq[JavaTokenEnum] =
     Seq(COMMENT_BLOCK, COMMENT, COMMENT_MACRO_EXPLAIN, COMMENT_MACRO_CODE, COMMENT_MACRO_NAME)
 
-  def printCode(codeName: String, tokens: Vector[JavaSToken]): Unit = {
-    val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType))
-    println(s"parse ${reformatTokens.map(_.value).mkString(" ")}")
-    println(JavaParser.blockStmt(false)
-                      .collect(reformatTokens.toList,
-                        CodeWriterConfig(debug = Some(DebugOption(stackTrace = true)))))
+  def printCode(codeName: String, tokens: Vector[JavaSToken]): String = {
+    val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
+    println(s"parse ${reformatTokens.map(_._1.value).mkString(" ")}")
+
+    JavaParser.blockStmt(false)
+              .collect(reformatTokens, CodeWriterConfig(debug = Some(DebugOption(stackTrace = true))))
   }
 }

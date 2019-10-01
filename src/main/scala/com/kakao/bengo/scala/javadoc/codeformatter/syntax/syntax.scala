@@ -23,8 +23,8 @@ package object syntax {
           val sb = StringBuilder.newBuilder
           sb ++= "match"
           if (nextTokenList.nonEmpty) {
-            val JavaSToken(tokenType, value) = nextTokenList.head
-            sb ++= s""" |$tokenType|"$value"| with"""
+            val (JavaSToken(tokenType, value), idx) = nextTokenList.head
+            sb ++= s""" $idx|$tokenType|"$value"| with"""
           }
           if (debugOption.stackTrace) {
             sb ++= s" [${newStack.mkString("/")}]"
@@ -52,15 +52,16 @@ package object syntax {
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
         case Nil => (prevState, Left(new TokenListEmptyException))
-        case JavaSToken(v, _) :: _ if pred(v) => thisWriter(prevState)
-        case tokenList@JavaSToken(v, _) :: _ => (prevState,
+        case (JavaSToken(v, _), _) :: _ if pred(v) => thisWriter(prevState)
+        case tokenList@(JavaSToken(v, _), _) :: _ => (prevState,
           Left(new TokenNotAllowedException(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
       }
     }
 
     def pushTag(tag: String): CodeWriter[A] = {
       case CodeWriterState(prevTokenList, prevSb, prevStack, config) =>
-        val actualTag = CodeWriterStackElem(prevTokenList.head, tag)
+        val (token, idx) = prevTokenList.head
+        val actualTag = CodeWriterStackElem(idx, token, tag)
         val sb: StringBuilder = StringBuilder.newBuilder
 
         config.debug match {
@@ -81,6 +82,8 @@ package object syntax {
           case Left(_) =>  s"FAIL ${sb.toString}"
         })
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
+      //        }
+      //        (CodeWriterState(prevTokenList, prevSb, prevStack, config), Left(new TokenListEmptyException))
     }
 
     def tell(something: String): CodeWriter[A] = prevState => {
@@ -143,12 +146,12 @@ package object syntax {
       }
     }
 
-    def collect(tokens: List[JavaSToken], config: CodeWriterConfig): String = {
+    def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): String = {
       val (CodeWriterState(_, sb, _, _), _) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
       sb.toString
     }
 
-    def run(state: List[JavaSToken],
+    def run(state: List[(JavaSToken, Int)],
             stringBuilder: IndentAwareStringBuilder,
             stack: List[CodeWriterStackElem],
             config: CodeWriterConfig): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack, config))
@@ -162,7 +165,7 @@ package object syntax {
   }
 
   object NextCodeWriterMonad {
-    def apply[A](f: List[JavaSToken] => CodeWriter[A]): NextCodeWriterMonad[A] = f
+    def apply[A](f: List[(JavaSToken, Int)] => CodeWriter[A]): NextCodeWriterMonad[A] = f
   }
 
 }

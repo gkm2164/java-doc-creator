@@ -40,7 +40,7 @@ final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaST
         case JavaAnnotationInterface(annotationInterfaceName, modifier, definitions, _) if modifier.access == PUBLIC =>
           'li ('span ('class /= "class-name", 'onclick /= s"highlightBlock('${definition.id}')", s"@$annotationInterfaceName"),
             'ul (definitions.sortBy(_.name).map(recur)))
-        case JavaMethod(modifier, methodName, _, args) if modifier.access == PUBLIC =>
+        case JavaMethod(modifier, methodName, _, args, _) if modifier.access == PUBLIC =>
           'li ('span ('class /= "method-name", 'onclick /= s"highlightBlock('${definition.id}')", s" $methodName(${args.map(x => escapeLTGT(x.name)).mkString(", ")})"))
         case JavaMember(modifier, memberName, _) if modifier.access == PUBLIC =>
           'li ('span ('class /= "member-name", 'onclick /= s"highlightBlock('${definition.id}')", memberName))

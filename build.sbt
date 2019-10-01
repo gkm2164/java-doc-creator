@@ -1,4 +1,4 @@
-name := "go-doc-creator"
+name := "java-doc-creator"
 
 version := "0.1"
 
