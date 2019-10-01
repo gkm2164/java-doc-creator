@@ -211,7 +211,13 @@ object JavaCode {
       _ <- assertToken(LT)
       typeDesignate <- parseTypeDesignator
       list <- parseTypeDesignatorRemains(Vector(typeDesignate))
-      _ <- assertToken(GT)
+      _ <- CodeState {
+        case Nil => throw new TokenNotAcceptedException("list is Nil")
+        case JavaSToken(GT, _) :: t => (t, ())
+        case JavaSToken(RIGHT_SHIFT, _) :: t => (JavaSToken(GT, ">") :: t, ())
+        case JavaSToken(U_RIGHT_SHIFT, _) :: t => (JavaSToken(RIGHT_SHIFT, ">>") :: t, ())
+        case JavaSToken(v, _) :: _ => throw new TokenNotAcceptedException(s"expected >, >>, >>>, but $v")
+      }
     } yield list
     case _ => State.pure(Vector.empty)
   }
@@ -317,7 +323,7 @@ object JavaCode {
         case JavaSToken(a@SEMICOLON, _) :: _ => for {
           _ <- assertToken(a)
         } yield JavaMember(modifier, name, typename)
-        case h :: _ => throw new TokenNotAcceptedException(h.toString)
+        case h :: t => throw new TokenNotAcceptedException(s"$h, $t")
       }
 
     for {

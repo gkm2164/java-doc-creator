@@ -1,6 +1,5 @@
 package com.kakao.bengo.scala.javadoc.codeformatter
 
-import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.scala.javadoc.JavaSToken
 import com.kakao.bengo.scala.javadoc.codeformatter.exceptions.{RecoverableException, TokenListEmptyException, TokenNotAllowedException, UnrecoverableException}
@@ -9,6 +8,7 @@ import com.kakao.bengo.scala.javadoc.codeformatter.monad._
 import scala.language.implicitConversions
 
 package object syntax {
+
   implicit class CodeWriterExt[A](thisWriter: CodeWriter[A]) {
     def doSomething(x: => Unit): CodeWriter[A] = {
       x
@@ -16,28 +16,38 @@ package object syntax {
     }
 
     def matchDebug(tag: String, msg: String = ""): CodeWriter[A] = prevState => {
-      val (CodeWriterState(nextTokenList, newSb, newStack), v) = thisWriter(prevState)
-      val sb = StringBuilder.newBuilder
-      sb ++= "match"
-      if (nextTokenList.nonEmpty) {
-        val JavaSToken(tokenType, value) = nextTokenList.head
-        sb ++= s""" |$tokenType|"$value"| with"""
+      val (CodeWriterState(nextTokenList, newSb, newStack, config), v) = thisWriter(prevState)
+
+      config.debug match {
+        case Some(debugOption) =>
+          val sb = StringBuilder.newBuilder
+          sb ++= "match"
+          if (nextTokenList.nonEmpty) {
+            val JavaSToken(tokenType, value) = nextTokenList.head
+            sb ++= s""" |$tokenType|"$value"| with"""
+          }
+          if (debugOption.stackTrace) {
+            sb ++= s" [${newStack.mkString("/")}]"
+          }
+
+          if (msg.nonEmpty) {
+            sb ++= s": $msg"
+          }
+
+          sb ++= s"[${newSb.debugStringBuilder(5)}]"
+          v match {
+            case Right(_) => println(sb.toString)
+            case _ =>
+          }
+        case None =>
       }
 
-      sb ++= s" [${newStack.mkString("/")}]"
-
-      if (msg.nonEmpty) {
-        sb ++= s": $msg"
-      }
-
-      sb ++= s"[${newSb.debugStringBuilder(5)}]"
-
-      v match {
-        case Right(_) => println(sb.toString)
-        case _ =>
-      }
-      (CodeWriterState(nextTokenList, newSb, newStack), v)
+      (CodeWriterState(nextTokenList, newSb, newStack, config), v)
     }
+
+    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
+
+    def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
 
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
@@ -48,37 +58,50 @@ package object syntax {
       }
     }
 
-    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
-    def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
-
     def pushTag(tag: String): CodeWriter[A] = {
-      case CodeWriterState(prevTokenList, prevSb, prevStack) =>
-        val JavaSToken(enum, value) = prevTokenList.head
-        val actualTag = s"$tag[$enum($value)]"
-        val (CodeWriterState(nextTokenList, newSb, _), v) = thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack)
+      case CodeWriterState(prevTokenList, prevSb, prevStack, config) =>
+        val actualTag = CodeWriterStackElem(prevTokenList.head, tag)
+        val sb: StringBuilder = StringBuilder.newBuilder
 
-        (CodeWriterState(nextTokenList, newSb, prevStack), v)
+        config.debug match {
+          case Some(debugOption) =>
+            sb ++= s"[${actualTag.toString}]"
+            if (debugOption.stackTrace) {
+              sb ++= s" <- [${prevStack.take(debugOption.maxStackSize).mkString(" / ")}]"
+            }
+
+          case _ =>
+        }
+
+        val (CodeWriterState(nextTokenList, newSb, _, _), v) =
+          thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
+
+        if (config.debug.isDefined) println(v match {
+          case Right(_) => s"OK   ${sb.toString}"
+          case Left(_) =>  s"FAIL ${sb.toString}"
+        })
+        (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
     }
 
     def tell(something: String): CodeWriter[A] = prevState => {
-      val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
+      val (CodeWriterState(nextState, newSb, newStack, config), v) = thisWriter(prevState)
       v match {
-        case Right(_) => (CodeWriterState(nextState, newSb.append(something), newStack), v)
-        case Left(e) => (CodeWriterState(nextState, newSb, newStack), v)
+        case Right(_) => (CodeWriterState(nextState, newSb.append(something), newStack, config), v)
+        case Left(e) => (CodeWriterState(nextState, newSb, newStack, config), Left(e))
       }
     }
 
     def print(fmt: A => String = x => x.toString): CodeWriter[Unit] = prevState => {
-      val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
+      val (nextState, v) = thisWriter(prevState)
       v match {
-        case Right(str) => (CodeWriterState(nextState, newSb.append(fmt(str)), newStack), Right())
-        case Left(e) => (CodeWriterState(nextState, newSb, newStack), Left(e))
+        case Right(str) => (nextState.copy(stringBuilder = nextState.stringBuilder.append(fmt(str))), Right())
+        case Left(e) => (nextState, Left(e))
       }
     }
 
     def tab(): CodeWriter[A] = prevState => {
-      val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
-      (CodeWriterState(nextState, newSb.tab, newStack), v)
+      val (nextState, v) = thisWriter(prevState)
+      (nextState.copy(stringBuilder = nextState.stringBuilder.tab), v)
     }
 
     def untab(): CodeWriter[A] =
@@ -120,22 +143,26 @@ package object syntax {
       }
     }
 
-    def collect(tokens: List[JavaSToken]): String = {
-      val (CodeWriterState(_, sb, _), _) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil)
+    def collect(tokens: List[JavaSToken], config: CodeWriterConfig): String = {
+      val (CodeWriterState(_, sb, _, _), _) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
       sb.toString
     }
 
-    def run(state: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String]): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack))
+    def run(state: List[JavaSToken],
+            stringBuilder: IndentAwareStringBuilder,
+            stack: List[CodeWriterStackElem],
+            config: CodeWriterConfig): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack, config))
 
   }
 
-
   implicit def nextCodeWriterMonadConversion[A](nextCodeWriterMonad: NextCodeWriterMonad[A]): CodeWriter[A] = {
 
-    case CodeWriterState(tokens, stringBuilder, stack) => nextCodeWriterMonad(tokens).run(tokens, stringBuilder, stack)
+    case CodeWriterState(tokens, stringBuilder, stack, config) =>
+      nextCodeWriterMonad(tokens).run(tokens, stringBuilder, stack, config)
   }
 
   object NextCodeWriterMonad {
     def apply[A](f: List[JavaSToken] => CodeWriter[A]): NextCodeWriterMonad[A] = f
   }
+
 }

@@ -47,7 +47,7 @@ public enum JavaTokenEnum {
     CHAR("", true),
     SYNCHRONIZED("synchronized", true),
     ANNOTATION("@"),
-    ANNOTATION_INTERFACE("@interface", true),
+    ANNOTATION_INTERFACE("@interface"),
     LEFT_PARENTHESIS("("),
     RIGHT_PARENTHESIS(")"),
     LBRACKET("["),

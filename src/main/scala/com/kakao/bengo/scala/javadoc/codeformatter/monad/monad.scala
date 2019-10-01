@@ -1,6 +1,7 @@
 package com.kakao.bengo.scala.javadoc.codeformatter
 
 import cats.{Applicative, Functor, Monad}
+import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.scala.javadoc.JavaSToken
 
 import scala.language.{higherKinds, implicitConversions}
@@ -10,7 +11,27 @@ package object monad {
   type CodeWriterValue[A] = (CodeWriterState, Either[Throwable, A])
   type NextCodeWriterMonad[A] = List[JavaSToken] => CodeWriter[A]
 
-  case class CodeWriterState(tokens: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String])
+  case class DebugOption(stackTrace: Boolean, maxStackSize: Int = 1)
+
+  case class CodeWriterConfig(debug: Option[DebugOption] = None)
+
+  case class CodeWriterStackElem(token: JavaSToken, context: String) {
+    private def capWithDoubleQuote(str: String): String =
+      if (token.tokenType == JavaTokenEnum.STRING ||
+          token.tokenType == JavaTokenEnum.CHAR) str
+      else s""""$str""""
+
+    override def toString: String = {
+      val JavaSToken(enum, value) = token
+
+      s"""$context:$enum(${capWithDoubleQuote(value)})"""
+    }
+  }
+
+  case class CodeWriterState(tokens: List[JavaSToken],
+                             stringBuilder: IndentAwareStringBuilder,
+                             stack: List[CodeWriterStackElem],
+                             config: CodeWriterConfig)
 
   object CodeWriter {
 
@@ -19,9 +40,9 @@ package object monad {
     }
 
     def apply[A](f: List[JavaSToken] => (List[JavaSToken], Either[Throwable, A])): CodeWriter[A] = {
-      case CodeWriterState(tokenList, sb, stack) =>
+      case CodeWriterState(tokenList, sb, stack, config) =>
         val (nextList, value) = f(tokenList)
-        (CodeWriterState(nextList, sb, stack), value)
+        (CodeWriterState(nextList, sb, stack, config), value)
     }
   }
 
@@ -39,8 +60,8 @@ package object monad {
     import syntax._
 
     override def tailRecM[A, B](a: A)(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
-      case CodeWriterState(tokenList, stringBuilder, syntaxStack) =>
-        f(a).run(tokenList, stringBuilder, syntaxStack) match {
+      case CodeWriterState(tokenList, stringBuilder, syntaxStack, config) =>
+        f(a).run(tokenList, stringBuilder, syntaxStack, config) match {
           case (nextState, Right(Right(done))) =>(nextState, Right(done))
           case (nextState, Right(Left(nextA))) => tailRecM(nextA)(f)(nextState)
           case (nextState, Left(e)) => (nextState, Left(e))
