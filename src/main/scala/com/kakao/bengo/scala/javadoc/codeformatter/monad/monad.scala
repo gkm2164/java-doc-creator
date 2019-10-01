@@ -41,8 +41,8 @@ package object monad {
     override def tailRecM[A, B](a: A)(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
       case CodeWriterState(tokenList, stringBuilder, syntaxStack) =>
         f(a).run(tokenList, stringBuilder, syntaxStack) match {
-          case (nextState, Right(Left(nextA))) => tailRecM(nextA)(f)(nextState)
           case (nextState, Right(Right(done))) =>(nextState, Right(done))
+          case (nextState, Right(Left(nextA))) => tailRecM(nextA)(f)(nextState)
           case (nextState, Left(e)) => (nextState, Left(e))
         }
     }

@@ -1,8 +1,9 @@
 package com.kakao.bengo.scala.javadoc.codeformatter
 
-import cats.{FlatMap, Monad}
+import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
+import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.scala.javadoc.JavaSToken
-import com.kakao.bengo.scala.javadoc.codeformatter.exceptions.{RecoverableException, UnrecoverableException}
+import com.kakao.bengo.scala.javadoc.codeformatter.exceptions.{RecoverableException, TokenListEmptyException, TokenNotAllowedException, UnrecoverableException}
 import com.kakao.bengo.scala.javadoc.codeformatter.monad._
 
 import scala.language.implicitConversions
@@ -38,11 +39,25 @@ package object syntax {
       (CodeWriterState(nextTokenList, newSb, newStack), v)
     }
 
-    def pushTag(tag: String): CodeWriter[A] = {
-      case CodeWriterState(prevTokenList, prevSb, prevStack) => {
-        val (CodeWriterState(nextTokenList, newSb, _), v) = thisWriter.run(prevTokenList, prevSb, tag :: prevStack)
-        (CodeWriterState(nextTokenList, newSb, prevStack), v)
+    private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
+      prevState.tokens match {
+        case Nil => (prevState, Left(new TokenListEmptyException))
+        case JavaSToken(v, _) :: _ if pred(v) => thisWriter(prevState)
+        case tokenList@JavaSToken(v, _) :: _ => (prevState,
+          Left(new TokenNotAllowedException(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
       }
+    }
+
+    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
+    def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
+
+    def pushTag(tag: String): CodeWriter[A] = {
+      case CodeWriterState(prevTokenList, prevSb, prevStack) =>
+        val JavaSToken(enum, value) = prevTokenList.head
+        val actualTag = s"$tag[$enum($value)]"
+        val (CodeWriterState(nextTokenList, newSb, _), v) = thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack)
+
+        (CodeWriterState(nextTokenList, newSb, prevStack), v)
     }
 
     def tell(something: String): CodeWriter[A] = prevState => {
@@ -53,7 +68,7 @@ package object syntax {
       }
     }
 
-    def print(fmt: A => String): CodeWriter[Unit] = prevState => {
+    def print(fmt: A => String = x => x.toString): CodeWriter[Unit] = prevState => {
       val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
       v match {
         case Right(str) => (CodeWriterState(nextState, newSb.append(fmt(str)), newStack), Right())
