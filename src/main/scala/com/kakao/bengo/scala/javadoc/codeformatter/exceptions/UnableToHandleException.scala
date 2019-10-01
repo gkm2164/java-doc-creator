@@ -1,4 +1,4 @@
-package com.kakao.bengo.scala.javadoc.writer.exceptions
+package com.kakao.bengo.scala.javadoc.codeformatter.exceptions
 
 import com.kakao.bengo.scala.javadoc.JavaSToken
 

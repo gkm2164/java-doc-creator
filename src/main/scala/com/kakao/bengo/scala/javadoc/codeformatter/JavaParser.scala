@@ -1,76 +1,13 @@
-package com.kakao.bengo.scala.javadoc.writer
+package com.kakao.bengo.scala.javadoc.codeformatter
 
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
 import com.kakao.bengo.scala.javadoc.JavaSToken
-import com.kakao.bengo.scala.javadoc.writer.CodeWriter._
-import com.kakao.bengo.scala.javadoc.writer.exceptions._
+import com.kakao.bengo.scala.javadoc.codeformatter.exceptions._
+import com.kakao.bengo.scala.javadoc.codeformatter.monad._
 
-object JavaCodeFormatter {
-  def printCode(codeName: String, tokens: Vector[JavaSToken]): Unit = {
-    val reformatTokens = tokens.filterNot(x => List(COMMENT_BLOCK, COMMENT, COMMENT_MACRO_EXPLAIN, COMMENT_MACRO_CODE, COMMENT_MACRO_NAME).contains(x.tokenType))
-    println(s"parse ${reformatTokens.map(_.value).mkString(" ")}")
-    println(blockStmt(false).collect(reformatTokens.toList))
-  }
-
-  def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(new ParseFailException(reason))) }
-
-  def none: CodeWriter[Unit] = CodeWriter {
-    tks => (tks, Right())
-  }
-
-  def consumeTokens(enums: List[JavaTokenEnum]): CodeWriter[JavaSToken] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (st@JavaSToken(v, _)) :: t if enums.contains(v) => (t, Right(st))
-    case tokenList@JavaSToken(v, _) :: _ =>
-      (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should one of [${enums.map(_.toString).mkString(", ")}]", tokenList)))
-  }
-
-  implicit class EnumSyntax(thisToken: JavaTokenEnum) {
-    def |(elem: JavaTokenEnum): List[JavaTokenEnum] = List(thisToken, elem)
-  }
-
-  implicit class EnumsSyntax(thisTokens: List[JavaTokenEnum]) {
-    def |(elem: JavaTokenEnum): List[JavaTokenEnum] = thisTokens :+ elem
-  }
-
-  def takeToken(enum: JavaTokenEnum): CodeWriter[String] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case JavaSToken(v, str) :: t if v == enum => (t, Right(str))
-    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
-  }
-
-  def takeTokens(enums: List[JavaTokenEnum]): CodeWriter[String] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case JavaSToken(v, str) :: t if enums.contains(v) => (t, Right(str))
-    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should be one of ${enums.mkString(", ")}", tokenList)))
-  }
-
-  def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case JavaSToken(v, _) :: t if v == enum => (t, Right())
-    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
-  }
-
-  def assertTokens(enums: List[JavaTokenEnum]): CodeWriter[Unit] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case JavaSToken(v, _) :: t if enums.contains(v) => (t, Right())
-    case tokenList@JavaSToken(v, _) :: _ => (tokenList,
-      Left(new TokenNotAllowedException(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
-  }
-
-  def unrollingRightShift: CodeWriter[Unit] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case JavaSToken(shiftType@(RIGHT_SHIFT | U_RIGHT_SHIFT), _) :: t => shiftType match {
-      case RIGHT_SHIFT => (JavaSToken(GT, ">") :: t, Right())
-      case U_RIGHT_SHIFT => (JavaSToken(RIGHT_SHIFT, ">>") :: t, Right())
-      case _ => (Nil, Left(new ParseFailException("unexpected")))
-    }
-    case tokenList => (tokenList, Left(new TokenNotAllowedException("token is not '>>'", tokenList)))
-  }
-
-  def tag(writer: CodeWriter[Unit], t: String): CodeWriter[Unit] = writer.pushTag(t)
-
+object JavaParser {
+  import com.kakao.bengo.scala.javadoc.codeformatter.syntax._
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{").enter().tab()
     _ <- blockStmts || none
@@ -272,7 +209,7 @@ object JavaCodeFormatter {
     _ <- assertToken(WHILE)
     _ <- assertToken(LEFT_PARENTHESIS).tell("while (")
     _ <- expression
-    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(true) || statement
   } yield Right()
 
@@ -471,7 +408,7 @@ object JavaCodeFormatter {
       } yield Right()
 
       for {
-        _ <- typeUse
+        _ <- typeUse.tell(" ")
         _ <- identifier
         _ <- variableInitialize || none
         _ <- loop || none
@@ -531,4 +468,63 @@ object JavaCodeFormatter {
       _ <- loop || none
     } yield Right()
   }
+
+  def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(new ParseFailException(reason))) }
+
+  def none: CodeWriter[Unit] = CodeWriter {
+    tks => (tks, Right())
+  }
+
+  def consumeTokens(enums: List[JavaTokenEnum]): CodeWriter[JavaSToken] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case (st@JavaSToken(v, _)) :: t if enums.contains(v) => (t, Right(st))
+    case tokenList@JavaSToken(v, _) :: _ =>
+      (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should one of [${enums.map(_.toString).mkString(", ")}]", tokenList)))
+  }
+
+  implicit class EnumSyntax(thisToken: JavaTokenEnum) {
+    def |(elem: JavaTokenEnum): List[JavaTokenEnum] = List(thisToken, elem)
+  }
+
+  implicit class EnumsSyntax(thisTokens: List[JavaTokenEnum]) {
+    def |(elem: JavaTokenEnum): List[JavaTokenEnum] = thisTokens :+ elem
+  }
+
+  def takeToken(enum: JavaTokenEnum): CodeWriter[String] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case JavaSToken(v, str) :: t if v == enum => (t, Right(str))
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
+  }
+
+  def takeTokens(enums: List[JavaTokenEnum]): CodeWriter[String] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case JavaSToken(v, str) :: t if enums.contains(v) => (t, Right(str))
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should be one of ${enums.mkString(", ")}", tokenList)))
+  }
+
+  def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case JavaSToken(v, _) :: t if v == enum => (t, Right())
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
+  }
+
+  def assertTokens(enums: List[JavaTokenEnum]): CodeWriter[Unit] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case JavaSToken(v, _) :: t if enums.contains(v) => (t, Right())
+    case tokenList@JavaSToken(v, _) :: _ => (tokenList,
+      Left(new TokenNotAllowedException(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
+  }
+
+  def unrollingRightShift: CodeWriter[Unit] = CodeWriter {
+    case Nil => (Nil, Left(new TokenListEmptyException()))
+    case JavaSToken(shiftType@(RIGHT_SHIFT | U_RIGHT_SHIFT), _) :: t => shiftType match {
+      case RIGHT_SHIFT => (JavaSToken(GT, ">") :: t, Right())
+      case U_RIGHT_SHIFT => (JavaSToken(RIGHT_SHIFT, ">>") :: t, Right())
+      case _ => (Nil, Left(new ParseFailException("unexpected")))
+    }
+    case tokenList => (tokenList, Left(new TokenNotAllowedException("token is not '>>'", tokenList)))
+  }
+
+  def tag(writer: CodeWriter[Unit], t: String): CodeWriter[Unit] = writer.pushTag(t)
+
 }

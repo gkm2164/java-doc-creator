@@ -1,4 +1,4 @@
-package com.kakao.bengo.scala.javadoc.writer
+package com.kakao.bengo.scala.javadoc.codeformatter
 
 case class Line(indent: Int, line: String)
 

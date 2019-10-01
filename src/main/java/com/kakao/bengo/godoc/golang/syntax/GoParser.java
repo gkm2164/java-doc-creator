@@ -131,6 +131,7 @@ public class GoParser {
         ret.toArray(r);
         return r;
     }
+
     private static class GoTokenIterator implements Iterator<GoToken> {
         private int idx = 0;
         private GoToken[] tokens = null;
@@ -332,7 +333,7 @@ public class GoParser {
 
     public static int findDefStop(String code) {
         int start = 0;
-        while (start < code.length() && code.charAt(start++) != '\n');
+        while (start < code.length() && code.charAt(start++) != '\n') ;
 
         final String avoidWord = "interface";
 

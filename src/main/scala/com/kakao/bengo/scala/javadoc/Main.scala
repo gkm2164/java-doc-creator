@@ -20,7 +20,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     try {
     List(
-      ("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-dacommons-190930.html", "DA commons"),
+      ("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"),
     )
 //      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
 //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))

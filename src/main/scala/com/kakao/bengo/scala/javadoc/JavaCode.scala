@@ -5,7 +5,7 @@ import cats.data._
 import com.kakao.bengo.godoc.exceptions.TokenNotAcceptedException
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
-import com.kakao.bengo.scala.javadoc.writer.JavaCodeFormatter
+import com.kakao.bengo.scala.javadoc.codeformatter.JavaCodeFormatter
 import levsha.Document.Node
 import levsha.text.symbolDsl._
 

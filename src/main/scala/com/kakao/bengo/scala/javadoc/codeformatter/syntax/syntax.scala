@@ -1,48 +1,14 @@
-package com.kakao.bengo.scala.javadoc.writer
+package com.kakao.bengo.scala.javadoc.codeformatter
 
-import com.kakao.bengo.scala.functional.Monad
+import cats.{FlatMap, Monad}
 import com.kakao.bengo.scala.javadoc.JavaSToken
-import com.kakao.bengo.scala.javadoc.writer.exceptions._
+import com.kakao.bengo.scala.javadoc.codeformatter.exceptions.{RecoverableException, UnrecoverableException}
+import com.kakao.bengo.scala.javadoc.codeformatter.monad._
 
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 
-object CodeWriter {
-
-  type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
-  type CodeWriterValue[A] = (CodeWriterState, Either[Throwable, A])
-  type NextCodeWriterMonad[A] = List[JavaSToken] => CodeWriter[A]
-
-  def apply[A](f: List[JavaSToken] => (List[JavaSToken], Either[Throwable, A])): CodeWriter[A] = {
-    case CodeWriterState(tokenList, sb, stack) =>
-      val (nextList, value) = f(tokenList)
-      (CodeWriterState(nextList, sb, stack), value)
-  }
-
-  implicit val codeWriterMonad: Monad[CodeWriter] = new Monad[CodeWriter] {
-    override def flatMap[A, B](ma: CodeWriter[A])(f: A => CodeWriter[B]): CodeWriter[B] = prevState => {
-      val (newState, value) = ma(prevState)
-      value match {
-        case Right(v) => f(v)(newState)
-        case Left(e) => (newState, Left(e))
-      }
-    }
-
-
-    override def unit[A](x: A): CodeWriter[A] = CodeWriter.pure(x)
-  }
-
-  implicit class MonadDefaultExtension[F[_] : Monad, A](ma: F[A]) {
-    private val m: Monad[F] = implicitly[Monad[F]]
-
-    def flatMap[B](f: A => F[B]): F[B] = m.flatMap(ma)(f)
-
-    def map[B](f: A => B): F[B] = m.map(ma)(f)
-
-    def unit(value: A): F[A] = m.unit(value)
-  }
-
+package object syntax {
   implicit class CodeWriterExt[A](thisWriter: CodeWriter[A]) {
-
     def doSomething(x: => Unit): CodeWriter[A] = {
       x
       thisWriter
@@ -64,11 +30,11 @@ object CodeWriter {
       }
 
       sb ++= s"[${newSb.debugStringBuilder(5)}]"
-//
-//      v match {
-//        case Right(_) => println(sb.toString)
-//        case _ =>
-//      }
+
+      v match {
+        case Right(_) => println(sb.toString)
+        case _ =>
+      }
       (CodeWriterState(nextTokenList, newSb, newStack), v)
     }
 
@@ -78,8 +44,6 @@ object CodeWriter {
         (CodeWriterState(nextTokenList, newSb, prevStack), v)
       }
     }
-
-    def run(state: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String]): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack))
 
     def tell(something: String): CodeWriter[A] = prevState => {
       val (CodeWriterState(nextState, newSb, newStack), v) = thisWriter(prevState)
@@ -146,13 +110,10 @@ object CodeWriter {
       sb.toString
     }
 
+    def run(state: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String]): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack))
+
   }
 
-  def pure[A](value: A): CodeWriter[A] = state => {
-    (state, Right(value))
-  }
-
-  case class CodeWriterState(tokens: List[JavaSToken], stringBuilder: IndentAwareStringBuilder, stack: List[String])
 
   implicit def nextCodeWriterMonadConversion[A](nextCodeWriterMonad: NextCodeWriterMonad[A]): CodeWriter[A] = {
 
@@ -162,5 +123,4 @@ object CodeWriter {
   object NextCodeWriterMonad {
     def apply[A](f: List[JavaSToken] => CodeWriter[A]): NextCodeWriterMonad[A] = f
   }
-
 }
