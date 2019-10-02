@@ -8,6 +8,7 @@ public enum JavaTokenEnum {
     PUBLIC("public", true),
     PROTECTED("protected", true),
     PRIVATE("private", true),
+    STRICTFP("strictfp", true),
     STATIC("static", true),
     PACKAGE("package", true),
     IMPORT("import", true),

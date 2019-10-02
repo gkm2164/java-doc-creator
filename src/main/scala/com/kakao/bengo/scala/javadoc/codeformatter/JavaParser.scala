@@ -11,6 +11,7 @@ import scala.language.postfixOps
 object JavaParser {
 
   import com.kakao.bengo.scala.javadoc.codeformatter.syntax._
+  import Helper._
 
   // LL(1) parser
   private val PrimitiveTypeTokens: List[JavaTokenEnum] =
@@ -26,8 +27,7 @@ object JavaParser {
   private val UnaryStartable: List[JavaTokenEnum] =
     List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
   private val ExpressionStartable =
-    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable :::
-      IdentifiableTokens ::: JavaValueTypeTokens
+    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens
 
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
@@ -102,28 +102,116 @@ object JavaParser {
     _ <- takeTokens(INC | DEC).print()
   } yield (), "postExpression")
 
-  def methodInvocation: CodeWriter[Unit] = tag(for {
-    _ <- reference
-    _ <- assertToken(LEFT_PARENTHESIS)
-    _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
-    _ <- assertToken(RIGHT_PARENTHESIS)
-  } yield (), "methodInvocation")
-
   def parameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    _ <- classBodyDefinition || none
   } yield (), "parameters")
 
-  def css(keyword: String, cssString: String*): String = s"""<span style="${cssString.mkString(" ")}">$keyword</span>"""
+  def classBodyDefinition: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- definitionElements || none
+    _ <- assertToken(RBRACE).enter().untab().tell("}")
+  } yield(), "classBodyDefinition")
 
-  def color(keyword: String, colorValue: String): String = css(keyword, s"color: $colorValue;")
+  def definitionElements: CodeWriter[Unit] = tag(for {
+    _ <- classDefinition || memberDefinition
+    _ <- definitionElements || none
+  } yield(), "definitionElements")
 
-  def keyword(tag: String): String = color(tag, "#D27428")
+  def classDefinition: CodeWriter[Unit] = tag(for {
+    _ <- modifiers
+    _ <- takeTokens(ENUM | CLASS).print(x => s"$x ")
+    _ <- identifier
+    _ <- typeParameters || none
+    _ <- superClass || none
+    _ <- superInterface || none
+    _ <- classBodyDefinition
+  } yield (), "classDefinition")
 
-  def block(lit: String): String = color(lit, "#00b800")
+  def modifiers: CodeWriter[Unit] = tag(for {
+    _ <- takeTokens(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x ")) || annotation.enter()
+    _ <- modifiers || none
+  } yield(), "modifiers")
 
-  def typeNameCss: String => String = css(_, "font-weight: bold;", "color: #e8e4d6")
+  def annotation: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(ANNOTATION).tell(color("@", "yellow"))
+    _ <- identifier
+    _ <- annotationTail || none
+  } yield(), "annotation")
+
+  def annotationTail: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- annotationSingleValue || tokenSeparatedCtx(annotationValuePairs, COMMA, requireSpace = true) || none
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+  } yield(), "annotationTail")
+
+  def annotationSingleValue: CodeWriter[Unit] =
+    tag(conditionalExpression || arrayInitializer || annotation, "annotationSingleValue")
+
+  def annotationValuePairs: CodeWriter[Unit] = tag(for {
+    _ <- identifier
+    _ <- assertToken(SUBSTITUTE).tell(" = ")
+    _ <- annotationSingleValue
+  } yield(), "annotationValuePairs")
+
+  def typeParameters: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LT).tell("<")
+    _ <- tokenSeparatedCtx(typeVariable, COMMA, requireSpace = true)
+    _ <- assertToken(GT).tell(">") || unrollingRightShift.tell(">")
+  } yield(), "typeParameters")
+
+  def typeVariable: CodeWriter[Unit] = tag(for {
+    _ <- annotation || none
+    _ <- identifier
+    _ <- typeBound || none
+  } yield(), "typeVariable")
+
+  def typeBound: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(EXTENDS).tell("extends ")
+    _ <- identifier
+    _ <- additionalBound || none
+  } yield (), "typeBound")
+
+  def additionalBound: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(BIT_AND).tell(" & ")
+    _ <- identifier
+  } yield(), "additionalBound")
+
+  def superClass: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(EXTENDS).tell("extends ")
+    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+  } yield(), "superClass")
+
+  def superInterface: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(IMPLEMENTS).tell("implements ")
+    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+  } yield(), "superInterface")
+
+  def memberDefinition: CodeWriter[Unit] = tag(for {
+    _ <- modifiers || none
+    _ <- typeUse.tell(" ")
+    _ <- identifier
+    _ <- fieldDefinition || methodDefinition
+  } yield(), "memberDefinition")
+
+  def fieldDefinition: CodeWriter[Unit] = tag(for {
+    _ <- variableInitialize || none
+    _ <- takeToken(SEMICOLON).tell(";").enter()
+  } yield(), "fieldDefinition")
+
+  def methodDefinition: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- tokenSeparatedCtx(methodArgDef, COMMA, requireSpace = true) || none
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    _ <- blockStmt(true) || assertToken(SEMICOLON).tell(";").enter()
+  } yield(), "methodDefinition")
+
+  def methodArgDef: CodeWriter[Unit] = tag(for {
+    _ <- typeUse
+    _ <- identifier
+  } yield(), "methodArgDef")
 
   def classInstanceCreation: CodeWriter[Unit] = tag({
     def arrayInstance: CodeWriter[Unit] = tag(for {
@@ -434,9 +522,9 @@ object JavaParser {
     } yield (), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
-      _ <- identifier
+      _ <- typeUse
       _ <- assertToken(NAMESPACE).tell("::")
-      _ <- identifier
+      _ <- identifier || assertToken(NEW).tell(keyword("new"))
     } yield (), "shortenLambda")
 
     originLambda || shortenLambda
@@ -471,6 +559,7 @@ object JavaParser {
     }, "declDetail")
 
     for {
+      _ <- annotation || none
       _ <- assertToken(FINAL).tell(keyword("final ")) || none
       _ <- declDetail
     } yield ()
@@ -483,7 +572,7 @@ object JavaParser {
 
   def customDecl: CodeWriter[Unit] = tag(for {
     _ <- tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
-    _ <- generic.hint(LT) || none
+    _ <- generic || none
   } yield (), "customDecl")
 
   def variableInitialize: CodeWriter[Unit] = tag(for {
@@ -500,8 +589,14 @@ object JavaParser {
   def generic: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
     _ <- tokenSeparatedCtx(typeUse || takeToken(QUESTION_MARK).print(), COMMA, requireSpace = true) || none
-    _ <- (assertToken(GT) || unrollingRightShift.hint(RIGHT_SHIFT, U_RIGHT_SHIFT)).tell(">")
+    _ <- genericExtends || none
+    _ <- (assertToken(GT) || unrollingRightShift).tell(">")
   } yield (), "generic")
+
+  def genericExtends: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(EXTENDS).tell(" extends ")
+    _ <- typeUse
+  } yield(), "genericExtends")
 
   def arrayUse: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET)
@@ -526,60 +621,4 @@ object JavaParser {
       _ <- loop || none
     } yield ()
   }, s"tokenSeparatedCtx($enum)")
-
-  def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(new ParseFailException(reason))) }
-
-  def none: CodeWriter[Unit] = CodeWriter.pure(())
-
-  def consumeTokens(enums: List[JavaTokenEnum]): CodeWriter[JavaSToken] = CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (st@JavaSToken(v, _), _) :: t if enums.contains(v) => (t, Right(st))
-    case tokenList@(JavaSToken(v, _), _) :: _ =>
-      (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should one of [${enums.map(_.toString).mkString(", ")}]", tokenList)))
-  }
-
-  implicit class EnumSyntax(thisToken: JavaTokenEnum) {
-    def |(elem: JavaTokenEnum): List[JavaTokenEnum] = List(thisToken, elem)
-  }
-
-  implicit class EnumsSyntax(thisTokens: List[JavaTokenEnum]) {
-    def |(elem: JavaTokenEnum): List[JavaTokenEnum] = thisTokens :+ elem
-  }
-
-  def takeToken(enum: JavaTokenEnum): CodeWriter[String] = tag(CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (JavaSToken(v, str), _) :: t if v == enum => (t, Right(str))
-    case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
-  }, s"takeToken($enum)")
-
-  def takeTokens(enums: List[JavaTokenEnum], converter: JavaSToken => String = _.value): CodeWriter[String] = tag(CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (token@JavaSToken(v, str), _) :: t if enums.contains(v) => (t, Right(converter(token)))
-    case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should be one of ${enums.mkString(", ")}", tokenList)))
-  }, s"takeTokens(${enums.mkString(" | ")})").hint(enums: _*)
-
-  def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = tag(CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (JavaSToken(v, _), _) :: t if v == enum => (t, Right())
-    case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
-  }, s"assertToken($enum)")
-
-  def assertTokens(enums: List[JavaTokenEnum]): CodeWriter[Unit] = tag(CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (JavaSToken(v, _), _) :: t if enums.contains(v) => (t, Right())
-    case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList,
-      Left(new TokenNotAllowedException(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
-  }, s"assertTokens(${enums.mkString(" | ")})")
-
-  def tag[A](writer: CodeWriter[A], t: String): CodeWriter[A] = writer.pushTag(t)
-
-  def unrollingRightShift: CodeWriter[Unit] = tag(CodeWriter {
-    case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (JavaSToken(shiftType@(RIGHT_SHIFT | U_RIGHT_SHIFT), _), idx) :: t => shiftType match {
-      case RIGHT_SHIFT => ((JavaSToken(GT, ">"), idx) :: t, Right())
-      case U_RIGHT_SHIFT => ((JavaSToken(RIGHT_SHIFT, ">>"), idx) :: t, Right())
-      case _ => (Nil, Left(new ParseFailException("unexpected")))
-    }
-    case tokenList => (tokenList, Left(new TokenNotAllowedException("token is not '>>'", tokenList)))
-  }, "unrollingRightShift")
 }

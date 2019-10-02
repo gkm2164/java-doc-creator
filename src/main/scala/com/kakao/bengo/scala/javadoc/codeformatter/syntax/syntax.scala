@@ -146,10 +146,10 @@ package object syntax {
     }
 
     def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): String = {
-      val (CodeWriterState(_, sb, _, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
+      val (CodeWriterState(_, sb, stack, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
       v match {
         case Right(_) => sb.toString
-        case Left(e) => s"Error occurred during parse code: $e"
+        case Left(e) => s"Error occurred during parse code: $e, lastStack: ${stack.take(5)}"
       }
     }
 
