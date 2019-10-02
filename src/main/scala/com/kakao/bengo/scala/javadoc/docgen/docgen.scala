@@ -1,5 +1,6 @@
 package com.kakao.bengo.scala.javadoc
 
+import com.kakao.bengo.scala.javadoc.codeformatter.{JavaCodeFormatter, JavaParser}
 import levsha.Document.{Empty, Node}
 import levsha.impl.TextPrettyPrintingConfig
 import levsha.text.renderHtml
@@ -58,12 +59,13 @@ package object docgen {
               a.decideTarget.map(x => 'div(attachTo(x))).getOrElse(Empty),
               'div(definitions.map(_.show(indent.inc))))
 
-          case m@JavaMethod(modifier, name, returnType, args, _) =>
+          case m@JavaMethod(modifier, name, returnType, args, codes) =>
             'div('span('class /= "full-path", modifier.fullPath),
               'p('class /= "java-def", modifier.show, returnType.show,
                 if (name == "" || name == returnType.show) "" else 'span('class /= "method-name", s" $name"), "(",
                 args.map(x => renderHtml(x.show, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "), ")"),
               'span(modifier.commentMacros.filter(_.startsWith("//!")).map(_.drop(3)).mkString("\n")),
+              'pre(JavaCodeFormatter.printCode("", codes)),
               if (m.exampleCode.nonEmpty) 'pre('code('class /= "java", exampleCodes(modifier))) else Empty)
 
           case JavaMember(modifier, name, memberType) =>

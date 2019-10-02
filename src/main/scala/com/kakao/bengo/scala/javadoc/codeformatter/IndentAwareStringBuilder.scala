@@ -15,7 +15,17 @@ case class IndentAwareStringBuilder(initialIndent: Int,
                                     indentHistory: List[Int] = Nil) {
 
   def append[T](value: T): IndentAwareStringBuilder = {
-    this.copy(stringBuilder = stringBuilder :+ value.toString)
+    val str = value.toString
+    val tobe = str match {
+      case "<" => "&lt;"
+      case ">" => "&gt;"
+      case "<<" => "&lt;&lt;"
+      case ">>" => "&gt;&gt;"
+      case ">>>" => "&gt;&gt;&gt;"
+      case _ => str
+    }
+
+    this.copy(stringBuilder = stringBuilder :+ tobe)
   }
 
   def tab: IndentAwareStringBuilder = {

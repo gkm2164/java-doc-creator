@@ -3,40 +3,44 @@ package com.kakao.bengo.scala.javadoc.codeformatter
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.javalang.JavaTokenEnum._
 import com.kakao.bengo.scala.javadoc.JavaSToken
-import com.kakao.bengo.scala.javadoc.codeformatter.JavaParser.{breakStmt, continueStmt, doStmt, emptyStmt, forStmt, ifStmt, returnStmt, switchStmt, synchronizedStmt, throwStmt, tryStmt, whileStmt}
 import com.kakao.bengo.scala.javadoc.codeformatter.exceptions._
 import com.kakao.bengo.scala.javadoc.codeformatter.monad._
+
+import scala.language.postfixOps
 
 object JavaParser {
 
   import com.kakao.bengo.scala.javadoc.codeformatter.syntax._
 
+  // LL(1) parser
   private val PrimitiveTypeTokens: List[JavaTokenEnum] =
-    List(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG, PRIMITIVE_INT, PRIMITIVE_FLOAT,
-      PRIMITIVE_DOUBLE, PRIMITIVE_BOOLEAN)
+    List(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG,
+      PRIMITIVE_INT, PRIMITIVE_FLOAT, PRIMITIVE_DOUBLE, PRIMITIVE_BOOLEAN)
   private val ControlStatementBeginTokens: List[JavaTokenEnum] =
-    List(LBRACE, SEMICOLON, SWITCH, DO, BREAK, CONTINUE, RETURN, FOR, IF, WHILE, SYNCHRONIZED, THROW, TRY)
+    List(LBRACE, SEMICOLON, SWITCH, DO, BREAK, CONTINUE, RETURN, FOR, IF,
+      WHILE, SYNCHRONIZED, THROW, TRY)
   private val JavaValueTypeTokens: List[JavaTokenEnum] =
     List(STRING, NUMBER, CHAR, TRUE, FALSE, NULL)
   private val IdentifiableTokens: List[JavaTokenEnum] =
     List(TOKEN, SUPER, CLASS)
-  private val UnaryBeginable: List[JavaTokenEnum] = List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
-  private val ExpressionBeginable =
-    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryBeginable ::: IdentifiableTokens ::: JavaValueTypeTokens
-
+  private val UnaryStartable: List[JavaTokenEnum] =
+    List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
+  private val ExpressionStartable =
+    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable :::
+      IdentifiableTokens ::: JavaValueTypeTokens
 
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
-    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
     _ <- blockStmts || none
-    _ <- assertToken(RBRACE).untab().tell("}").enterIf(enterAtEndLine)
-  } yield Right(), "blockStmt")
+    _ <- assertToken(RBRACE).untab().tell(block("}")).enterIf(enterAtEndLine)
+  } yield (), "blockStmt")
 
   def statements: CodeWriter[Unit] = tag({
     def loop: CodeWriter[Unit] = {
       for {
         _ <- statement
         _ <- loop || none
-      } yield Right()
+      } yield ()
     }
 
     loop || none
@@ -45,71 +49,81 @@ object JavaParser {
   def statement: CodeWriter[Unit] = tag(for {
     _ <- controlStatement.hint(ControlStatementBeginTokens: _*) ||
       nonControlStatement.notHint(ControlStatementBeginTokens: _*)
-  } yield Right(), "statement")
+  } yield (), "statement")
 
   def controlStatement: CodeWriter[Unit] = tag(
     blockStmt(true).hint(LBRACE) ||
-    emptyStmt.hint(SEMICOLON) ||
-    switchStmt.hint(SWITCH) ||
-    doStmt.hint(DO) ||
-    breakStmt.hint(BREAK) ||
-    continueStmt.hint(CONTINUE) ||
-    returnStmt.hint(RETURN) ||
-    forStmt.hint(FOR) ||
-    ifStmt.hint(IF) ||
-    whileStmt.hint(WHILE) ||
-    synchronizedStmt.hint(SYNCHRONIZED) ||
-    throwStmt.hint(THROW) ||
-    tryStmt.hint(TRY), "controlStatement")
+      emptyStmt.hint(SEMICOLON) ||
+      switchStmt.hint(SWITCH) ||
+      doStmt.hint(DO) ||
+      breakStmt.hint(BREAK) ||
+      continueStmt.hint(CONTINUE) ||
+      returnStmt.hint(RETURN) ||
+      forStmt.hint(FOR) ||
+      ifStmt.hint(IF) ||
+      whileStmt.hint(WHILE) ||
+      synchronizedStmt.hint(SYNCHRONIZED) ||
+      throwStmt.hint(THROW) ||
+      tryStmt.hint(TRY), "controlStatement")
 
   def nonControlStatement: CodeWriter[Unit] = tag(expressionStmt || declarationStmt, "nonControlStatement")
 
   def unaryStmt(token: JavaTokenEnum): CodeWriter[Unit] = tag(for {
-    _ <- assertToken(token).tell(token.value)
+    _ <- assertToken(token).tell(keyword(token.value))
     _ <- assertToken(SEMICOLON).tell(";").enter()
-  } yield Right(), s"unaryStmt($token)")
+  } yield (), s"unaryStmt($token)")
 
   def expressionStmt: CodeWriter[Unit] = tag(for {
-    _ <- assignment || expression
+    _ <- assignment || expression.hint(ExpressionStartable: _*)
     _ <- assertToken(SEMICOLON).tell(";").enter()
-  } yield Right(), "expressionStmt")
+  } yield (), "expressionStmt")
 
   def assignment: CodeWriter[Unit] = tag(for {
     _ <- identifier
     _ <- arrayRefs || none
     _ <- takeTokens(SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC).print(x => s" $x ")
     _ <- expression
-  } yield Right(), "assignment")
+  } yield (), "assignment")
 
   def arrayRefs: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET).tell("[")
     _ <- expression
     _ <- assertToken(RBRACKET).tell("]")
     _ <- arrayRefs || none
-  } yield Right(), "arrayRefs")
+  } yield (), "arrayRefs")
 
   def preExpression: CodeWriter[Unit] = tag(for {
     _ <- takeTokens(INC | DEC).print()
     _ <- identifier
-  } yield Right(), "preExpression")
+  } yield (), "preExpression")
 
   def postExpression: CodeWriter[Unit] = tag(for {
     _ <- identifier
     _ <- takeTokens(INC | DEC).print()
-  } yield Right(), "postExpression")
+  } yield (), "postExpression")
 
   def methodInvocation: CodeWriter[Unit] = tag(for {
     _ <- reference
     _ <- assertToken(LEFT_PARENTHESIS)
     _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS)
-  } yield Right(), "methodInvocation")
+  } yield (), "methodInvocation")
 
   def parameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-  } yield Right(), "parameters")
+  } yield (), "parameters")
+
+  def css(keyword: String, cssString: String*): String = s"""<span style="${cssString.mkString(" ")}">$keyword</span>"""
+
+  def color(keyword: String, colorValue: String): String = css(keyword, s"color: $colorValue;")
+
+  def keyword(tag: String): String = color(tag, "#D27428")
+
+  def block(lit: String): String = color(lit, "#00b800")
+
+  def typeNameCss: String => String = css(_, "font-weight: bold;", "color: #e8e4d6")
 
   def classInstanceCreation: CodeWriter[Unit] = tag({
     def arrayInstance: CodeWriter[Unit] = tag(for {
@@ -117,14 +131,14 @@ object JavaParser {
       _ <- expression || none
       _ <- assertToken(RBRACKET).tell("]")
       _ <- arrayInitializer || none
-    } yield Right(), "arrayInstance")
+    } yield (), "arrayInstance")
 
     for {
-      _ <- assertToken(NEW).tell("new ")
-      _ <- primitiveTypes || identifier
+      _ <- assertToken(NEW).tell(keyword("new "))
+      _ <- primitiveTypes || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
       _ <- generic || none
       _ <- arrayInstance || parameters
-    } yield Right()
+    } yield ()
   }, "classInstanceCreation")
 
   def continueStmt: CodeWriter[Unit] = tag(unaryStmt(CONTINUE), "continueStmt")
@@ -132,52 +146,52 @@ object JavaParser {
   def breakStmt: CodeWriter[Unit] = tag(unaryStmt(BREAK), "breakStmt")
 
   def throwStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(THROW).tell("throw ")
+    _ <- assertToken(THROW).tell(keyword("throw "))
     _ <- expression
-  } yield Right(), "throwStmt")
+  } yield (), "throwStmt")
 
   def emptyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(SEMICOLON).tell(";").enter()
-  } yield Right(), "emptyStmt")
+  } yield (), "emptyStmt")
 
   def tryStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(TRY).tell("try ")
+    _ <- assertToken(TRY).tell(keyword("try "))
     _ <- blockStmt(false)
     _ <- catchStmts
     _ <- finallyStmt || none
     _ <- none.enter()
-  } yield Right(), "tryStmt")
+  } yield (), "tryStmt")
 
   def catchStmts: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(CATCH).tell(" catch")
+    _ <- assertToken(CATCH).tell(keyword(" catch "))
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- catchDeclaration
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(false)
     _ <- catchStmts || none
-  } yield Right(), "catchStmt")
+  } yield (), "catchStmt")
 
   def catchDeclaration: CodeWriter[Unit] = tag(for {
     _ <- infixOperator(BIT_OR, typeUse).tell(" ")
     _ <- identifier
-  } yield Right(), "catchDeclaration")
+  } yield (), "catchDeclaration")
 
   def blockStmts: CodeWriter[Unit] = tag(for {
     _ <- statement
     _ <- blockStmts || none
-  } yield Right(), "blockStmts")
+  } yield (), "blockStmts")
 
-  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(), "primitiveTypes")
+  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(keyword), "primitiveTypes")
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(FINALLY).tell(" finally ")
+    _ <- assertToken(FINALLY).tell(keyword(" finally "))
     _ <- blockStmt(false)
-  } yield Right(), "finallyStmt")
+  } yield (), "finallyStmt")
 
   def returnStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(RETURN).tell("return ")
+    _ <- assertToken(RETURN).tell(keyword("return "))
     _ <- expression
-  } yield Right(), "returnStmt")
+  } yield (), "returnStmt")
 
   def forStmt: CodeWriter[Unit] = tag({
     def forConditionStmt: CodeWriter[Unit] = tag({
@@ -187,29 +201,29 @@ object JavaParser {
         _ <- conditionalExpression
         _ <- assertToken(SEMICOLON).tell("; ")
         _ <- expression || none
-      } yield Right(), "triExpressions")
+      } yield (), "triExpressions")
 
       def simpleTypes: CodeWriter[Unit] = tag(for {
         _ <- customDecl.tell(" ")
         _ <- identifier
         _ <- assertToken(COLON).tell(": ")
         _ <- expression
-      } yield Right(), "simpleTypes")
+      } yield (), "simpleTypes")
 
       triExpressions || simpleTypes
     }, "forConditionStmt")
 
     for {
-      _ <- assertToken(FOR).tell("for ")
+      _ <- assertToken(FOR).tell(keyword("for "))
       _ <- assertToken(LEFT_PARENTHESIS).tell("(")
       _ <- forConditionStmt
       _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
       _ <- blockStmt(true) || statement
-    } yield Right()
+    } yield ()
   }, "forStmt")
 
   def ifStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(IF).tell("if ")
+    _ <- assertToken(IF).tell(keyword("if "))
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
@@ -217,70 +231,74 @@ object JavaParser {
     _ <- elseIfStmts || none
     _ <- elseStmt || none
     _ <- none.enter()
-  } yield Right(), "ifStmt")
+  } yield (), "ifStmt")
 
   def elseIfStmts: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ELSE)
-    _ <- assertToken(IF).tell("else if ")
+    _ <- assertToken(IF).tell(keyword("else if "))
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(false).tell(" ") || statement.enter()
     _ <- elseIfStmts || none
-  } yield Right(), "elseIfStmts")
+  } yield (), "elseIfStmts")
 
   def elseStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(ELSE).tell("else ")
+    _ <- assertToken(ELSE).tell(keyword("else "))
     _ <- blockStmt(false) || statement
-  } yield Right(), "elseStmt")
+  } yield (), "elseStmt")
 
   def whileStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(WHILE)
-    _ <- assertToken(LEFT_PARENTHESIS).tell("while (")
-    _ <- expression
-    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt(true) || statement
-  } yield Right(), "whileStmt")
-
-  //noinspection MutatorLikeMethodIsParameterless
-  def doStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(DO).tell("do ")
-    _ <- blockStmt(false).tell(" ")
-    _ <- assertToken(WHILE)
-    _ <- assertToken(LEFT_PARENTHESIS).tell("while(")
-    _ <- expressionStmt
-    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    _ <- assertToken(SEMICOLON).tell(";").enter()
-  } yield Right(), "doStmt")
-
-  def switchStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(SWITCH).tell("switch ")
+    _ <- assertToken(WHILE).tell(keyword("while "))
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- blockStmt(true) || statement
+  } yield (), "whileStmt")
+
+  //noinspection MutatorLikeMethodIsParameterless
+  def doStmt: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(DO).tell(keyword("do "))
+    _ <- blockStmt(false).tell(" ")
+    _ <- assertToken(WHILE).tell(keyword("while "))
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- expressionStmt
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    _ <- assertToken(SEMICOLON).tell(";").enter()
+  } yield (), "doStmt")
+
+  def switchStmt: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(SWITCH).tell(keyword("switch "))
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- expression
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
+    _ <- caseBlock
+  } yield (), "switchStmt")
+
+  def caseBlock: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
     _ <- caseStmts || none
     _ <- defaultStmt || none
-    _ <- assertToken(RBRACE).tell("}").untab().enter()
-  } yield Right(), "switchStmt")
+    _ <- assertToken(RBRACE).tell(block("}")).untab().enter()
+  } yield (), "caseBlock")
 
   def caseStmts: CodeWriter[Unit] = tag(for {
     _ <- caseStmtDetail
     _ <- caseStmts || none
-  } yield Right(), "caseStmts")
+  } yield (), "caseStmts")
 
   def defaultStmt: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(DEFAULT)
-    _ <- assertToken(COLON).tell("default: ")
-    _ <- statements
-  } yield Right(), "defaultStmt")
+    _ <- assertToken(DEFAULT).tell(keyword("default"))
+    _ <- assertToken(COLON).tell(":").enter().tab()
+    _ <- statements.untab()
+  } yield (), "defaultStmt")
 
   def caseStmtDetail: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(CASE).tell("case ")
+    _ <- assertToken(CASE).tell(keyword("case "))
     _ <- valueTypes || identifier
-    _ <- assertToken(COLON).tell(": ")
-    _ <- statements
-  } yield Right(), "caseStmtDetail")
+    _ <- assertToken(COLON).tell(":").enter().tab()
+    _ <- statements.untab()
+  } yield (), "caseStmtDetail")
 
   def expression: CodeWriter[Unit] = tag(lambda || castExpression || assignment || conditionalExpression, "expression")
 
@@ -290,24 +308,24 @@ object JavaParser {
       _ <- expression
       _ <- assertToken(COLON).tell(" : ")
       _ <- expression || lambda
-    } yield Right(), "conditionalExpressionDetail")
+    } yield (), "conditionalExpressionDetail")
 
     for {
       _ <- conditionalOrExpression
       _ <- conditionalExpressionDetail || none
     } yield ()
-  }, "conditionalExpression").hint(ExpressionBeginable: _*)
+  }, "conditionalExpression").hint(ExpressionStartable: _*)
 
   def infixOperator(operator: JavaTokenEnum, next: CodeWriter[Unit]): CodeWriter[Unit] = tag({
     def infixOperatorDetail: CodeWriter[Unit] = tag(for {
       _ <- takeToken(operator).print(x => s" $x ")
       _ <- infixOperator(operator, next)
-    } yield Right(), "infixOperatorDetail")
+    } yield (), "infixOperatorDetail")
 
     for {
       _ <- next
       _ <- infixOperatorDetail || none
-    } yield Right()
+    } yield ()
   }, s"infixOperator($operator)")
 
 
@@ -315,12 +333,12 @@ object JavaParser {
     def infixOperatorsDetail: CodeWriter[Unit] = tag(for {
       _ <- takeTokens(operators).print(x => s" $x ")
       _ <- infixOperators(operators, next)
-    } yield Right(), "infixOperatorsDetail")
+    } yield (), "infixOperatorsDetail")
 
     for {
       _ <- next
       _ <- infixOperatorsDetail || none
-    } yield Right()
+    } yield ()
   }, s"infixOperators(${operators.mkString(" | ")})")
 
   def conditionalOrExpression: CodeWriter[Unit] = tag(infixOperator(OR, conditionalAndExpression), "conditionalOrExpression")
@@ -338,17 +356,17 @@ object JavaParser {
   def relationalExpression: CodeWriter[Unit] = tag(for {
     _ <- shiftExpression
     _ <- shiftTail || instanceOfTail || none
-  } yield Right(), "relationalExpression")
+  } yield (), "relationalExpression")
 
   def shiftTail: CodeWriter[Unit] = tag(for {
     _ <- takeTokens(LT | GT | LTE | GTE).print(x => s" $x ")
     _ <- relationalExpression
-  } yield Right(), "shiftTail")
+  } yield (), "shiftTail")
 
   def instanceOfTail: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(INSTANCEOF).tell(" instanceof ")
+    _ <- assertToken(INSTANCEOF).tell(keyword(" instanceof "))
     _ <- typeUse
-  } yield Right(), "instanceOfTail")
+  } yield (), "instanceOfTail")
 
   def shiftExpression: CodeWriter[Unit] =
     tag(infixOperators(LEFT_SHIFT | RIGHT_SHIFT | U_RIGHT_SHIFT, additiveExpression), "shiftExpression")
@@ -360,22 +378,29 @@ object JavaParser {
     tag(infixOperators(MULTIPLY | DIVIDE | MODULAR, unaryExpression), "multiplicativeExpression")
 
   def unaryExpression: CodeWriter[Unit] = tag(for {
-    _ <- preExpression.hint(INC, DEC) || postExpression.hint(IdentifiableTokens: _*) || unaryExpWith(UnaryBeginable) ||
+    _ <- preExpression.hint(INC, DEC) || postExpression.hint(IdentifiableTokens: _*) || unaryExpWith(UnaryStartable) ||
       classInstanceCreation.hint(NEW) || tokenSeparatedCtx(referableValue, DOT).hint(LEFT_PARENTHESIS :: IdentifiableTokens ::: JavaValueTypeTokens: _*)
-  } yield (), "unaryExpression").hint(ExpressionBeginable: _*)
+  } yield (), "unaryExpression").hint(ExpressionStartable: _*)
 
   def referableValue: CodeWriter[Unit] = tag(for {
     _ <- parenthesisExpression || reference || valueTypes
     _ <- arrayRefs || none
-  } yield Right(), "valueReferable")
+  } yield (), "valueReferable")
 
   def parenthesisExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-  } yield Right(), "parenthesisExpression")
+  } yield (), "parenthesisExpression")
 
-  def valueTypes: CodeWriter[Unit] = tag(takeTokens(JavaValueTypeTokens).print(), "valueTypes").hint(JavaValueTypeTokens: _*)
+  def valueTypes: CodeWriter[Unit] = tag(takeTokens(JavaValueTypeTokens, {
+    case JavaSToken(enum, v) => enum match {
+      case TRUE | FALSE | NULL => keyword(v)
+      case NUMBER => color(v, "#3986AF")
+      case STRING | CHAR => color(v, "#477944")
+      case _ => v
+    }
+  }).print(), "valueTypes").hint(JavaValueTypeTokens: _*)
 
   def castExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
@@ -393,26 +418,26 @@ object JavaParser {
     _ <- identifier
     _ <- arrayRefs || none
     _ <- parameters || none
-  } yield Right(), "reference")
+  } yield (), "reference")
 
   def lambda: CodeWriter[Unit] = tag({
     def lambdaDecl: CodeWriter[Unit] = tag(for {
       _ <- assertToken(LEFT_PARENTHESIS).tell("(")
       _ <- tokenSeparatedCtx(declaration || takeToken(TOKEN).print(x => s"$x"), COMMA, requireSpace = true) || none
       _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    } yield Right(), "lambdaDecl")
+    } yield (), "lambdaDecl")
 
     def originLambda: CodeWriter[Unit] = tag(for {
       _ <- lambdaDecl || takeToken(TOKEN).print(x => s"$x")
       _ <- assertToken(LAMBDA_BODY_START).tell(" -> ")
       _ <- expression || blockStmt(false)
-    } yield Right(), "originLambda")
+    } yield (), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
       _ <- identifier
       _ <- assertToken(NAMESPACE).tell("::")
       _ <- identifier
-    } yield Right(), "shortenLambda")
+    } yield (), "shortenLambda")
 
     originLambda || shortenLambda
   }, "lambda").hint(LEFT_PARENTHESIS, TOKEN, CLASS, SUPER)
@@ -423,68 +448,72 @@ object JavaParser {
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- blockStmt(true)
-  } yield Right(), "synchronizedStmt")
+  } yield (), "synchronizedStmt")
 
   def declarationStmt: CodeWriter[Unit] = tag(for {
     _ <- declaration
     _ <- assertToken(SEMICOLON).tell(";").enter()
-  } yield Right(), "declarationStmt")
+  } yield (), "declarationStmt")
 
   def declaration: CodeWriter[Unit] = tag({
     def declDetail: CodeWriter[Unit] = tag({
       def loop: CodeWriter[Unit] = tag(for {
         _ <- assertToken(COMMA).tell(",").enter()
         _ <- declDetail
-      } yield Right(), "loop")
+      } yield (), "loop")
 
       for {
         _ <- typeUse.tell(" ")
         _ <- identifier
         _ <- variableInitialize.hint(SUBSTITUTE) || none
         _ <- loop || none
-      } yield Right()
+      } yield ()
     }, "declDetail")
 
     for {
-      _ <- assertToken(FINAL).tell("final ") || none
+      _ <- assertToken(FINAL).tell(keyword("final ")) || none
       _ <- declDetail
-    } yield Right()
+    } yield ()
   }, "declaration")
 
   def typeUse: CodeWriter[Unit] = tag(for {
     _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || customDecl
     _ <- arrayUse || none
-  } yield Right(), "typeUse")
+  } yield (), "typeUse")
 
   def customDecl: CodeWriter[Unit] = tag(for {
-    _ <- identifier
+    _ <- tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
     _ <- generic.hint(LT) || none
-  } yield Right(), "customDecl")
+  } yield (), "customDecl")
 
   def variableInitialize: CodeWriter[Unit] = tag(for {
     _ <- assertToken(SUBSTITUTE).tell(" = ")
     _ <- expression || arrayInitializer
-  } yield Right(), "variableInitialize")
+  } yield (), "variableInitialize")
 
   def arrayInitializer: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{")
     _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RBRACE).tell("}")
-  } yield Right(), "arrayInitializer")
+  } yield (), "arrayInitializer")
 
   def generic: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
     _ <- tokenSeparatedCtx(typeUse || takeToken(QUESTION_MARK).print(), COMMA, requireSpace = true) || none
     _ <- (assertToken(GT) || unrollingRightShift.hint(RIGHT_SHIFT, U_RIGHT_SHIFT)).tell(">")
-  } yield Right(), "generic")
+  } yield (), "generic")
 
   def arrayUse: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET)
     _ <- assertToken(RBRACKET).tell("[]")
     _ <- arrayUse || none
-  } yield Right(), "arrayUse")
+  } yield (), "arrayUse")
 
-  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeTokens(IdentifiableTokens).print(), DOT)
+  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeTokens(IdentifiableTokens, {
+    case JavaSToken(TOKEN, "this") => keyword("this")
+    case JavaSToken(SUPER | CLASS, v) => keyword(v)
+    case JavaSToken(_, v) => v
+  }).print(), DOT)
 
   def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum, requireSpace: Boolean = false): CodeWriter[Unit] = tag({
     def loop: CodeWriter[Unit] = tag(for {
@@ -495,14 +524,12 @@ object JavaParser {
     for {
       _ <- chosenParser
       _ <- loop || none
-    } yield Right()
+    } yield ()
   }, s"tokenSeparatedCtx($enum)")
 
   def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(new ParseFailException(reason))) }
 
-  def none: CodeWriter[Unit] = CodeWriter {
-    tks => (tks, Right())
-  }
+  def none: CodeWriter[Unit] = CodeWriter.pure(())
 
   def consumeTokens(enums: List[JavaTokenEnum]): CodeWriter[JavaSToken] = CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
@@ -525,9 +552,9 @@ object JavaParser {
     case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but $enum", tokenList)))
   }, s"takeToken($enum)")
 
-  def takeTokens(enums: List[JavaTokenEnum]): CodeWriter[String] = tag(CodeWriter {
+  def takeTokens(enums: List[JavaTokenEnum], converter: JavaSToken => String = _.value): CodeWriter[String] = tag(CodeWriter {
     case Nil => (Nil, Left(new TokenListEmptyException()))
-    case (JavaSToken(v, str), _) :: t if enums.contains(v) => (t, Right(str))
+    case (token@JavaSToken(v, str), _) :: t if enums.contains(v) => (t, Right(converter(token)))
     case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(new TokenNotAllowedException(s"not allow $v, but should be one of ${enums.mkString(", ")}", tokenList)))
   }, s"takeTokens(${enums.mkString(" | ")})").hint(enums: _*)
 

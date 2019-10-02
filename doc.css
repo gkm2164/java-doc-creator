@@ -53,3 +53,7 @@ div.contents {
     /*margin-left: 10px;*/
     float: left;
 }
+
+pre {
+    color: whitesmoke;
+}

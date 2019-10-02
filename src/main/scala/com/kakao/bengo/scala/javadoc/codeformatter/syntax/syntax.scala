@@ -2,7 +2,7 @@ package com.kakao.bengo.scala.javadoc.codeformatter
 
 import com.kakao.bengo.javalang.JavaTokenEnum
 import com.kakao.bengo.scala.javadoc.JavaSToken
-import com.kakao.bengo.scala.javadoc.codeformatter.exceptions.{RecoverableException, TokenListEmptyException, TokenNotAllowedException, UnrecoverableException}
+import com.kakao.bengo.scala.javadoc.codeformatter.exceptions._
 import com.kakao.bengo.scala.javadoc.codeformatter.monad._
 
 import scala.language.implicitConversions
@@ -47,8 +47,6 @@ package object syntax {
 
     def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
 
-    def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
-
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
         case Nil => (prevState, Left(new TokenListEmptyException))
@@ -57,6 +55,8 @@ package object syntax {
           Left(new TokenNotAllowedException(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
       }
     }
+
+    def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
 
     def pushTag(tag: String): CodeWriter[A] = {
       case CodeWriterState(prevTokenList, prevSb, prevStack, config) =>
@@ -69,6 +69,7 @@ package object syntax {
             sb ++= s"[${actualTag.toString}]"
             if (debugOption.stackTrace) {
               sb ++= s" <- [${prevStack.take(debugOption.maxStackSize).mkString(" / ")}]"
+              println(f"${" " * prevStack.length}RUN  ${prevStack.length + 1}%3d ${sb.toString}")
             }
 
           case _ =>
@@ -78,12 +79,10 @@ package object syntax {
           thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
 
         if (config.debug.isDefined) println(v match {
-          case Right(_) => s"OK   ${prevStack.length + 1}:${sb.toString}"
-          case Left(_) =>  s"FAIL ${prevStack.length + 1}:${sb.toString}"
+          case Right(_) => f"${" " * prevStack.length}OK   ${prevStack.length + 1}%3d ${sb.toString}"
+          case Left(_) => f"${" " * prevStack.length}FAIL ${prevStack.length + 1}%3d ${sb.toString}"
         })
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
-      //        }
-      //        (CodeWriterState(prevTokenList, prevSb, prevStack, config), Left(new TokenListEmptyException))
     }
 
     def tell(lit: String): CodeWriter[A] = prevState => {
@@ -147,8 +146,11 @@ package object syntax {
     }
 
     def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): String = {
-      val (CodeWriterState(_, sb, _, _), _) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
-      sb.toString
+      val (CodeWriterState(_, sb, _, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
+      v match {
+        case Right(_) => sb.toString
+        case Left(e) => s"Error occurred during parse code: $e"
+      }
     }
 
     def run(state: List[(JavaSToken, Int)],

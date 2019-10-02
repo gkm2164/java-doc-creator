@@ -151,6 +151,8 @@ ul.enum-values {
 }
 
 pre {
+    background: #191919;
+    color: #b3b3b3 !important;
     padding: 10px;
 }
 

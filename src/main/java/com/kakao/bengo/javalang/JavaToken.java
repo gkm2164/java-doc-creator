@@ -32,7 +32,7 @@ public class JavaToken {
             return new JavaToken(e, e.value, endsAt);
         }
 
-        if (str.matches("^[-+]?\\\\d+(\\\\.\\\\d+)?$")) {
+        if (str.matches("^[-+]?\\d+(\\.\\d+)?$")) {
             return new JavaToken(JavaTokenEnum.NUMBER, str, endsAt);
         }
         return new JavaToken(JavaTokenEnum.TOKEN, str, endsAt);

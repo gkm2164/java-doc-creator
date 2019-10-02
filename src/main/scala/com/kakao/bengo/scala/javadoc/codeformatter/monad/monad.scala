@@ -24,7 +24,7 @@ package object monad {
     override def toString: String = {
       val JavaSToken(enum, value) = token
 
-      s"""$context:$idx=$enum(${capWithDoubleQuote(value)})"""
+      s"""$context:$idx:$enum(${capWithDoubleQuote(value)})"""
     }
   }
 

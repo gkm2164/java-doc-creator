@@ -18,16 +18,13 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"))
-//      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
-//      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
-//    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
-      .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
-  }
+    //    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"))
+    //      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
+    //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
+    //    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
+    List(("/Users/ben.go/scala/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
 
-  def runLogging[T](buildNavTree: => T, f: => Unit): T = {
-    f
-    buildNavTree
+      .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 
   def createDoc(baseDir: String, outFile: String, name: String): Unit = {
@@ -46,33 +43,33 @@ object Main {
     val pw = new PrintWriter(outFile)
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
-      'html ('lang /= "ko",
-        'head (
-          'meta ('charset /= "utf-8"),
-          'title ("document"),
-          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/animation.css"),
-          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/style.css"),
-          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/bootstrap.css"),
-          'link ('type /= "text/css", 'rel /= "stylesheet", 'href /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
+      'html('lang /= "ko",
+        'head(
+          'meta('charset /= "utf-8"),
+          'title("document"),
+          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/animation.css"),
+          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/style.css"),
+          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/bootstrap.css"),
+          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
 
-          'script ('src /= "js/jquery.js"),
-          'script ('src /= "js/bootstrap.js"),
-          'script ('src /= "js/main.js"),
-          'script ('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"),
-          'script ('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/java.min.js"),
-          'script ("hljs.initHighlightingOnLoad();")
+          'script('src /= "js/jquery.js"),
+          'script('src /= "js/bootstrap.js"),
+          'script('src /= "js/main.js"),
+          'script('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"),
+          'script('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/java.min.js"),
+          'script("hljs.initHighlightingOnLoad();")
         ),
-        'body (
-          'section (
-            'aside ('id /= "sidebar", 'class /= "sidebar-dark",
-              'nav (
-                'h3 ("소스코드 트리"),
-                'ul (runLogging(node.buildNavTree, log.info("build nav tree")))
+        'body(
+          'section(
+            'aside('id /= "sidebar", 'class /= "sidebar-dark",
+              'nav(
+                'h3("소스코드 트리"),
+                'ul(runLogging(node.buildNavTree, log.info("build nav tree")))
               )
             ),
-            'div ('id /= "split-bar", 'br ('class /= "clearfix")),
-            'article ('id /= "main", 'class /= "contents",
-              'div (introString),
+            'div('id /= "split-bar", 'br('class /= "clearfix")),
+            'article('id /= "main", 'class /= "contents",
+              'div(introString),
               node.print
             )
           ),
@@ -85,7 +82,10 @@ object Main {
     node.createHashMap.keys.foreach(println)
   }
 
-  case class PrintOption(rawMethodBody: Boolean)
+  def runLogging[T](buildNavTree: => T, f: => Unit): T = {
+    f
+    buildNavTree
+  }
 
   def goThroughTree(currentHandle: File, printOption: PrintOption = PrintOption(rawMethodBody = false)): CodeNonLeaf = {
     def loop(currentHandle: File, pkgNameAcc: Seq[String]): CodeNode = {
@@ -104,7 +104,7 @@ object Main {
         log.info(s"entered package ${(pkgNameAcc :+ currentHandle.getName).mkString(".")}")
         CodeNonLeaf(currentHandle.getName,
           currentHandle.listFiles(onlyJavaAndDirFilter)
-                       .map(x => x.getName -> loop(x, pkgNameAcc :+ currentHandle.getName)).toMap)
+            .map(x => x.getName -> loop(x, pkgNameAcc :+ currentHandle.getName)).toMap)
       }
     }
 
@@ -112,4 +112,6 @@ object Main {
   }
 
   def getType(currentHandle: File): String = if (currentHandle.isFile) "FILE" else if (currentHandle.isDirectory) "DIRECTORY" else "UNKNOWN"
+
+  case class PrintOption(rawMethodBody: Boolean)
 }
