@@ -78,18 +78,18 @@ package object syntax {
           thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
 
         if (config.debug.isDefined) println(v match {
-          case Right(_) => s"OK   ${sb.toString}"
-          case Left(_) =>  s"FAIL ${sb.toString}"
+          case Right(_) => s"OK   ${prevStack.length + 1}:${sb.toString}"
+          case Left(_) =>  s"FAIL ${prevStack.length + 1}:${sb.toString}"
         })
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
       //        }
       //        (CodeWriterState(prevTokenList, prevSb, prevStack, config), Left(new TokenListEmptyException))
     }
 
-    def tell(something: String): CodeWriter[A] = prevState => {
+    def tell(lit: String): CodeWriter[A] = prevState => {
       val (CodeWriterState(nextState, newSb, newStack, config), v) = thisWriter(prevState)
       v match {
-        case Right(_) => (CodeWriterState(nextState, newSb.append(something), newStack, config), v)
+        case Right(_) => (CodeWriterState(nextState, newSb.append(lit), newStack, config), v)
         case Left(e) => (CodeWriterState(nextState, newSb, newStack, config), Left(e))
       }
     }

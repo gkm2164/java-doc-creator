@@ -14,7 +14,13 @@ object JavaCodeFormatter {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
     println(s"parse ${reformatTokens.map(_._1.value).mkString(" ")}")
 
-    JavaParser.blockStmt(false)
-              .collect(reformatTokens, CodeWriterConfig(debug = Some(DebugOption(stackTrace = true))))
+    if (reformatTokens.nonEmpty) {
+      JavaParser.blockStmt(false)
+        .collect(reformatTokens, CodeWriterConfig(debug = Some(DebugOption(stackTrace = true))))
+    }
+    else {
+      println("there's no code here")
+      ""
+    }
   }
 }

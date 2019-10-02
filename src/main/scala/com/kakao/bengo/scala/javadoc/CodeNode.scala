@@ -4,6 +4,7 @@ import com.kakao.bengo.scala.javadoc.Main.PrintOption
 import com.typesafe.scalalogging.Logger
 import levsha.Document.{Empty, Node}
 import levsha.text.symbolDsl._
+import com.kakao.bengo.scala.javadoc
 
 sealed trait CodeNode {
   def name: String

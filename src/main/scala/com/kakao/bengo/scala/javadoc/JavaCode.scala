@@ -24,7 +24,7 @@ final case class JavaCode(packageName: String,
 
   def copyWithoutAnnotations: JavaCode = JavaCode(packageName, imports, Vector.empty, defs)
 
-  import writer._
+  import docgen._
 
   def show[T]: Node[T] = 'div(defs.sortBy(_.name).map(_.show(Indent(0))))
 }

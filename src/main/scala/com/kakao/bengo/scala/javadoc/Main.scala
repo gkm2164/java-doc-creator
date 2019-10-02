@@ -18,10 +18,10 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-//    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"),
+    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"))
 //      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
 //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
-    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
+//    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 

@@ -1,8 +1,9 @@
 package com.kakao.bengo.scala.javadoc.codeformatter
 
 import com.kakao.bengo.javalang.JavaTokenEnum
-import com.kakao.bengo.javalang.JavaTokenEnum.{PRIMITIVE_CHAR, PRIMITIVE_LONG, _}
+import com.kakao.bengo.javalang.JavaTokenEnum._
 import com.kakao.bengo.scala.javadoc.JavaSToken
+import com.kakao.bengo.scala.javadoc.codeformatter.JavaParser.{breakStmt, continueStmt, doStmt, emptyStmt, forStmt, ifStmt, returnStmt, switchStmt, synchronizedStmt, throwStmt, tryStmt, whileStmt}
 import com.kakao.bengo.scala.javadoc.codeformatter.exceptions._
 import com.kakao.bengo.scala.javadoc.codeformatter.monad._
 
@@ -10,10 +11,19 @@ object JavaParser {
 
   import com.kakao.bengo.scala.javadoc.codeformatter.syntax._
 
-  val PrimitiveTypeTokens: Seq[JavaTokenEnum] = Seq(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG,
-    PRIMITIVE_INT, PRIMITIVE_FLOAT, PRIMITIVE_DOUBLE, PRIMITIVE_BOOLEAN)
-  private val ControlStatementBeginTokens: Seq[JavaTokenEnum] =
-    Seq(LBRACE, SEMICOLON, SWITCH, DO, BREAK, CONTINUE, RETURN, FOR, IF, WHILE, SYNCHRONIZED, THROW, TRY)
+  private val PrimitiveTypeTokens: List[JavaTokenEnum] =
+    List(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG, PRIMITIVE_INT, PRIMITIVE_FLOAT,
+      PRIMITIVE_DOUBLE, PRIMITIVE_BOOLEAN)
+  private val ControlStatementBeginTokens: List[JavaTokenEnum] =
+    List(LBRACE, SEMICOLON, SWITCH, DO, BREAK, CONTINUE, RETURN, FOR, IF, WHILE, SYNCHRONIZED, THROW, TRY)
+  private val JavaValueTypeTokens: List[JavaTokenEnum] =
+    List(STRING, NUMBER, CHAR, TRUE, FALSE, NULL)
+  private val IdentifiableTokens: List[JavaTokenEnum] =
+    List(TOKEN, SUPER, CLASS)
+  private val UnaryBeginable: List[JavaTokenEnum] = List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
+  private val ExpressionBeginable =
+    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryBeginable ::: IdentifiableTokens ::: JavaValueTypeTokens
+
 
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{").enter().tab()
@@ -33,21 +43,26 @@ object JavaParser {
   }, "statements")
 
   def statement: CodeWriter[Unit] = tag(for {
-    _ <- blockStmt(true).hint(LBRACE) ||
-      emptyStmt.hint(SEMICOLON) ||
-      switchStmt.hint(SWITCH) ||
-      doStmt.hint(DO) ||
-      breakStmt.hint(BREAK) ||
-      continueStmt.hint(CONTINUE) ||
-      returnStmt.hint(RETURN) ||
-      forStmt.hint(FOR) ||
-      ifStmt.hint(IF) ||
-      whileStmt.hint(WHILE) ||
-      synchronizedStmt.hint(SYNCHRONIZED) ||
-      throwStmt.hint(THROW) ||
-      tryStmt.hint(TRY) ||
-      (expressionStmt || declarationStmt).notHint(ControlStatementBeginTokens: _*)
+    _ <- controlStatement.hint(ControlStatementBeginTokens: _*) ||
+      nonControlStatement.notHint(ControlStatementBeginTokens: _*)
   } yield Right(), "statement")
+
+  def controlStatement: CodeWriter[Unit] = tag(
+    blockStmt(true).hint(LBRACE) ||
+    emptyStmt.hint(SEMICOLON) ||
+    switchStmt.hint(SWITCH) ||
+    doStmt.hint(DO) ||
+    breakStmt.hint(BREAK) ||
+    continueStmt.hint(CONTINUE) ||
+    returnStmt.hint(RETURN) ||
+    forStmt.hint(FOR) ||
+    ifStmt.hint(IF) ||
+    whileStmt.hint(WHILE) ||
+    synchronizedStmt.hint(SYNCHRONIZED) ||
+    throwStmt.hint(THROW) ||
+    tryStmt.hint(TRY), "controlStatement")
+
+  def nonControlStatement: CodeWriter[Unit] = tag(expressionStmt || declarationStmt, "nonControlStatement")
 
   def unaryStmt(token: JavaTokenEnum): CodeWriter[Unit] = tag(for {
     _ <- assertToken(token).tell(token.value)
@@ -152,7 +167,7 @@ object JavaParser {
     _ <- blockStmts || none
   } yield Right(), "blockStmts")
 
-  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens.toList).print(), "primitiveTypes")
+  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(), "primitiveTypes")
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(FINALLY).tell(" finally ")
@@ -280,8 +295,8 @@ object JavaParser {
     for {
       _ <- conditionalOrExpression
       _ <- conditionalExpressionDetail || none
-    } yield Right()
-  }, "conditionalExpression")
+    } yield ()
+  }, "conditionalExpression").hint(ExpressionBeginable: _*)
 
   def infixOperator(operator: JavaTokenEnum, next: CodeWriter[Unit]): CodeWriter[Unit] = tag({
     def infixOperatorDetail: CodeWriter[Unit] = tag(for {
@@ -345,11 +360,11 @@ object JavaParser {
     tag(infixOperators(MULTIPLY | DIVIDE | MODULAR, unaryExpression), "multiplicativeExpression")
 
   def unaryExpression: CodeWriter[Unit] = tag(for {
-    _ <- preExpression.hint(INC, DEC) || postExpression || unaryExpWith(PLUS | MINUS | NEGATE | EXCLAMATION_MARK) ||
-      classInstanceCreation.hint(NEW) || tokenSeparatedCtx(valueReferable, DOT)
-  } yield Right(), "unaryExpression")
+    _ <- preExpression.hint(INC, DEC) || postExpression.hint(IdentifiableTokens: _*) || unaryExpWith(UnaryBeginable) ||
+      classInstanceCreation.hint(NEW) || tokenSeparatedCtx(referableValue, DOT).hint(LEFT_PARENTHESIS :: IdentifiableTokens ::: JavaValueTypeTokens: _*)
+  } yield (), "unaryExpression").hint(ExpressionBeginable: _*)
 
-  def valueReferable: CodeWriter[Unit] = tag(for {
+  def referableValue: CodeWriter[Unit] = tag(for {
     _ <- parenthesisExpression || reference || valueTypes
     _ <- arrayRefs || none
   } yield Right(), "valueReferable")
@@ -360,7 +375,7 @@ object JavaParser {
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield Right(), "parenthesisExpression")
 
-  def valueTypes: CodeWriter[Unit] = tag(takeTokens(STRING | CHAR | NUMBER).print(), "valueTypes").hint(STRING, CHAR, NUMBER)
+  def valueTypes: CodeWriter[Unit] = tag(takeTokens(JavaValueTypeTokens).print(), "valueTypes").hint(JavaValueTypeTokens: _*)
 
   def castExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
@@ -469,7 +484,7 @@ object JavaParser {
     _ <- arrayUse || none
   } yield Right(), "arrayUse")
 
-  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeTokens(TOKEN | CLASS | SUPER).print(), DOT)
+  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeTokens(IdentifiableTokens).print(), DOT)
 
   def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum, requireSpace: Boolean = false): CodeWriter[Unit] = tag({
     def loop: CodeWriter[Unit] = tag(for {
