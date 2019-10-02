@@ -18,11 +18,11 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    //    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"))
-    //      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
-    //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
-    //    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
-    List(("/Users/ben.go/scala/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
+    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"))
+      //      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
+      //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
+      //    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
+      //    List(("/Users/ben.go/scala/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
 
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
@@ -114,4 +114,5 @@ object Main {
   def getType(currentHandle: File): String = if (currentHandle.isFile) "FILE" else if (currentHandle.isDirectory) "DIRECTORY" else "UNKNOWN"
 
   case class PrintOption(rawMethodBody: Boolean)
+
 }
