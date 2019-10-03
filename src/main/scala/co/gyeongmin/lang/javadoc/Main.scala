@@ -1,6 +1,6 @@
 package co.gyeongmin.lang.javadoc
 
-import java.io.{File, FilenameFilter, PrintWriter}
+import java.io._
 
 import co.gyeongmin.lang.javalang.Tokenizer
 import com.typesafe.scalalogging.Logger
@@ -17,9 +17,11 @@ object Main {
     dir.isDirectory || (dir.isFile && dir.getName.endsWith(".java"))
   }
 
+  case class DocumentDescription(baseDir: String, outputFile: String, description: String)
+
   def main(args: Array[String]): Unit = {
-    List((".", "javadoc-java-doc-creator.html", "JAVA Doc Creator Test"))
-      .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
+    List(DocumentDescription(".", "sample.html", "JAVA Doc Creator Test"))
+      .foreach { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 
   def createDoc(baseDir: String, outFile: String, name: String): Unit = {
