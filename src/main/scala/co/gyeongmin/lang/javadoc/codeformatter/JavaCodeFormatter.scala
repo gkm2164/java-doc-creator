@@ -16,7 +16,7 @@ object JavaCodeFormatter {
 
     if (reformatTokens.nonEmpty) {
       JavaParser.blockStmt(false)
-        .collect(reformatTokens, CodeWriterConfig(debug = Some(DebugOption(stackTrace = true))))
+        .collect(reformatTokens, CodeWriterConfig(debug = None))
     }
     else {
       println("there's no code here")
