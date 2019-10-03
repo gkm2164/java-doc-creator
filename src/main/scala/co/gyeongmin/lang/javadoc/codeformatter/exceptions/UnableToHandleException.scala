@@ -2,16 +2,17 @@ package co.gyeongmin.lang.javadoc.codeformatter.exceptions
 
 import co.gyeongmin.lang.javadoc.JavaSToken
 
-
-abstract class ParseException(str: String) extends Throwable(str)
-
-abstract class UnrecoverableException(msg: String) extends ParseException(msg)
-abstract class RecoverableException(msg: String) extends ParseException(msg)
-
-class TokenListEmptyException() extends RecoverableException("token list is empty")
-
-class TokenNotAllowedException(msg: String, tokens: List[(JavaSToken, Int)])
-  extends RecoverableException(s"expected token has not arrived ${tokens.take(5).map(x => s"${x._2}: ${x._1.tokenType}").mkString(", ")}.") {
+abstract class FormatterError(msg: String) {
+  def asJavaException: RuntimeException = throw new RuntimeException(msg)
 }
 
-class ParseFailException(reason: String) extends UnrecoverableException(reason)
+abstract class UnrecoverableError(msg: String) extends FormatterError(msg)
+abstract class RecoverableError(msg: String) extends FormatterError(msg)
+
+final case class TokenListEmptyError() extends RecoverableError("token list is empty")
+
+final case class TokenNotAllowedError(msg: String, tokens: List[(JavaSToken, Int)])
+  extends RecoverableError(s"expected token has not arrived ${tokens.take(5).map(x => s"${x._2}: ${x._1.tokenType}").mkString(", ")}.") {
+}
+
+final case class ParseFailError(reason: String) extends UnrecoverableError(reason)

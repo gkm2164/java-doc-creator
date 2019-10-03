@@ -19,9 +19,9 @@ case class IndentAwareStringBuilder(initialIndent: Int,
     val tobe = str match {
       case "<" => "&lt;"
       case ">" => "&gt;"
-      case "<<" => "&lt;&lt;"
-      case ">>" => "&gt;&gt;"
-      case ">>>" => "&gt;&gt;&gt;"
+      case "<<" => "&lt;" * 2
+      case ">>" => "&gt;" * 2
+      case ">>>" => "&gt;" * 3
       case _ => str
     }
 

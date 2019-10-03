@@ -49,10 +49,10 @@ package object syntax {
 
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
-        case Nil => (prevState, Left(new TokenListEmptyException))
+        case Nil => (prevState, Left(new TokenListEmptyError))
         case (JavaSToken(v, _), _) :: _ if pred(v) => thisWriter(prevState)
         case tokenList@(JavaSToken(v, _), _) :: _ => (prevState,
-          Left(new TokenNotAllowedException(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
+          Left(TokenNotAllowedError(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
       }
     }
 
@@ -69,7 +69,7 @@ package object syntax {
             sb ++= s"[${actualTag.toString}]"
             if (debugOption.stackTrace) {
               sb ++= s" <- [${prevStack.take(debugOption.maxStackSize).mkString(" / ")}]"
-              println(f"${" " * prevStack.length}RUN  ${prevStack.length + 1}%3d ${sb.toString}")
+              println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
             }
 
           case _ =>
@@ -79,8 +79,8 @@ package object syntax {
           thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
 
         if (config.debug.isDefined) println(v match {
-          case Right(_) => f"${" " * prevStack.length}OK   ${prevStack.length + 1}%3d ${sb.toString}"
-          case Left(_) => f"${" " * prevStack.length}FAIL ${prevStack.length + 1}%3d ${sb.toString}"
+          case Right(_) => f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}"
+          case Left(_) =>  f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}"
         })
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
     }
@@ -139,8 +139,8 @@ package object syntax {
       val (nextState, ret) = thisWriter(prevState)
       ret match {
         case Right(_) => (nextState, ret)
-        case Left(_: RecoverableException) => otherWriter(prevState)
-        case Left(e: UnrecoverableException) => throw e
+        case Left(_: RecoverableError) => otherWriter(prevState)
+        case Left(e: UnrecoverableError) => throw e.asJavaException
         case _ => throw new RuntimeException()
       }
     }
@@ -159,15 +159,4 @@ package object syntax {
             config: CodeWriterConfig): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack, config))
 
   }
-
-  implicit def nextCodeWriterMonadConversion[A](nextCodeWriterMonad: NextCodeWriterMonad[A]): CodeWriter[A] = {
-
-    case CodeWriterState(tokens, stringBuilder, stack, config) =>
-      nextCodeWriterMonad(tokens).run(tokens, stringBuilder, stack, config)
-  }
-
-  object NextCodeWriterMonad {
-    def apply[A](f: List[(JavaSToken, Int)] => CodeWriter[A]): NextCodeWriterMonad[A] = f
-  }
-
 }

@@ -27,6 +27,9 @@ object JavaParser {
     List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
   private val ExpressionStartable =
     INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens
+  val ModifierStartToken: List[JavaTokenEnum] =
+    List(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
+
 
   def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
@@ -109,19 +112,19 @@ object JavaParser {
   } yield (), "parameters")
 
   def classBodyDefinition: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- assertToken(LBRACE).tell(" {").enter().tab()
     _ <- definitionElements || none
-    _ <- assertToken(RBRACE).enter().untab().tell("}")
-  } yield(), "classBodyDefinition")
+    _ <- assertToken(RBRACE).untab().tell("}")
+  } yield (), "classBodyDefinition")
 
   def definitionElements: CodeWriter[Unit] = tag(for {
-    _ <- classDefinition || memberDefinition
+    _ <- (classDefinition || memberDefinition).enter()
     _ <- definitionElements || none
-  } yield(), "definitionElements")
+  } yield (), "definitionElements")
 
   def classDefinition: CodeWriter[Unit] = tag(for {
-    _ <- modifiers
-    _ <- takeTokens(ENUM | CLASS).print(x => s"$x ")
+    _ <- modifiers || none
+    _ <- takeTokens(ENUM | CLASS).print(x => keyword(s"$x "))
     _ <- identifier
     _ <- typeParameters || none
     _ <- superClass || none
@@ -132,19 +135,19 @@ object JavaParser {
   def modifiers: CodeWriter[Unit] = tag(for {
     _ <- takeTokens(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x ")) || annotation.enter()
     _ <- modifiers || none
-  } yield(), "modifiers")
+  } yield (), "modifiers").hint(ModifierStartToken: _*)
 
   def annotation: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ANNOTATION).tell(color("@", "yellow"))
-    _ <- identifier
+    _ <- takeToken(TOKEN).print(color(_, "yellow"))
     _ <- annotationTail || none
-  } yield(), "annotation")
+  } yield (), "annotation")
 
   def annotationTail: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- annotationSingleValue || tokenSeparatedCtx(annotationValuePairs, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-  } yield(), "annotationTail")
+  } yield (), "annotationTail")
 
   def annotationSingleValue: CodeWriter[Unit] =
     tag(conditionalExpression || arrayInitializer || annotation, "annotationSingleValue")
@@ -153,19 +156,19 @@ object JavaParser {
     _ <- identifier
     _ <- assertToken(SUBSTITUTE).tell(" = ")
     _ <- annotationSingleValue
-  } yield(), "annotationValuePairs")
+  } yield (), "annotationValuePairs")
 
   def typeParameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
     _ <- tokenSeparatedCtx(typeVariable, COMMA, requireSpace = true)
     _ <- assertToken(GT).tell(">") || unrollingRightShift.tell(">")
-  } yield(), "typeParameters")
+  } yield (), "typeParameters")
 
   def typeVariable: CodeWriter[Unit] = tag(for {
     _ <- annotation || none
     _ <- identifier
     _ <- typeBound || none
-  } yield(), "typeVariable")
+  } yield (), "typeVariable")
 
   def typeBound: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell("extends ")
@@ -176,43 +179,48 @@ object JavaParser {
   def additionalBound: CodeWriter[Unit] = tag(for {
     _ <- assertToken(BIT_AND).tell(" & ")
     _ <- identifier
-  } yield(), "additionalBound")
+  } yield (), "additionalBound")
 
   def superClass: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell("extends ")
     _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
-  } yield(), "superClass")
+  } yield (), "superClass")
 
   def superInterface: CodeWriter[Unit] = tag(for {
     _ <- assertToken(IMPLEMENTS).tell("implements ")
     _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
-  } yield(), "superInterface")
+  } yield (), "superInterface")
 
   def memberDefinition: CodeWriter[Unit] = tag(for {
     _ <- modifiers || none
     _ <- typeUse.tell(" ")
     _ <- identifier
     _ <- fieldDefinition || methodDefinition
-  } yield(), "memberDefinition")
+  } yield (), "memberDefinition")
 
   def fieldDefinition: CodeWriter[Unit] = tag(for {
     _ <- variableInitialize || none
-    _ <- takeToken(SEMICOLON).tell(";").enter()
-  } yield(), "fieldDefinition")
+    _ <- takeToken(SEMICOLON).tell(";")
+  } yield (), "fieldDefinition")
 
   def methodDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- tokenSeparatedCtx(methodArgDef, COMMA, requireSpace = true) || none
-    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    _ <- blockStmt(true) || assertToken(SEMICOLON).tell(";").enter()
-  } yield(), "methodDefinition")
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
+    _ <- blockStmt(false) || assertToken(SEMICOLON).tell(";").enter()
+  } yield (), "methodDefinition")
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
     _ <- typeUse
     _ <- identifier
-  } yield(), "methodArgDef")
+  } yield (), "methodArgDef")
 
   def classInstanceCreation: CodeWriter[Unit] = tag({
+    def classInstance: CodeWriter[Unit] = tag(for {
+      _ <- parameters
+      _ <- classBodyDefinition || none
+    } yield (), "classInstance")
+
     def arrayInstance: CodeWriter[Unit] = tag(for {
       _ <- assertToken(LBRACKET).tell("[")
       _ <- expression || none
@@ -220,11 +228,17 @@ object JavaParser {
       _ <- arrayInitializer || none
     } yield (), "arrayInstance")
 
+    def newInstanceReferable: CodeWriter[Unit] = tag(for {
+      _ <- assertToken(DOT).tell(".")
+      _ <- tokenSeparatedCtx(reference, DOT)
+    } yield (), "newInstanceReferable")
+
     for {
       _ <- assertToken(NEW).tell(keyword("new "))
-      _ <- primitiveTypes || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
-      _ <- generic || none
-      _ <- arrayInstance || parameters
+      _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
+      _ <- generic.hint(LT) || none
+      _ <- arrayInstance.hint(LBRACE) || classInstance.hint(LEFT_PARENTHESIS)
+      _ <- newInstanceReferable || none
     } yield ()
   }, "classInstanceCreation")
 
@@ -595,7 +609,7 @@ object JavaParser {
   def genericExtends: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell(" extends ")
     _ <- typeUse
-  } yield(), "genericExtends")
+  } yield (), "genericExtends")
 
   def arrayUse: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET)
@@ -603,11 +617,11 @@ object JavaParser {
     _ <- arrayUse || none
   } yield (), "arrayUse")
 
-  def identifier: CodeWriter[Unit] = tokenSeparatedCtx(takeTokens(IdentifiableTokens, {
+  def identifier: CodeWriter[Unit] = tag(tokenSeparatedCtx(takeTokens(IdentifiableTokens, {
     case JavaSToken(TOKEN, "this") => keyword("this")
     case JavaSToken(SUPER | CLASS, v) => keyword(v)
     case JavaSToken(_, v) => v
-  }).print(), DOT)
+  }).print(), DOT), "identifier")
 
   def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum, requireSpace: Boolean = false): CodeWriter[Unit] = tag({
     def loop: CodeWriter[Unit] = tag(for {

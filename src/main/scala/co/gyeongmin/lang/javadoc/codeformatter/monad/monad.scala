@@ -2,14 +2,14 @@ package co.gyeongmin.lang.javadoc.codeformatter
 
 import cats._
 import co.gyeongmin.lang.javadoc.JavaSToken
+import co.gyeongmin.lang.javadoc.codeformatter.exceptions.FormatterError
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 
 import scala.language.{higherKinds, implicitConversions}
 
 package object monad {
   type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
-  type CodeWriterValue[A] = (CodeWriterState, Either[Throwable, A])
-  type NextCodeWriterMonad[A] = List[(JavaSToken, Int)] => CodeWriter[A]
+  type CodeWriterValue[A] = (CodeWriterState, Either[FormatterError, A])
 
   case class DebugOption(stackTrace: Boolean, maxStackSize: Int = 1, onlySuccess: Boolean = true)
 
@@ -39,7 +39,7 @@ package object monad {
       (state, Right(value))
     }
 
-    def apply[A](f: List[(JavaSToken, Int)] => (List[(JavaSToken, Int)], Either[Throwable, A])): CodeWriter[A] = {
+    def apply[A](f: List[(JavaSToken, Int)] => (List[(JavaSToken, Int)], Either[FormatterError, A])): CodeWriter[A] = {
       case CodeWriterState(tokenList, sb, stack, config) =>
         val (nextList, value) = f(tokenList)
         (CodeWriterState(nextList, sb, stack, config), value)

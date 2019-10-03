@@ -13,12 +13,10 @@ object JavaCodeFormatter {
 
   def printCode(codeName: String, tokens: Vector[JavaSToken]): String = {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
-    val testCode = "handleResult"
-    if (codeName == testCode) println(s"parse ${reformatTokens.map(_._1.value).mkString(" ")}")
 
     if (reformatTokens.nonEmpty) {
       JavaParser.blockStmt(false)
-        .collect(reformatTokens, CodeWriterConfig(debug = if (codeName == "handleResult") Some(DebugOption(stackTrace = true)) else None))
+        .collect(reformatTokens, CodeWriterConfig(debug = Some(DebugOption(stackTrace = true))))
     }
     else {
       println("there's no code here")

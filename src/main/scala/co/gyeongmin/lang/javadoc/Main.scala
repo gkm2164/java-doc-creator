@@ -13,7 +13,7 @@ import scala.io.Source
 
 object Main {
   val log = Logger("go-doc-creator")
-  val onlyJavaAndDirFilter: FilenameFilter = (dir: File, name: String) => {
+  val onlyJavaAndDirFilter: FilenameFilter = (dir: File, _: String) => {
     dir.isDirectory || (dir.isFile && dir.getName.endsWith(".java"))
   }
 
@@ -21,7 +21,7 @@ object Main {
     //    List(("/Users/ben.go/java/da-commons/da-intent-handler", "javadoc-dacommons-190930.html", "DA commons"))
     //      ("/Users/ben.go/java/da-core", "javadoc-dacore.html", "DA Core 문서"),
     //      ("/Users/ben.go/java/mid-commons", "javadoc-midcommons.html", "공통 미들 문서"))
-    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
+    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator Test"))
       //    List(("/Users/ben.go/scala/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator"))
 
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
@@ -39,7 +39,7 @@ object Main {
       else ""
     }
 
-    val node = goThroughTree(new File(s"$baseDir/src/main/java"))
+    val node = goThroughTree(new File(s"$baseDir/src/test/java"))
     val pw = new PrintWriter(outFile)
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
