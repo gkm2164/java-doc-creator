@@ -34,7 +34,7 @@ object Main {
       else ""
     }
 
-    val node = goThroughTree(new File(s"$baseDir/src/test/java"))
+    val node = goThroughTree(new File(s"$baseDir/src/main/java"))
     val pw = new PrintWriter(outFile)
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
