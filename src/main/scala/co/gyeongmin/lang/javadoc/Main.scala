@@ -18,7 +18,7 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    List(("/Users/gyeongmin/IdeaProjects/java-doc-creator", "javadoc-java-doc-creator.html", "JAVA Doc Creator Test"))
+    List((".", "javadoc-java-doc-creator.html", "JAVA Doc Creator Test"))
       .foreach { case (basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 
@@ -68,10 +68,8 @@ object Main {
               node.print
             )
           ),
-
         )
-      )
-      , TextPrettyPrintingConfig.noPrettyPrinting))
+      ), TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
 
     node.createHashMap.keys.foreach(println)
