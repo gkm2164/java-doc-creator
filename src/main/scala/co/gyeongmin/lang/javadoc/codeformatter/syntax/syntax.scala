@@ -10,11 +10,6 @@ import scala.language.implicitConversions
 package object syntax {
 
   implicit class CodeWriterExt[A](thisWriter: CodeWriter[A]) {
-    def doSomething(x: => Unit): CodeWriter[A] = {
-      x
-      thisWriter
-    }
-
     def matchDebug(tag: String, msg: String = ""): CodeWriter[A] = prevState => {
       val (CodeWriterState(nextTokenList, newSb, newStack, config), v) = thisWriter(prevState)
 
@@ -45,8 +40,6 @@ package object syntax {
       (CodeWriterState(nextTokenList, newSb, newStack, config), v)
     }
 
-    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
-
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
         case Nil => (prevState, Left(new TokenListEmptyError))
@@ -55,6 +48,8 @@ package object syntax {
           Left(TokenNotAllowedError(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
       }
     }
+
+    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
 
     def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
 
@@ -84,6 +79,12 @@ package object syntax {
         })
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
     }
+
+    def foldable: CodeWriter[A] = for {
+      _ <- CodeWriter.pure().tell("""<a class="foldable-block">""")
+      res <- thisWriter
+      _ <- CodeWriter.pure().tell("</a>")
+    } yield res
 
     def tell(lit: String): CodeWriter[A] = prevState => {
       val (CodeWriterState(nextState, newSb, newStack, config), v) = thisWriter(prevState)

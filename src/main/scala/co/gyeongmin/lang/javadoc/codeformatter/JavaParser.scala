@@ -35,7 +35,7 @@ object JavaParser {
     _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
     _ <- blockStmts || none
     _ <- assertToken(RBRACE).untab().tell(block("}")).enterIf(enterAtEndLine)
-  } yield (), "blockStmt")
+  } yield (), "blockStmt").foldable
 
   def statements: CodeWriter[Unit] = tag({
     def loop: CodeWriter[Unit] = {
@@ -381,7 +381,7 @@ object JavaParser {
     _ <- caseStmts || none
     _ <- defaultStmt || none
     _ <- assertToken(RBRACE).tell(block("}")).untab().enter()
-  } yield (), "caseBlock")
+  } yield (), "caseBlock").foldable
 
   def caseStmts: CodeWriter[Unit] = tag(for {
     _ <- caseStmtDetail
@@ -597,7 +597,7 @@ object JavaParser {
     _ <- assertToken(LBRACE).tell("{")
     _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, requireSpace = true) || none
     _ <- assertToken(RBRACE).tell("}")
-  } yield (), "arrayInitializer")
+  } yield (), "arrayInitializer").foldable
 
   def generic: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
