@@ -1,3 +1,5 @@
 .idea/
 target/
 temp/
+*.txt
+*.html
