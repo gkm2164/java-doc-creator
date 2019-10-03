@@ -41,10 +41,10 @@ object JavaCode {
     case Nil => for {
       ret <- State.pure(base)
     } yield ret
-    case JavaSToken(DOT, _) :: JavaSToken(_, _) :: _ => for {
-      _ <- assertToken(DOT)
+    case JavaSToken(_, _) :: JavaSToken(DOT, _) :: _ => for {
       annName <- takeString
-      annotationName <- parseAnnotationName(base + s".$annName")
+      _ <- assertToken(DOT)
+      annotationName <- parseAnnotationName(base + s"$annName.")
     } yield annotationName
     case _ => for {
       annName <- takeString
@@ -69,9 +69,18 @@ object JavaCode {
         case JavaSToken(TOKEN, _) :: _ => for {
           tokenName <- takeString
           _ <- parseParenthesis(LEFT_PARENTHESIS, RIGHT_PARENTHESIS)
+          _ <- parseClassBody
           enumClass <- parseEnumBody(tokenName, acc)
         } yield enumClass
         case h :: _ => throw new TokenNotAcceptedException(s"unknown token: $h")
+      }
+
+      def parseClassBody: CodeState[Unit] = NextCodeState {
+        case JavaSToken(LBRACE, _) :: _ => for {
+          _ <- assertToken(LBRACE)
+          _ <- parseClassInside("", Vector.empty)
+        } yield ()
+        case _ => State.pure()
       }
 
       def parseEnumBody(tokenName: String, acc: Vector[String]): CodeState[JavaEnumClass] = NextCodeState {
@@ -116,8 +125,8 @@ object JavaCode {
       annotation <- parseAnnotation
       defs <- parseDefs(modifier.appendAnnotation(annotation))
     } yield defs
-    case JavaSToken(PRIVATE | PROTECTED | PUBLIC, _) :: _ => for {
-      access <- assertTokens(PRIVATE, PROTECTED, PUBLIC)
+    case JavaSToken(PRIVATE | PROTECTED | PUBLIC | VOLATILE, _) :: _ => for {
+      access <- assertTokens(PRIVATE, PROTECTED, PUBLIC, VOLATILE)
       defs <- parseDefs(modifier.setAccess(access))
     } yield defs
     case JavaSToken(LBRACE, _) :: _ => for {
@@ -228,11 +237,21 @@ object JavaCode {
     case _ => State.pure(None)
   }
 
+  def parseArrBrackets(acc: String): CodeState[String] = NextCodeState {
+    case JavaSToken(LBRACKET, _) :: JavaSToken(RBRACKET, _) :: _ => for {
+      _ <- assertToken(LBRACKET)
+      _ <- assertToken(RBRACKET)
+      _ <- parseArrBrackets(acc)
+    } yield "[]" + acc
+    case _ => State.pure(acc)
+  }
+
   def parseTypeDesignator: CodeState[JavaTypeDesignate] = for {
     typename <- takeDotSeparated.map(_.mkString("."))
     extend <- parseTypeRelation
     generics <- parseGenerics
-  } yield JavaTypeDesignate(typename, extend, generics)
+    arrNotations <- parseArrBrackets("")
+  } yield JavaTypeDesignate(typename, extend, generics, arrNotations)
 
   def parseType: CodeState[JavaTypeUse] = for {
     typeDesignator <- parseTypeDesignator

@@ -6,6 +6,7 @@ import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._
 
 object JavaCodeFormatter {
+
   import syntax._
 
   private val CommentTokens: Seq[JavaTokenEnum] =
@@ -13,10 +14,11 @@ object JavaCodeFormatter {
 
   def printCode(codeName: String, tokens: Vector[JavaSToken]): String = {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
+    val debugOption = if (codeName == "destroy") Some(DebugOption(stackTrace = true)) else None
 
     if (reformatTokens.nonEmpty) {
       JavaParser.blockStmt(false)
-        .collect(reformatTokens, CodeWriterConfig(debug = None))
+        .collect(reformatTokens, CodeWriterConfig(debug = debugOption))
     }
     else {
       println("there's no code here")

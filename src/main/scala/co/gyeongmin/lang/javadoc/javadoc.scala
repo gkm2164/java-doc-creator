@@ -149,10 +149,10 @@ package object javadoc {
   final case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: Vector[JavaArgument], codes: Vector[JavaSToken]) extends JavaMembers {
     lazy val exampleCode: Vector[String] = modifier.commentMacros.filter(_.startsWith("//="))
 
-    println(JavaCodeFormatter.printCode(name, codes))
+//    println(JavaCodeFormatter.printCode(name, codes))
   }
 
-  final case class JavaTypeDesignate(name: String, extend: Option[(String, JavaTypeDesignate)], generics: Vector[JavaTypeDesignate]) {
+  final case class JavaTypeDesignate(name: String, extend: Option[(String, JavaTypeDesignate)], generics: Vector[JavaTypeDesignate], arrayNotation: String) {
 
     import levsha.text.renderHtml
 
@@ -166,8 +166,8 @@ package object javadoc {
       genericSymbol("&gt;"))
 
     def showNode[T]: Node[T] = {
-      if (Vector("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span('class /= "reserved-keyword", name))
-      else Seq('span('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty)
+      if (Vector("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span('class /= "reserved-keyword", name + arrayNotation))
+      else Seq('span('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty, 'span(arrayNotation))
     }
   }
 
@@ -202,7 +202,7 @@ package object javadoc {
   }
 
   object JavaTypeUse {
-    def empty: JavaTypeUse = JavaTypeUse(JavaTypeDesignate("", None, Vector.empty), "")
+    def empty: JavaTypeUse = JavaTypeUse(JavaTypeDesignate("", None, Vector.empty, ""), "")
   }
 
   object JavaModifier {

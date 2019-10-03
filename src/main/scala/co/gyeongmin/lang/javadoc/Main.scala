@@ -20,7 +20,9 @@ object Main {
   case class DocumentDescription(baseDir: String, outputFile: String, description: String)
 
   def main(args: Array[String]): Unit = {
-    List(DocumentDescription(".", "sample.html", "JAVA Doc Creator Test"))
+    List(/*DocumentDescription(".", "sample.html", "JAVA Doc Creator Test"),*/
+      DocumentDescription("/Users/gyeongmin/java/spring-framework/spring-web", "java-doc-spring-web.html", "Java Doc for Spring Framework")
+    )
       .foreach { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 

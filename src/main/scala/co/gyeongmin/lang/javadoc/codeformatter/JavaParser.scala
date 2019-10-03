@@ -26,7 +26,7 @@ object JavaParser {
   private val UnaryStartable: List[JavaTokenEnum] =
     List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
   private val ExpressionStartable =
-    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens
+    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens ::: PrimitiveTypeTokens
   val ModifierStartToken: List[JavaTokenEnum] =
     List(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
 
@@ -207,10 +207,17 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- tokenSeparatedCtx(methodArgDef, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
+    _ <- methodThrows || none
     _ <- blockStmt(false) || assertToken(SEMICOLON).tell(";").enter()
   } yield (), "methodDefinition")
 
+  def methodThrows: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(THROWS).tell(keyword("throws "))
+    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+  } yield(), "methodThrows")
+
   def methodArgDef: CodeWriter[Unit] = tag(for {
+    _ <- annotation.hint(ANNOTATION) || none
     _ <- typeUse
     _ <- identifier
   } yield (), "methodArgDef")
@@ -237,7 +244,7 @@ object JavaParser {
       _ <- assertToken(NEW).tell(keyword("new "))
       _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
       _ <- generic.hint(LT) || none
-      _ <- arrayInstance.hint(LBRACE) || classInstance.hint(LEFT_PARENTHESIS)
+      _ <- arrayInstance.hint(LBRACKET, LBRACE) || classInstance.hint(LEFT_PARENTHESIS)
       _ <- newInstanceReferable || none
     } yield ()
   }, "classInstanceCreation")
@@ -257,11 +264,18 @@ object JavaParser {
 
   def tryStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(TRY).tell(keyword("try "))
+    _ <- tryDeclaration || none
     _ <- blockStmt(false)
-    _ <- catchStmts
+    _ <- catchStmts || none
     _ <- finallyStmt || none
     _ <- none.enter()
   } yield (), "tryStmt")
+
+  def tryDeclaration: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- declaration
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+  } yield(), "tryDeclaration")
 
   def catchStmts: CodeWriter[Unit] = tag(for {
     _ <- assertToken(CATCH).tell(keyword(" catch "))
@@ -291,7 +305,7 @@ object JavaParser {
 
   def returnStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(RETURN).tell(keyword("return "))
-    _ <- expression
+    _ <- expression || none
   } yield (), "returnStmt")
 
   def forStmt: CodeWriter[Unit] = tag({
@@ -305,7 +319,7 @@ object JavaParser {
       } yield (), "triExpressions")
 
       def simpleTypes: CodeWriter[Unit] = tag(for {
-        _ <- customDecl.tell(" ")
+        _ <- typeUse.tell(" ") || none
         _ <- identifier
         _ <- assertToken(COLON).tell(": ")
         _ <- expression
@@ -480,7 +494,7 @@ object JavaParser {
 
   def unaryExpression: CodeWriter[Unit] = tag(for {
     _ <- preExpression.hint(INC, DEC) || postExpression.hint(IdentifiableTokens: _*) || unaryExpWith(UnaryStartable) ||
-      classInstanceCreation.hint(NEW) || tokenSeparatedCtx(referableValue, DOT).hint(LEFT_PARENTHESIS :: IdentifiableTokens ::: JavaValueTypeTokens: _*)
+      classInstanceCreation.hint(NEW) || tokenSeparatedCtx(referableValue, DOT).hint(LEFT_PARENTHESIS :: PrimitiveTypeTokens ::: IdentifiableTokens ::: JavaValueTypeTokens: _*)
   } yield (), "unaryExpression").hint(ExpressionStartable: _*)
 
   def referableValue: CodeWriter[Unit] = tag(for {
@@ -515,8 +529,14 @@ object JavaParser {
     _ <- unaryExpression
   } yield (), s"unaryExpWith($enums)").hint(enums: _*)
 
+  def primitiveTypesArrType: CodeWriter[Unit] = tag(for {
+    _ <- primitiveTypes
+    _ <- arrayUse || none
+  } yield(), "primitiveTypesArrType")
+
   def reference: CodeWriter[Unit] = tag(for {
-    _ <- identifier
+    _ <- generic || none
+    _ <- identifier || primitiveTypesArrType // 이 문법이 여기에 와도 되려나?
     _ <- arrayRefs || none
     _ <- parameters || none
   } yield (), "reference")
@@ -601,15 +621,19 @@ object JavaParser {
 
   def generic: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
-    _ <- tokenSeparatedCtx(typeUse || takeToken(QUESTION_MARK).print(), COMMA, requireSpace = true) || none
-    _ <- genericExtends || none
+    _ <- tokenSeparatedCtx(genericTypeUse, COMMA, requireSpace = true) || none
     _ <- (assertToken(GT) || unrollingRightShift).tell(">")
   } yield (), "generic")
 
-  def genericExtends: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(EXTENDS).tell(" extends ")
-    _ <- typeUse
+  def genericTypeUse: CodeWriter[Unit] = tag(for {
+    _ <- typeUse || takeToken(QUESTION_MARK).print()
+    _ <- genericTypeBound || none
   } yield (), "genericExtends")
+
+  def genericTypeBound: CodeWriter[Unit] = tag(for {
+    _ <- takeTokens(EXTENDS | SUPER).print(x => keyword(s" $x "))
+    _ <- typeUse
+  } yield (), "genericTypeBound")
 
   def arrayUse: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET)

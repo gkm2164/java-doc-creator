@@ -50,6 +50,7 @@ public enum JavaTokenEnum {
     FALSE("false", true),
     NULL("null", true),
     SYNCHRONIZED("synchronized", true),
+    VOLATILE("volatile", true),
     ANNOTATION("@"),
     ANNOTATION_INTERFACE("@interface"),
     LEFT_PARENTHESIS("("),
