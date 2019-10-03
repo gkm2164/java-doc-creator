@@ -85,7 +85,7 @@ object JavaParser {
     _ <- arrayRefs || none
     _ <- takeTokens(SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC).print(x => s" $x ")
     _ <- expression
-  } yield (), "assignment")
+  } yield (), "assignment").hint(TOKEN, SUPER)
 
   def arrayRefs: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET).tell("[")
@@ -535,7 +535,7 @@ object JavaParser {
     } yield (), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
-      _ <- typeUse
+      _ <- tokenSeparatedCtx(typeUse || identifier, DOT)
       _ <- assertToken(NAMESPACE).tell("::")
       _ <- identifier || assertToken(NEW).tell(keyword("new"))
     } yield (), "shortenLambda")
@@ -572,7 +572,7 @@ object JavaParser {
     }, "declDetail")
 
     for {
-      _ <- annotation || none
+      _ <- annotation.tell(" ") || none
       _ <- assertToken(FINAL).tell(keyword("final ")) || none
       _ <- declDetail
     } yield ()
