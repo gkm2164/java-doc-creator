@@ -125,8 +125,8 @@ object JavaCode {
       annotation <- parseAnnotation
       defs <- parseDefs(modifier.appendAnnotation(annotation))
     } yield defs
-    case JavaSToken(PRIVATE | PROTECTED | PUBLIC | VOLATILE, _) :: _ => for {
-      access <- assertTokens(PRIVATE, PROTECTED, PUBLIC, VOLATILE)
+    case JavaSToken(testToken@(PRIVATE | PROTECTED | PUBLIC | VOLATILE | TRANSIENT | SYNCHRONIZED), _) :: _ => for {
+      access <- assertTokens(testToken)
       defs <- parseDefs(modifier.setAccess(access))
     } yield defs
     case JavaSToken(LBRACE, _) :: _ => for {

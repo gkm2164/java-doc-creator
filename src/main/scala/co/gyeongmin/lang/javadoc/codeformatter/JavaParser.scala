@@ -521,7 +521,7 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- typeUse
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    _ <- unaryExpression || lambda
+    _ <- lambda || unaryExpression
   } yield (), "castExpression").hint(LEFT_PARENTHESIS)
 
   def unaryExpWith(enums: List[JavaTokenEnum]): CodeWriter[Unit] = tag(for {
@@ -555,13 +555,13 @@ object JavaParser {
     } yield (), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
-      _ <- tokenSeparatedCtx(typeUse || identifier, DOT)
+      _ <- tokenSeparatedCtx(typeUse || reference, DOT)
       _ <- assertToken(NAMESPACE).tell("::")
       _ <- identifier || assertToken(NEW).tell(keyword("new"))
     } yield (), "shortenLambda")
 
     originLambda || shortenLambda
-  }, "lambda").hint(LEFT_PARENTHESIS, TOKEN, CLASS, SUPER)
+  }, "lambda").hint(LEFT_PARENTHESIS, TOKEN)
 
   def synchronizedStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(SYNCHRONIZED).tell("synchronized")

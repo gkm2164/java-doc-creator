@@ -14,7 +14,7 @@ object JavaCodeFormatter {
 
   def printCode(codeName: String, tokens: Vector[JavaSToken]): String = {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
-    val debugOption = if (codeName == "destroy") Some(DebugOption(stackTrace = true)) else None
+    val debugOption = if (codeName == "postProcessBeanFactory") Some(DebugOption(stackTrace = true)) else None
 
     if (reformatTokens.nonEmpty) {
       JavaParser.blockStmt(false)

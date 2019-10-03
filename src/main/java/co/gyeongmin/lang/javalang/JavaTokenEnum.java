@@ -10,6 +10,7 @@ public enum JavaTokenEnum {
     PRIVATE("private", true),
     STRICTFP("strictfp", true),
     STATIC("static", true),
+    TRANSIENT("transient", true),
     PACKAGE("package", true),
     IMPORT("import", true),
     FINAL("final", true),
