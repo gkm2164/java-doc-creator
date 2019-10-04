@@ -183,7 +183,7 @@ package object javadoc {
     def appendAnnotation(annotation: JavaAnnotationCall): JavaArgument = copy(annotations = annotations :+ annotation)
 
     def show[T]: Node[T] = 'span(
-      if (annotations.nonEmpty) annotations.map(x => 'span('class /= "annotation-def", s"@$x ")) else Empty,
+      if (annotations.nonEmpty) annotations.map(x => 'span('class /= "annotation-def", s"@${x.name}${x.parameters} ")) else Empty,
       if (isFinal) 'span('class /= "reserved-keyword", "final ") else Empty,
       'span(s"${argumentType.show} "), name
     )
