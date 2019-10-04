@@ -132,7 +132,6 @@ public class Tokenizer {
     public static List<JavaToken> tokenize(String code) {
         final char[] codes = code.toCharArray();
         final List<JavaToken> ret = new ArrayList<>();
-
         Node elem = tokenizer.root;
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < codes.length; i++) {

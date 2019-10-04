@@ -20,10 +20,11 @@ object Main {
   case class DocumentDescription(baseDir: String, outputFile: String, description: String)
 
   def main(args: Array[String]): Unit = {
-    List(/*DocumentDescription(".", "sample.html", "JAVA Doc Creator Test"),*/
-      DocumentDescription("/Users/gyeongmin/java/spring-framework/spring-web", "java-doc-spring-web.html", "Java Doc for Spring Framework")
-    )
-      .foreach { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name) }
+    List(
+      DocumentDescription(".", "sample.html", "JAVA Doc Creator Test"),
+      DocumentDescription("/Users/gyeongmin/java/spring-framework/spring-web", "java-doc-spring-web.html", "Java Doc for Spring Framework"),
+      DocumentDescription("/Users/gyeongmin/java/spring-framework/spring-tx", "java-doc-spring-tx.html", "Java Doc for Spring Framework transaction")
+    ).foreach { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name) }
   }
 
   def createDoc(baseDir: String, outFile: String, name: String): Unit = {

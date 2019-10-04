@@ -1,6 +1,7 @@
 package co.gyeongmin.lang.javadoc.codeformatter
 
 import co.gyeongmin.lang.javadoc.JavaSToken
+import co.gyeongmin.lang.javadoc.codeformatter.JavaParser.{controlStatement, nonControlStatement}
 import co.gyeongmin.lang.javadoc.codeformatter.monad._
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._
@@ -37,21 +38,13 @@ object JavaParser {
     _ <- assertToken(RBRACE).untab().tell(block("}")).enterIf(enterAtEndLine)
   } yield (), "blockStmt").foldable
 
-  def statements: CodeWriter[Unit] = tag({
-    def loop: CodeWriter[Unit] = {
-      for {
-        _ <- statement
-        _ <- loop || none
-      } yield ()
-    }
+  def statements: CodeWriter[Unit] = tag((for {
+    _ <- statement
+    _ <- statements || none
+  } yield ()) || none, "statements")
 
-    loop || none
-  }, "statements")
-
-  def statement: CodeWriter[Unit] = tag(for {
-    _ <- controlStatement.hint(ControlStatementBeginTokens: _*) ||
-      nonControlStatement.notHint(ControlStatementBeginTokens: _*)
-  } yield (), "statement")
+  def statement: CodeWriter[Unit] = tag(controlStatement.hint(ControlStatementBeginTokens: _*) ||
+    nonControlStatement.notHint(ControlStatementBeginTokens: _*), "statement")
 
   def controlStatement: CodeWriter[Unit] = tag(
     blockStmt(true).hint(LBRACE) ||
@@ -118,7 +111,8 @@ object JavaParser {
   } yield (), "classBodyDefinition")
 
   def definitionElements: CodeWriter[Unit] = tag(for {
-    _ <- (classDefinition || memberDefinition).enter()
+    _ <- classDefinition || memberDefinition
+    _ <- enter
     _ <- definitionElements || none
   } yield (), "definitionElements")
 
@@ -214,7 +208,7 @@ object JavaParser {
   def methodThrows: CodeWriter[Unit] = tag(for {
     _ <- assertToken(THROWS).tell(keyword("throws "))
     _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
-  } yield(), "methodThrows")
+  } yield (), "methodThrows")
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
     _ <- annotation.hint(ANNOTATION) || none
@@ -232,6 +226,7 @@ object JavaParser {
       _ <- assertToken(LBRACKET).tell("[")
       _ <- expression || none
       _ <- assertToken(RBRACKET).tell("]")
+      _ <- tokenLoop(emptyArrayBoxes) || none
       _ <- arrayInitializer || none
     } yield (), "arrayInstance")
 
@@ -268,14 +263,14 @@ object JavaParser {
     _ <- blockStmt(false)
     _ <- catchStmts || none
     _ <- finallyStmt || none
-    _ <- none.enter()
+    _ <- enter
   } yield (), "tryStmt")
 
   def tryDeclaration: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- declaration
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-  } yield(), "tryDeclaration")
+  } yield (), "tryDeclaration")
 
   def catchStmts: CodeWriter[Unit] = tag(for {
     _ <- assertToken(CATCH).tell(keyword(" catch "))
@@ -345,7 +340,7 @@ object JavaParser {
     _ <- blockStmt(false).tell(" ") || statement
     _ <- elseIfStmts || none
     _ <- elseStmt || none
-    _ <- none.enter()
+    _ <- enter
   } yield (), "ifStmt")
 
   def elseIfStmts: CodeWriter[Unit] = tag(for {
@@ -498,9 +493,14 @@ object JavaParser {
   } yield (), "unaryExpression").hint(ExpressionStartable: _*)
 
   def referableValue: CodeWriter[Unit] = tag(for {
-    _ <- parenthesisExpression || reference || valueTypes
+    _ <- parenthesisExpression || reference || valueTypes || primitiveTypesArrType
     _ <- arrayRefs || none
   } yield (), "valueReferable")
+
+  def primitiveTypesArrType: CodeWriter[Unit] = tag(for {
+    _ <- primitiveTypes
+    _ <- arrayUse || none
+  } yield (), "primitiveTypesArrType")
 
   def parenthesisExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
@@ -529,14 +529,9 @@ object JavaParser {
     _ <- unaryExpression
   } yield (), s"unaryExpWith($enums)").hint(enums: _*)
 
-  def primitiveTypesArrType: CodeWriter[Unit] = tag(for {
-    _ <- primitiveTypes
-    _ <- arrayUse || none
-  } yield(), "primitiveTypesArrType")
-
   def reference: CodeWriter[Unit] = tag(for {
     _ <- generic || none
-    _ <- identifier || primitiveTypesArrType // 이 문법이 여기에 와도 되려나?
+    _ <- identifier
     _ <- arrayRefs || none
     _ <- parameters || none
   } yield (), "reference")
@@ -604,7 +599,7 @@ object JavaParser {
   } yield (), "typeUse")
 
   def customDecl: CodeWriter[Unit] = tag(for {
-    _ <- tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
+    _ <- tokenSeparatedCtx(takeToken(TOKEN).print(), DOT)
     _ <- generic || none
   } yield (), "customDecl")
 
@@ -635,11 +630,12 @@ object JavaParser {
     _ <- typeUse
   } yield (), "genericTypeBound")
 
-  def arrayUse: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(LBRACKET)
-    _ <- assertToken(RBRACKET).tell("[]")
-    _ <- arrayUse || none
-  } yield (), "arrayUse")
+  def emptyArrayBoxes: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LBRACKET).tell("[")
+    _ <- assertToken(RBRACKET).tell("]")
+  } yield (), "emptyArrayBoxes")
+
+  def arrayUse: CodeWriter[Unit] = tag(tokenLoop(emptyArrayBoxes), "arrayUse")
 
   def identifier: CodeWriter[Unit] = tag(tokenSeparatedCtx(takeTokens(IdentifiableTokens, {
     case JavaSToken(TOKEN, "this") => keyword("this")

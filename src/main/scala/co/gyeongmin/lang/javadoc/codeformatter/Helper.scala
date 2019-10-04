@@ -13,6 +13,15 @@ object Helper {
 
   def none: CodeWriter[Unit] = CodeWriter.pure(())
 
+  def enter: CodeWriter[Unit] = none.enter()
+
+  def tell(lit: String): CodeWriter[Unit] = none.tell(lit)
+
+  def tokenLoop(value: CodeWriter[Unit]): CodeWriter[Unit] = tag(for {
+    _ <- value
+    _ <- tokenLoop(value) || none
+  } yield(), "tokenLoop")
+
   def unrollingRightShift: CodeWriter[Unit] = tag(CodeWriter {
     case Nil => (Nil, Left(TokenListEmptyError()))
     case (JavaSToken(shiftType@(RIGHT_SHIFT | U_RIGHT_SHIFT), _), idx) :: t => shiftType match {

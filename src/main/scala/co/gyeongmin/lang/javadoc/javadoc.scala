@@ -78,7 +78,7 @@ package object javadoc {
                                 fullPath: String) {
 
     def show[T]: Node[T] = 'span(
-      if (generic.nonEmpty) 'span('span('class /= "generic-symbol", "&lt;"), escapeLTGT(generic.mkString(", ")), 'span('class /= "generic-symbol", "&gt;")) else Empty,
+      if (generic.nonEmpty) 'span('span('class /= "generic-symbol", "&lt;"), generic.map(_.showNode), 'span('class /= "generic-symbol", "&gt;")) else Empty,
       annotations.map(x => 'span('class /= "annotation-use", s"@${x.name}${x.parameters} ")),
       'span('class /= "reserved-keyword", s"${access.value} "), Empty,
       if (isStatic) 'span('class /= "reserved-keyword", "static ") else Empty,
