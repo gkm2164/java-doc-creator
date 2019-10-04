@@ -15,6 +15,8 @@ object Helper {
 
   def enter: CodeWriter[Unit] = none.enter()
 
+  def space: CodeWriter[Unit] = none.tell(" ")
+
   def tell(lit: String): CodeWriter[Unit] = none.tell(lit)
 
   def symbolLoop(value: CodeWriter[Unit]): CodeWriter[Unit] = tag(for {

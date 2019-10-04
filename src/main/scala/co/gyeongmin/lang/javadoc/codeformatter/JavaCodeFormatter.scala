@@ -12,12 +12,12 @@ object JavaCodeFormatter {
   private val CommentTokens: Seq[JavaTokenEnum] =
     Seq(COMMENT_BLOCK, COMMENT, COMMENT_MACRO_EXPLAIN, COMMENT_MACRO_CODE, COMMENT_MACRO_NAME)
 
-  def printCode(codeName: String, tokens: Vector[JavaSToken]): String = {
+
+  private def printCodeCommon[A](codeName: String, tokens: Vector[JavaSToken], startFrom: CodeWriter[A], debugOption: Option[DebugOption]): String = {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
-    val debugOption = if (codeName == "postProcessBeanFactory") Some(DebugOption(stackTrace = true)) else None
 
     if (reformatTokens.nonEmpty) {
-      JavaParser.blockStmt.enter()
+      startFrom.enter()
         .collect(reformatTokens, CodeWriterConfig(debug = debugOption))
     }
     else {
@@ -25,4 +25,12 @@ object JavaCodeFormatter {
       ""
     }
   }
+
+  def printCodeBlock(codeName: String, tokens: Vector[JavaSToken]): String =
+    printCodeCommon(codeName, tokens, JavaParser.blockStmt,
+      if (codeName == "postProcessBeanFactory") Some(DebugOption(stackTrace = true)) else None)
+
+
+  def printCode(codeName: String, tokens: Vector[JavaSToken]): String =
+    printCodeCommon(codeName, tokens, JavaParser.javaCode, Some(DebugOption(stackTrace = true)))
 }

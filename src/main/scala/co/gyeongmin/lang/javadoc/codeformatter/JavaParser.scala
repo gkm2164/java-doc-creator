@@ -36,16 +36,16 @@ object JavaParser {
     _ <- imports || none
     _ <- symbolLoop(for {
       _ <- modifiers || none
-      _ <- classDefinition || interfaceDefinition || annotationInterfaceDefinition
+      _ <- classDefinition || enumDefinition || interfaceDefinition || annotationInterfaceDefinition
     } yield()) || none
   } yield (), "javaCode")
 
   def classDefinition: CodeWriter[Unit] = tag(for {
-    _ <- takeTokens(ENUM | CLASS).print(x => keyword(s"$x "))
+    _ <- takeToken(CLASS).print(x => keyword(s"$x "))
     _ <- identifier
-    _ <- typeParameters || none
-    _ <- superClass || none
-    _ <- superInterface || none
+    _ <- typeParameters.hint(LT) || none
+    _ <- superClass.hint(EXTENDS) || none
+    _ <- superInterface.hint(IMPLEMENTS) || none
     _ <- classBodyDefinition
     _ <- enter
   } yield (), "classDefDetail")
@@ -93,7 +93,7 @@ object JavaParser {
 
   def superInterfaceExtends: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell("implements ")
-    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "superInterface")
 
   def interfaceBody: CodeWriter[Unit] = tag(for {
@@ -123,16 +123,64 @@ object JavaParser {
 
   def classBodyDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell(" {").enter().tab()
-    _ <- definitionElements || none
+    _ <- symbolLoop(definitionElements.enter()).notHint(RBRACE) || none
     _ <- assertToken(RBRACE).untab().tell("}")
   } yield (), "classBodyDefinition")
 
-  def definitionElements: CodeWriter[Unit] = tag(for {
-    _ <- modifiers || none
-    _ <- classDefinition || memberDefinition
+  def staticBlockStmt: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(STATIC).tell(keyword("static "))
+    _ <- blockStmt.enter()
+  } yield(), "staticBodyStmt")
+
+  def enumDefinition: CodeWriter[Unit] = tag(for {
+    _ <- takeToken(ENUM).print(x => keyword(s"$x "))
+    _ <- identifier
+    _ <- superInterface.hint(IMPLEMENTS) || none
+    _ <- enumBodyDefinition
     _ <- enter
-    _ <- definitionElements || none
-  } yield (), "definitionElements")
+  } yield (), "enumDefinition")
+
+  def enumBodyDefinition: CodeWriter[Unit] = tag({
+    def enumBodyDetail: CodeWriter[Unit] = tag(for {
+      _ <- enumBody
+      _ <- (for {
+        _ <- assertToken(SEMICOLON).tell(";").enter()
+        _ <- symbolLoop(definitionElements.enter()).notHint(RBRACE) || none
+      } yield()) || none
+    } yield (), "enumBodyDetail")
+    for {
+      _ <- assertToken(LBRACE).tell("{").enter().tab()
+      _ <- enumBodyDetail || none
+      _ <- assertToken(RBRACE).untab().tell("}")
+    } yield()
+  }, "enumBodyDefinition")
+
+  def enumBody: CodeWriter[Unit] = tag(tokenSeparatedCtx(for {
+    _ <- identifier
+    _ <- enumParameters || none
+    _ <- classBodyDefinition || none
+  } yield(), COMMA, enter), "enumBody")
+
+  def enumParameters: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- tokenSeparatedCtx(tokenSeparatedCtx(referableValue, DOT), COMMA, space)
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+  } yield(), "enumParameters")
+
+  def definitionElements: CodeWriter[Unit] = tag(staticBlockStmt || (for {
+    _ <- modifiers || none
+    _ <- classDefinition || constructorDef || classMemberDefinition
+  } yield ()), "definitionElements")
+
+  def classMemberDefinition: CodeWriter[Unit] = tag(for {
+    _ <- typeParameters || none
+    _ <- memberDefinition
+  } yield (), "classMemberDefinition")
+
+  def constructorDef: CodeWriter[Unit] = tag(for {
+    _ <- identifier
+    _ <- methodDefinition
+  } yield(), "constructorDef")
 
   def packageDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(PACKAGE).tell(keyword("package "))
@@ -149,7 +197,7 @@ object JavaParser {
 
   def blockStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
-    _ <- blockStmts || none
+    _ <- blockStmts.notHint(RBRACE) || none
     _ <- assertToken(RBRACE).untab().tell(block("}"))
   } yield (), "blockStmt").foldable
 
@@ -214,7 +262,7 @@ object JavaParser {
 
   def parameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- tokenSeparatedCtx(expression, COMMA, requireSpace = true) || none
+    _ <- tokenSeparatedCtx(expression, COMMA, space) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     _ <- classBodyDefinition || none
   } yield (), "parameters")
@@ -233,7 +281,7 @@ object JavaParser {
 
   def annotationTail: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- annotationSingleValue || tokenSeparatedCtx(annotationValuePairs, COMMA, requireSpace = true) || none
+    _ <- annotationSingleValue || tokenSeparatedCtx(annotationValuePairs, COMMA, space) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield (), "annotationTail")
 
@@ -248,7 +296,7 @@ object JavaParser {
 
   def typeParameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
-    _ <- tokenSeparatedCtx(typeVariable, COMMA, requireSpace = true)
+    _ <- tokenSeparatedCtx(typeVariable, COMMA, space)
     _ <- assertToken(GT).tell(">") || unrollingRightShift.tell(">")
   } yield (), "typeParameters")
 
@@ -271,12 +319,12 @@ object JavaParser {
 
   def superClass: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell("extends ")
-    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "superClass")
 
   def superInterface: CodeWriter[Unit] = tag(for {
     _ <- assertToken(IMPLEMENTS).tell("implements ")
-    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "superInterface")
 
   def memberDefinition: CodeWriter[Unit] = tag(for {
@@ -292,7 +340,7 @@ object JavaParser {
 
   def methodDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- tokenSeparatedCtx(methodArgDef, COMMA, requireSpace = true) || none
+    _ <- tokenSeparatedCtx(methodArgDef, COMMA, space) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- methodThrows || none
     _ <- blockStmt || assertToken(SEMICOLON).tell(";").enter()
@@ -300,7 +348,7 @@ object JavaParser {
 
   def methodThrows: CodeWriter[Unit] = tag(for {
     _ <- assertToken(THROWS).tell(keyword("throws "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "methodThrows")
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
@@ -381,7 +429,7 @@ object JavaParser {
 
   def blockStmts: CodeWriter[Unit] = tag(for {
     _ <- statement
-    _ <- blockStmts || none
+    _ <- blockStmts.notHint(RBRACE) || none
   } yield (), "blockStmts")
 
   def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(keyword), "primitiveTypes")
@@ -632,7 +680,7 @@ object JavaParser {
   def lambda: CodeWriter[Unit] = tag({
     def lambdaDecl: CodeWriter[Unit] = tag(for {
       _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-      _ <- tokenSeparatedCtx(declaration || takeToken(TOKEN).print(x => s"$x"), COMMA, requireSpace = true) || none
+      _ <- tokenSeparatedCtx(declaration || takeToken(TOKEN).print(x => s"$x"), COMMA, space) || none
       _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     } yield (), "lambdaDecl")
 
@@ -701,13 +749,13 @@ object JavaParser {
 
   def arrayInitializer: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{")
-    _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, requireSpace = true) || none
+    _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, space) || none
     _ <- assertToken(RBRACE).tell("}")
   } yield (), "arrayInitializer").foldable
 
   def generic: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
-    _ <- tokenSeparatedCtx(genericTypeUse, COMMA, requireSpace = true) || none
+    _ <- tokenSeparatedCtx(genericTypeUse, COMMA, space) || none
     _ <- (assertToken(GT) || unrollingRightShift).tell(">")
   } yield (), "generic")
 
@@ -734,15 +782,16 @@ object JavaParser {
     case JavaSToken(_, v) => v
   }).print(), DOT), "identifier")
 
-  def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], enum: JavaTokenEnum, requireSpace: Boolean = false): CodeWriter[Unit] = tag({
+  def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], separator: JavaTokenEnum, afterToken: CodeWriter[Unit] = none): CodeWriter[Unit] = tag({
     def loop: CodeWriter[Unit] = tag(for {
-      _ <- assertToken(enum).tell(s"${enum.value}" + (if (requireSpace) " " else ""))
-      res <- tokenSeparatedCtx(chosenParser, enum, requireSpace = requireSpace)
+      _ <- takeToken(separator).print()
+      _ <- afterToken
+      res <- tokenSeparatedCtx(chosenParser, separator, afterToken)
     } yield res, "loop")
 
     for {
       _ <- chosenParser
       _ <- loop || none
     } yield ()
-  }, s"tokenSeparatedCtx($enum)")
+  }, s"tokenSeparatedCtx($separator)")
 }

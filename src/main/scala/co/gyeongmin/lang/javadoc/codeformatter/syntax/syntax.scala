@@ -24,6 +24,7 @@ package object syntax {
     def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
 
     def pushTag(tag: String): CodeWriter[A] = {
+      case state@CodeWriterState(Nil, _, _, _) => (state, Left(TokenListEmptyError()))
       case CodeWriterState(prevTokenList, prevSb, prevStack, config) =>
         val (token, idx) = prevTokenList.head
         val actualTag = CodeWriterStackElem(idx, token, tag)
