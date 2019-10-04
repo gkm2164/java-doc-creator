@@ -31,11 +31,126 @@ object JavaParser {
   val ModifierStartToken: List[JavaTokenEnum] =
     List(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
 
+  def javaCode: CodeWriter[Unit] = tag(for {
+    _ <- packageDefinition
+    _ <- imports || none
+    _ <- symbolLoop(for {
+      _ <- modifiers || none
+      _ <- classDefinition || interfaceDefinition || annotationInterfaceDefinition
+    } yield()) || none
+  } yield (), "javaCode")
 
-  def blockStmt(enterAtEndLine: Boolean): CodeWriter[Unit] = tag(for {
+  def classDefinition: CodeWriter[Unit] = tag(for {
+    _ <- takeTokens(ENUM | CLASS).print(x => keyword(s"$x "))
+    _ <- identifier
+    _ <- typeParameters || none
+    _ <- superClass || none
+    _ <- superInterface || none
+    _ <- classBodyDefinition
+    _ <- enter
+  } yield (), "classDefDetail")
+
+  def interfaceDefinition: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(INTERFACE).tell(keyword("interface "))
+    _ <- identifier
+    _ <- typeParameters || none
+    _ <- superInterfaceExtends || none
+    _ <- interfaceBody
+    _ <- enter
+  } yield (), "interfaceDefinition")
+
+  def annotationInterfaceDefinition: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(ANNOTATION_INTERFACE).tell(color("@", "yellow")).tell(keyword("interface "))
+    _ <- identifier
+    _ <- annotationBody
+  } yield (), "annotationInterfaceDefinition")
+
+  def annotationBody: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- symbolLoop(annotationBodyDetail) || none
+    _ <- assertToken(RBRACE).untab().tell("}").enter()
+  } yield(), "annotationBody")
+
+  def annotationBodyDetail: CodeWriter[Unit] = tag(for {
+    _ <- modifiers || none
+    _ <- annotationTypeElementDeclaration || constantDeclaration || classDefinition || interfaceDefinition || annotationInterfaceDefinition
+  } yield(), "annotationBodyDetail")
+
+  def annotationTypeElementDeclaration: CodeWriter[Unit] = tag(for {
+    _ <- typeUse
+    _ <- identifier
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
+    _ <- symbolLoop(emptyArrayBoxes) || none
+    _ <- defaultValue || none
+    _ <- assertToken(SEMICOLON).tell(";").enter()
+  } yield(), "annotationTypeElementDeclaration")
+
+  def defaultValue: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(DEFAULT).tell(keyword("default "))
+    _ <- valueTypes
+  } yield(), "defaultValue")
+
+  def superInterfaceExtends: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(EXTENDS).tell("implements ")
+    _ <- tokenSeparatedCtx(typeUse, COMMA, requireSpace = true)
+  } yield (), "superInterface")
+
+  def interfaceBody: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- symbolLoop(interfaceBodyDeclaration.enter())
+    _ <- assertToken(RBRACE).untab().tell("}").enter()
+  } yield (), "interfaceBody")
+
+  def interfaceBodyDeclaration: CodeWriter[Unit] = tag(for {
+    _ <- modifiers || none
+    _ <- constantDeclaration || interfaceMethodDeclaration || classDefinition || interfaceDefinition
+  } yield (), "interfaceDeclaration")
+
+  def constantDeclaration: CodeWriter[Unit] = tag(declDetail, "constantDeclaration")
+
+  def interfaceMethodDeclaration: CodeWriter[Unit] = tag(for {
+    _ <- methodHeader
+    _ <- blockStmt || assertToken(SEMICOLON)
+    _ <- enter
+  } yield (), "interfaceMethodDeclaration")
+
+  def methodHeader: CodeWriter[Unit] = tag(for {
+    _ <- typeUse.tell(" ")
+    _ <- identifier
+    _ <- methodDefinition
+  } yield(), "methodHeader")
+
+  def classBodyDefinition: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(LBRACE).tell(" {").enter().tab()
+    _ <- definitionElements || none
+    _ <- assertToken(RBRACE).untab().tell("}")
+  } yield (), "classBodyDefinition")
+
+  def definitionElements: CodeWriter[Unit] = tag(for {
+    _ <- modifiers || none
+    _ <- classDefinition || memberDefinition
+    _ <- enter
+    _ <- definitionElements || none
+  } yield (), "definitionElements")
+
+  def packageDefinition: CodeWriter[Unit] = tag(for {
+    _ <- assertToken(PACKAGE).tell(keyword("package "))
+    _ <- tokenSeparatedCtx(identifier, DOT)
+    _ <- assertToken(SEMICOLON).tell(";").enter().enter()
+  } yield (), "packageDefinition")
+
+  def imports: CodeWriter[Unit] = tag(symbolLoop(for {
+    _ <- assertToken(IMPORT).tell(keyword("import "))
+    _ <- tokenSeparatedCtx(identifier, DOT)
+    _ <- (assertToken(DOT) -> assertToken(MULTIPLY).tell("*")) || none
+    _ <- assertToken(SEMICOLON).tell(";").enter()
+  } yield ()), "symbolLoop")
+
+  def blockStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell(block("{")).enter().tab()
     _ <- blockStmts || none
-    _ <- assertToken(RBRACE).untab().tell(block("}")).enterIf(enterAtEndLine)
+    _ <- assertToken(RBRACE).untab().tell(block("}"))
   } yield (), "blockStmt").foldable
 
   def statements: CodeWriter[Unit] = tag((for {
@@ -47,7 +162,7 @@ object JavaParser {
     nonControlStatement.notHint(ControlStatementBeginTokens: _*), "statement")
 
   def controlStatement: CodeWriter[Unit] = tag(
-    blockStmt(true).hint(LBRACE) ||
+    blockStmt.hint(LBRACE) ||
       emptyStmt.hint(SEMICOLON) ||
       switchStmt.hint(SWITCH) ||
       doStmt.hint(DO) ||
@@ -104,30 +219,9 @@ object JavaParser {
     _ <- classBodyDefinition || none
   } yield (), "parameters")
 
-  def classBodyDefinition: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(LBRACE).tell(" {").enter().tab()
-    _ <- definitionElements || none
-    _ <- assertToken(RBRACE).untab().tell("}")
-  } yield (), "classBodyDefinition")
-
-  def definitionElements: CodeWriter[Unit] = tag(for {
-    _ <- classDefinition || memberDefinition
-    _ <- enter
-    _ <- definitionElements || none
-  } yield (), "definitionElements")
-
-  def classDefinition: CodeWriter[Unit] = tag(for {
-    _ <- modifiers || none
-    _ <- takeTokens(ENUM | CLASS).print(x => keyword(s"$x "))
-    _ <- identifier
-    _ <- typeParameters || none
-    _ <- superClass || none
-    _ <- superInterface || none
-    _ <- classBodyDefinition
-  } yield (), "classDefinition")
-
   def modifiers: CodeWriter[Unit] = tag(for {
-    _ <- takeTokens(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x ")) || annotation.enter()
+    _ <- annotation.enter() ||
+      takeTokens(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x "))
     _ <- modifiers || none
   } yield (), "modifiers").hint(ModifierStartToken: _*)
 
@@ -186,7 +280,6 @@ object JavaParser {
   } yield (), "superInterface")
 
   def memberDefinition: CodeWriter[Unit] = tag(for {
-    _ <- modifiers || none
     _ <- typeUse.tell(" ")
     _ <- identifier
     _ <- fieldDefinition || methodDefinition
@@ -202,7 +295,7 @@ object JavaParser {
     _ <- tokenSeparatedCtx(methodArgDef, COMMA, requireSpace = true) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- methodThrows || none
-    _ <- blockStmt(false) || assertToken(SEMICOLON).tell(";").enter()
+    _ <- blockStmt || assertToken(SEMICOLON).tell(";").enter()
   } yield (), "methodDefinition")
 
   def methodThrows: CodeWriter[Unit] = tag(for {
@@ -226,7 +319,7 @@ object JavaParser {
       _ <- assertToken(LBRACKET).tell("[")
       _ <- expression || none
       _ <- assertToken(RBRACKET).tell("]")
-      _ <- tokenLoop(emptyArrayBoxes) || none
+      _ <- symbolLoop(emptyArrayBoxes) || none
       _ <- arrayInitializer || none
     } yield (), "arrayInstance")
 
@@ -260,7 +353,7 @@ object JavaParser {
   def tryStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(TRY).tell(keyword("try "))
     _ <- tryDeclaration || none
-    _ <- blockStmt(false)
+    _ <- blockStmt
     _ <- catchStmts || none
     _ <- finallyStmt || none
     _ <- enter
@@ -277,7 +370,7 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- catchDeclaration
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt(false)
+    _ <- blockStmt
     _ <- catchStmts || none
   } yield (), "catchStmt")
 
@@ -295,7 +388,7 @@ object JavaParser {
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(FINALLY).tell(keyword(" finally "))
-    _ <- blockStmt(false)
+    _ <- blockStmt
   } yield (), "finallyStmt")
 
   def returnStmt: CodeWriter[Unit] = tag(for {
@@ -328,7 +421,7 @@ object JavaParser {
       _ <- assertToken(LEFT_PARENTHESIS).tell("(")
       _ <- forConditionStmt
       _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-      _ <- blockStmt(true) || statement
+      _ <- blockStmt.enter() || statement
     } yield ()
   }, "forStmt")
 
@@ -337,11 +430,10 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt(false).tell(" ") || statement
+    _ <- blockStmt.tell(" ") || statement
     _ <- elseIfStmts || none
     _ <- elseStmt || none
-    _ <- enter
-  } yield (), "ifStmt")
+  } yield (), "ifStmt").enter()
 
   def elseIfStmts: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ELSE)
@@ -349,13 +441,13 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt(false).tell(" ") || statement.enter()
+    _ <- blockStmt.tell(" ") || statement.enter()
     _ <- elseIfStmts || none
   } yield (), "elseIfStmts")
 
   def elseStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ELSE).tell(keyword("else "))
-    _ <- blockStmt(false) || statement
+    _ <- blockStmt || statement
   } yield (), "elseStmt")
 
   def whileStmt: CodeWriter[Unit] = tag(for {
@@ -363,13 +455,14 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt(true) || statement
+    _ <- blockStmt || statement
+    _ <- enter
   } yield (), "whileStmt")
 
   //noinspection MutatorLikeMethodIsParameterless
   def doStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(DO).tell(keyword("do "))
-    _ <- blockStmt(false).tell(" ")
+    _ <- blockStmt.tell(" ")
     _ <- assertToken(WHILE).tell(keyword("while "))
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expressionStmt
@@ -546,7 +639,7 @@ object JavaParser {
     def originLambda: CodeWriter[Unit] = tag(for {
       _ <- lambdaDecl || takeToken(TOKEN).print(x => s"$x")
       _ <- assertToken(LAMBDA_BODY_START).tell(" -> ")
-      _ <- expression || blockStmt(false)
+      _ <- expression || blockStmt
     } yield (), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
@@ -563,7 +656,7 @@ object JavaParser {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- expression
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt(true)
+    _ <- blockStmt.enter()
   } yield (), "synchronizedStmt")
 
   def declarationStmt: CodeWriter[Unit] = tag(for {
@@ -571,27 +664,25 @@ object JavaParser {
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "declarationStmt")
 
-  def declaration: CodeWriter[Unit] = tag({
-    def declDetail: CodeWriter[Unit] = tag({
-      def loop: CodeWriter[Unit] = tag(for {
-        _ <- assertToken(COMMA).tell(",").enter()
-        _ <- declDetail
-      } yield (), "loop")
+  def declaration: CodeWriter[Unit] = tag(for {
+    _ <- annotation.tell(" ") || none
+    _ <- assertToken(FINAL).tell(keyword("final ")) || none
+    _ <- declDetail
+  } yield (), "declaration")
 
-      for {
-        _ <- typeUse.tell(" ")
-        _ <- identifier
-        _ <- variableInitialize.hint(SUBSTITUTE) || none
-        _ <- loop || none
-      } yield ()
-    }, "declDetail")
+  def declDetail: CodeWriter[Unit] = tag({
+    def loop: CodeWriter[Unit] = tag(for {
+      _ <- assertToken(COMMA).tell(",").enter()
+      _ <- declDetail
+    } yield (), "loop")
 
     for {
-      _ <- annotation.tell(" ") || none
-      _ <- assertToken(FINAL).tell(keyword("final ")) || none
-      _ <- declDetail
+      _ <- typeUse.tell(" ")
+      _ <- identifier
+      _ <- variableInitialize.hint(SUBSTITUTE) || none
+      _ <- loop || none
     } yield ()
-  }, "declaration")
+  }, "declDetail")
 
   def typeUse: CodeWriter[Unit] = tag(for {
     _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || customDecl
@@ -635,7 +726,7 @@ object JavaParser {
     _ <- assertToken(RBRACKET).tell("]")
   } yield (), "emptyArrayBoxes")
 
-  def arrayUse: CodeWriter[Unit] = tag(tokenLoop(emptyArrayBoxes), "arrayUse")
+  def arrayUse: CodeWriter[Unit] = tag(symbolLoop(emptyArrayBoxes), "arrayUse")
 
   def identifier: CodeWriter[Unit] = tag(tokenSeparatedCtx(takeTokens(IdentifiableTokens, {
     case JavaSToken(TOKEN, "this") => keyword("this")

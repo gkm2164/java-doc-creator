@@ -43,20 +43,20 @@
                 sb = <span style="color: #D27428;">new </span><span style="font-weight: bold; color: #e8e4d6">StringBuilder</span>();
                 <span style="color: #D27428;">while </span>(i + <span style="color: #3986AF;">1</span> < codes.length && WHITESPACES.contains(codes[i + <span style="color: #3986AF;">1</span>])) <a class="foldable-block"><span style="color: #00b800;">{</span>
                     i++;
-                <span style="color: #00b800;">}</span>
-                </a>elem = tokenizer.root;
+                <span style="color: #00b800;">}</span></a>
+                elem = tokenizer.root;
             <span style="color: #00b800;">}</span></a> <span style="color: #D27428;">else </span><a class="foldable-block"><span style="color: #00b800;">{</span>
                 sb.append(ch);
                 <span style="color: #D27428;">while </span>(elem != tokenizer.root && !elem.next.containsKey(ch)) <a class="foldable-block"><span style="color: #00b800;">{</span>
                     elem = elem.fail;
-                <span style="color: #00b800;">}</span>
-                </a><span style="color: #D27428;">if </span>(elem.next.containsKey(ch)) <a class="foldable-block"><span style="color: #00b800;">{</span>
+                <span style="color: #00b800;">}</span></a>
+                <span style="color: #D27428;">if </span>(elem.next.containsKey(ch)) <a class="foldable-block"><span style="color: #00b800;">{</span>
                     elem = elem.next.get(ch);
                 <span style="color: #00b800;">}</span></a> 
             <span style="color: #00b800;">}</span></a>
         <span style="color: #00b800;">}</span></a>
-    <span style="color: #00b800;">}</span>
-    </a><span style="color: #D27428;">if </span>(sb.length() > <span style="color: #3986AF;">0</span>) <a class="foldable-block"><span style="color: #00b800;">{</span>
+    <span style="color: #00b800;">}</span></a>
+    <span style="color: #D27428;">if </span>(sb.length() > <span style="color: #3986AF;">0</span>) <a class="foldable-block"><span style="color: #00b800;">{</span>
         ret.add(JavaToken.newToken(sb.toString(), codes.length));
     <span style="color: #00b800;">}</span></a> 
     <span style="color: #D27428;">return </span>ret;

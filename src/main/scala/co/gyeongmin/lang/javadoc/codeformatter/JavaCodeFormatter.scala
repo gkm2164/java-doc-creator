@@ -17,7 +17,7 @@ object JavaCodeFormatter {
     val debugOption = if (codeName == "postProcessBeanFactory") Some(DebugOption(stackTrace = true)) else None
 
     if (reformatTokens.nonEmpty) {
-      JavaParser.blockStmt(false)
+      JavaParser.blockStmt.enter()
         .collect(reformatTokens, CodeWriterConfig(debug = debugOption))
     }
     else {

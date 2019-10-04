@@ -17,9 +17,9 @@ object Helper {
 
   def tell(lit: String): CodeWriter[Unit] = none.tell(lit)
 
-  def tokenLoop(value: CodeWriter[Unit]): CodeWriter[Unit] = tag(for {
+  def symbolLoop(value: CodeWriter[Unit]): CodeWriter[Unit] = tag(for {
     _ <- value
-    _ <- tokenLoop(value) || none
+    _ <- symbolLoop(value) || none
   } yield(), "tokenLoop")
 
   def unrollingRightShift: CodeWriter[Unit] = tag(CodeWriter {

@@ -10,36 +10,6 @@ import scala.language.implicitConversions
 package object syntax {
 
   implicit class CodeWriterExt[A](thisWriter: CodeWriter[A]) {
-    def matchDebug(tag: String, msg: String = ""): CodeWriter[A] = prevState => {
-      val (CodeWriterState(nextTokenList, newSb, newStack, config), v) = thisWriter(prevState)
-
-      config.debug match {
-        case Some(debugOption) =>
-          val sb = StringBuilder.newBuilder
-          sb ++= "match"
-          if (nextTokenList.nonEmpty) {
-            val (JavaSToken(tokenType, value), idx) = nextTokenList.head
-            sb ++= s""" $idx|$tokenType|"$value"| with"""
-          }
-          if (debugOption.stackTrace) {
-            sb ++= s" [${newStack.mkString("/")}]"
-          }
-
-          if (msg.nonEmpty) {
-            sb ++= s": $msg"
-          }
-
-          sb ++= s"[${newSb.debugStringBuilder(5)}]"
-          v match {
-            case Right(_) => println(sb.toString)
-            case _ =>
-          }
-        case None =>
-      }
-
-      (CodeWriterState(nextTokenList, newSb, newStack, config), v)
-    }
-
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
         case Nil => (prevState, Left(new TokenListEmptyError))
@@ -135,6 +105,11 @@ package object syntax {
       }
 
     def ||(x: CodeWriter[A]): CodeWriter[A] = orElse(x)
+
+    def ->(x: CodeWriter[A]): CodeWriter[Unit] = for {
+      _ <- thisWriter
+      _ <- x
+    } yield ()
 
     def orElse(otherWriter: CodeWriter[A]): CodeWriter[A] = prevState => {
       val (nextState, ret) = thisWriter(prevState)
