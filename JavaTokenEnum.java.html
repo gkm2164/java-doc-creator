@@ -1,0 +1,143 @@
+<!DOCTYPE html><html><body><pre style="background: black; color: #BCBCBC;"><span style="color: #D27428;">package </span>co.gyeongmin.lang.javalang;
+
+<span style="color: #D27428;">public </span><span style="color: #D27428;">enum </span>JavaTokenEnum{
+    CLASS(<span style="color: #477944;">"class"</span>, <span style="color: #D27428;">true</span>),
+    INTERFACE(<span style="color: #477944;">"interface"</span>, <span style="color: #D27428;">true</span>),
+    ABSTRACT(<span style="color: #477944;">"abstract"</span>, <span style="color: #D27428;">true</span>),
+    ENUM(<span style="color: #477944;">"enum"</span>, <span style="color: #D27428;">true</span>),
+    PUBLIC(<span style="color: #477944;">"public"</span>, <span style="color: #D27428;">true</span>),
+    PROTECTED(<span style="color: #477944;">"protected"</span>, <span style="color: #D27428;">true</span>),
+    PRIVATE(<span style="color: #477944;">"private"</span>, <span style="color: #D27428;">true</span>),
+    STRICTFP(<span style="color: #477944;">"strictfp"</span>, <span style="color: #D27428;">true</span>),
+    STATIC(<span style="color: #477944;">"static"</span>, <span style="color: #D27428;">true</span>),
+    TRANSIENT(<span style="color: #477944;">"transient"</span>, <span style="color: #D27428;">true</span>),
+    PACKAGE(<span style="color: #477944;">"package"</span>, <span style="color: #D27428;">true</span>),
+    IMPORT(<span style="color: #477944;">"import"</span>, <span style="color: #D27428;">true</span>),
+    FINAL(<span style="color: #477944;">"final"</span>, <span style="color: #D27428;">true</span>),
+    EXTENDS(<span style="color: #477944;">"extends"</span>, <span style="color: #D27428;">true</span>),
+    SUPER(<span style="color: #477944;">"super"</span>, <span style="color: #D27428;">true</span>),
+    IMPLEMENTS(<span style="color: #477944;">"implements"</span>, <span style="color: #D27428;">true</span>),
+    DEFAULT(<span style="color: #477944;">"default"</span>, <span style="color: #D27428;">true</span>),
+    CONTINUE(<span style="color: #477944;">"continue"</span>, <span style="color: #D27428;">true</span>),
+    DO(<span style="color: #477944;">"do"</span>, <span style="color: #D27428;">true</span>),
+    SWITCH(<span style="color: #477944;">"switch"</span>, <span style="color: #D27428;">true</span>),
+    BREAK(<span style="color: #477944;">"break"</span>, <span style="color: #D27428;">true</span>),
+    THROWS(<span style="color: #477944;">"throws"</span>, <span style="color: #D27428;">true</span>),
+    RETURN(<span style="color: #477944;">"return"</span>, <span style="color: #D27428;">true</span>),
+    THROW(<span style="color: #477944;">"throw"</span>, <span style="color: #D27428;">true</span>),
+    CASE(<span style="color: #477944;">"case"</span>, <span style="color: #D27428;">true</span>),
+    INSTANCEOF(<span style="color: #477944;">"instanceof"</span>, <span style="color: #D27428;">true</span>),
+    NEW(<span style="color: #477944;">"new"</span>, <span style="color: #D27428;">true</span>),
+    IF(<span style="color: #477944;">"if"</span>, <span style="color: #D27428;">true</span>),
+    ELSE(<span style="color: #477944;">"else"</span>, <span style="color: #D27428;">true</span>),
+    TRY(<span style="color: #477944;">"try"</span>, <span style="color: #D27428;">true</span>),
+    CATCH(<span style="color: #477944;">"catch"</span>, <span style="color: #D27428;">true</span>),
+    FINALLY(<span style="color: #477944;">"finally"</span>, <span style="color: #D27428;">true</span>),
+    FOR(<span style="color: #477944;">"for"</span>, <span style="color: #D27428;">true</span>),
+    WHILE(<span style="color: #477944;">"while"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_BYTE(<span style="color: #477944;">"byte"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_SHORT(<span style="color: #477944;">"short"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_INT(<span style="color: #477944;">"int"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_LONG(<span style="color: #477944;">"long"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_CHAR(<span style="color: #477944;">"char"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_FLOAT(<span style="color: #477944;">"float"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_DOUBLE(<span style="color: #477944;">"double"</span>, <span style="color: #D27428;">true</span>),
+    PRIMITIVE_BOOLEAN(<span style="color: #477944;">"boolean"</span>, <span style="color: #D27428;">true</span>),
+    TOKEN(<span style="color: #477944;">""</span>, <span style="color: #D27428;">true</span>),
+    NUMBER(<span style="color: #477944;">""</span>, <span style="color: #D27428;">true</span>),
+    STRING(<span style="color: #477944;">""</span>, <span style="color: #D27428;">true</span>),
+    CHAR(<span style="color: #477944;">""</span>, <span style="color: #D27428;">true</span>),
+    TRUE(<span style="color: #477944;">"true"</span>, <span style="color: #D27428;">true</span>),
+    FALSE(<span style="color: #477944;">"false"</span>, <span style="color: #D27428;">true</span>),
+    NULL(<span style="color: #477944;">"null"</span>, <span style="color: #D27428;">true</span>),
+    SYNCHRONIZED(<span style="color: #477944;">"synchronized"</span>, <span style="color: #D27428;">true</span>),
+    VOLATILE(<span style="color: #477944;">"volatile"</span>, <span style="color: #D27428;">true</span>),
+    ANNOTATION(<span style="color: #477944;">"@"</span>),
+    ANNOTATION_INTERFACE(<span style="color: #477944;">"@interface"</span>),
+    LEFT_PARENTHESIS(<span style="color: #477944;">"("</span>),
+    RIGHT_PARENTHESIS(<span style="color: #477944;">")"</span>),
+    LBRACKET(<span style="color: #477944;">"["</span>),
+    RBRACKET(<span style="color: #477944;">"]"</span>),
+    LBRACE(<span style="color: #477944;">"{"</span>),
+    RBRACE(<span style="color: #477944;">"}"</span>),
+    LT(<span style="color: #477944;">"<"</span>),
+    LTE(<span style="color: #477944;">"<="</span>),
+    GT(<span style="color: #477944;">">"</span>),
+    GTE(<span style="color: #477944;">">="</span>),
+    LEFT_SHIFT(<span style="color: #477944;">"<<"</span>),
+    RIGHT_SHIFT(<span style="color: #477944;">">>"</span>),
+    U_RIGHT_SHIFT(<span style="color: #477944;">">>>"</span>),
+    DOT(<span style="color: #477944;">"."</span>),
+    OR(<span style="color: #477944;">"||"</span>),
+    AND(<span style="color: #477944;">"&&"</span>),
+    BIT_OR(<span style="color: #477944;">"|"</span>),
+    BIT_AND(<span style="color: #477944;">"&"</span>),
+    BIT_XOR(<span style="color: #477944;">"^"</span>),
+    QUESTION_MARK(<span style="color: #477944;">"?"</span>),
+    EXCLAMATION_MARK(<span style="color: #477944;">"!"</span>),
+    NOT_EQUAL(<span style="color: #477944;">"!="</span>),
+    LAMBDA_BODY_START(<span style="color: #477944;">"->"</span>),
+    ETC_ARRAY(<span style="color: #477944;">"..."</span>),
+    SUBSTITUTE(<span style="color: #477944;">"="</span>),
+    EQUAL(<span style="color: #477944;">"=="</span>),
+    PLUS(<span style="color: #477944;">"+"</span>),
+    NEGATE(<span style="color: #477944;">"~"</span>),
+    PLUS_ACC(<span style="color: #477944;">"+="</span>),
+    INC(<span style="color: #477944;">"++"</span>),
+    MINUS(<span style="color: #477944;">"-"</span>),
+    MINUS_ACC(<span style="color: #477944;">"-="</span>),
+    DEC(<span style="color: #477944;">"--"</span>),
+    MULTIPLY(<span style="color: #477944;">"*"</span>),
+    MULTIPLY_ACC(<span style="color: #477944;">"*="</span>),
+    SEMICOLON(<span style="color: #477944;">";"</span>),
+    DIVIDE(<span style="color: #477944;">"/"</span>),
+    DIVIDE_ACC(<span style="color: #477944;">"/="</span>),
+    MODULAR(<span style="color: #477944;">"%"</span>),
+    COMMENT_BLOCK(<span style="color: #477944;">"/*"</span>, <span style="color: #477944;">"*/"</span>, <span style="color: #D27428;">false</span>),
+    COMMENT(<span style="color: #477944;">"//"</span>, <span style="color: #477944;">"\n"</span>, <span style="color: #D27428;">false</span>),
+    COMMENT_MACRO_EXPLAIN(<span style="color: #477944;">"//!"</span>, <span style="color: #477944;">"\n"</span>),
+    COMMENT_MACRO_CODE(<span style="color: #477944;">"//="</span>, <span style="color: #477944;">"\n"</span>),
+    COMMENT_MACRO_NAME(<span style="color: #477944;">"//name"</span>, <span style="color: #477944;">"\n"</span>),
+    DOUBLE_QUOTE(<span style="color: #477944;">"\""</span>, <span style="color: #477944;">"\""</span>, STRING),
+    QUOTE(<span style="color: #477944;">"'"</span>, <span style="color: #477944;">"'"</span>, CHAR),
+    COMMA(<span style="color: #477944;">","</span>),
+    COLON(<span style="color: #477944;">":"</span>),
+    NAMESPACE(<span style="color: #477944;">"::"</span>);
+    JavaTokenEnum(String value) <a class="foldable-block"><span style="color: #00b800;">{</span>
+        <span style="color: #D27428;">this</span>.value = value;
+        <span style="color: #D27428;">this</span>.isKeyword = <span style="color: #D27428;">false</span>;
+    <span style="color: #00b800;">}</span></a>
+    JavaTokenEnum(String value, <span style="color: #D27428;">boolean</span> isKeyword) <a class="foldable-block"><span style="color: #00b800;">{</span>
+        <span style="color: #D27428;">this</span>.value = value;
+        <span style="color: #D27428;">this</span>.isKeyword = isKeyword;
+    <span style="color: #00b800;">}</span></a>
+    JavaTokenEnum(String value, String until) <a class="foldable-block"><span style="color: #00b800;">{</span>
+        <span style="color: #D27428;">this</span>.value = value;
+        <span style="color: #D27428;">this</span>.isKeyword = <span style="color: #D27428;">false</span>;
+        <span style="color: #D27428;">this</span>.takeUntil = <span style="color: #D27428;">true</span>;
+        <span style="color: #D27428;">this</span>.until = until;
+        <span style="color: #D27428;">this</span>.saveTo = <span style="color: #D27428;">this</span>;
+    <span style="color: #00b800;">}</span></a>
+    JavaTokenEnum(String value, String until, <span style="color: #D27428;">boolean</span> allowEscape) <a class="foldable-block"><span style="color: #00b800;">{</span>
+        <span style="color: #D27428;">this</span>.value = value;
+        <span style="color: #D27428;">this</span>.isKeyword = <span style="color: #D27428;">false</span>;
+        <span style="color: #D27428;">this</span>.takeUntil = <span style="color: #D27428;">true</span>;
+        <span style="color: #D27428;">this</span>.until = until;
+        <span style="color: #D27428;">this</span>.saveTo = <span style="color: #D27428;">this</span>;
+        <span style="color: #D27428;">this</span>.allowEscape = allowEscape;
+    <span style="color: #00b800;">}</span></a>
+    JavaTokenEnum(String value, String until, JavaTokenEnum saveTo) <a class="foldable-block"><span style="color: #00b800;">{</span>
+        <span style="color: #D27428;">this</span>.value = value;
+        <span style="color: #D27428;">this</span>.isKeyword = <span style="color: #D27428;">false</span>;
+        <span style="color: #D27428;">this</span>.takeUntil = <span style="color: #D27428;">true</span>;
+        <span style="color: #D27428;">this</span>.until = until;
+        <span style="color: #D27428;">this</span>.saveTo = saveTo;
+    <span style="color: #00b800;">}</span></a>
+    <span style="color: #D27428;">public </span><span style="color: #D27428;">final </span>String value;
+    <span style="color: #D27428;">public </span><span style="color: #D27428;">final </span><span style="color: #D27428;">boolean</span> isKeyword;
+    <span style="color: #D27428;">boolean</span> takeUntil = <span style="color: #D27428;">false</span>;
+    String until;
+    JavaTokenEnum saveTo;
+    <span style="color: #D27428;">public </span><span style="color: #D27428;">boolean</span> allowEscape = <span style="color: #D27428;">true</span>;
+}
+</body></html></pre>
