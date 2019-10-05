@@ -37,7 +37,7 @@ object JavaParser {
     _ <- symbolLoop(for {
       _ <- modifiers || none
       _ <- classDefinition || enumDefinition || interfaceDefinition || annotationInterfaceDefinition
-    } yield()) || none
+    } yield ()) || none
   } yield (), "javaCode")
 
   def classDefinition: CodeWriter[Unit] = tag(for {
@@ -69,12 +69,12 @@ object JavaParser {
     _ <- assertToken(LBRACE).tell("{").enter().tab()
     _ <- symbolLoop(annotationBodyDetail) || none
     _ <- assertToken(RBRACE).untab().tell("}").enter()
-  } yield(), "annotationBody")
+  } yield (), "annotationBody")
 
   def annotationBodyDetail: CodeWriter[Unit] = tag(for {
     _ <- modifiers || none
     _ <- annotationTypeElementDeclaration || constantDeclaration || classDefinition || interfaceDefinition || annotationInterfaceDefinition
-  } yield(), "annotationBodyDetail")
+  } yield (), "annotationBodyDetail")
 
   def annotationTypeElementDeclaration: CodeWriter[Unit] = tag(for {
     _ <- typeUse
@@ -84,12 +84,12 @@ object JavaParser {
     _ <- symbolLoop(emptyArrayBoxes) || none
     _ <- defaultValue || none
     _ <- assertToken(SEMICOLON).tell(";").enter()
-  } yield(), "annotationTypeElementDeclaration")
+  } yield (), "annotationTypeElementDeclaration")
 
   def defaultValue: CodeWriter[Unit] = tag(for {
     _ <- assertToken(DEFAULT).tell(keyword("default "))
     _ <- valueTypes
-  } yield(), "defaultValue")
+  } yield (), "defaultValue")
 
   def superInterfaceExtends: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell("implements ")
@@ -119,7 +119,7 @@ object JavaParser {
     _ <- typeUse.tell(" ")
     _ <- identifier
     _ <- methodDefinition
-  } yield(), "methodHeader")
+  } yield (), "methodHeader")
 
   def classBodyDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell(" {").enter().tab()
@@ -130,7 +130,7 @@ object JavaParser {
   def staticBlockStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(STATIC).tell(keyword("static "))
     _ <- blockStmt.enter()
-  } yield(), "staticBodyStmt")
+  } yield (), "staticBodyStmt")
 
   def enumDefinition: CodeWriter[Unit] = tag(for {
     _ <- takeToken(ENUM).print(x => keyword(s"$x "))
@@ -146,26 +146,27 @@ object JavaParser {
       _ <- (for {
         _ <- assertToken(SEMICOLON).tell(";").enter()
         _ <- symbolLoop(definitionElements.enter()).notHint(RBRACE) || none
-      } yield()) || none
+      } yield ()) || none
     } yield (), "enumBodyDetail")
+
     for {
       _ <- assertToken(LBRACE).tell("{").enter().tab()
       _ <- enumBodyDetail || none
       _ <- assertToken(RBRACE).untab().tell("}")
-    } yield()
+    } yield ()
   }, "enumBodyDefinition")
 
   def enumBody: CodeWriter[Unit] = tag(tokenSeparatedCtx(for {
     _ <- identifier
     _ <- enumParameters || none
     _ <- classBodyDefinition || none
-  } yield(), COMMA, enter), "enumBody")
+  } yield (), COMMA, enter), "enumBody")
 
   def enumParameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- tokenSeparatedCtx(tokenSeparatedCtx(referableValue, DOT), COMMA, space)
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-  } yield(), "enumParameters")
+  } yield (), "enumParameters")
 
   def definitionElements: CodeWriter[Unit] = tag(staticBlockStmt || (for {
     _ <- modifiers || none
@@ -173,14 +174,14 @@ object JavaParser {
   } yield ()), "definitionElements")
 
   def classMemberDefinition: CodeWriter[Unit] = tag(for {
-    _ <- typeParameters || none
+    _ <- typeParameters.tell(" ") || none
     _ <- memberDefinition
   } yield (), "classMemberDefinition")
 
   def constructorDef: CodeWriter[Unit] = tag(for {
     _ <- identifier
     _ <- methodDefinition
-  } yield(), "constructorDef")
+  } yield (), "constructorDef")
 
   def packageDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(PACKAGE).tell(keyword("package "))
@@ -354,6 +355,7 @@ object JavaParser {
   def methodArgDef: CodeWriter[Unit] = tag(for {
     _ <- annotation.hint(ANNOTATION) || none
     _ <- typeUse
+    _ <- space
     _ <- identifier
   } yield (), "methodArgDef")
 
