@@ -36,7 +36,10 @@ object JavaParser {
     _ <- imports || none
     _ <- symbolLoop(for {
       _ <- modifiers || none
-      _ <- classDefinition || enumDefinition || interfaceDefinition || annotationInterfaceDefinition
+      _ <- classDefinition.hint(CLASS) ||
+           enumDefinition.hint(ENUM) ||
+           interfaceDefinition.hint(INTERFACE) ||
+           annotationInterfaceDefinition.hint(ANNOTATION_INTERFACE)
     } yield ()) || none
   } yield (), "javaCode")
 
@@ -192,7 +195,7 @@ object JavaParser {
   def imports: CodeWriter[Unit] = tag(symbolLoop(for {
     _ <- assertToken(IMPORT).tell(keyword("import "))
     _ <- tokenSeparatedCtx(identifier, DOT)
-    _ <- (assertToken(DOT) -> assertToken(MULTIPLY).tell("*")) || none
+    _ <- (assertToken(DOT) ~ assertToken(MULTIPLY).tell("*")) || none
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield ()), "symbolLoop")
 
@@ -793,7 +796,7 @@ object JavaParser {
 
     for {
       _ <- chosenParser
-      _ <- loop || none
+      _ <- takeToken(separator).print() ~ afterToken ~ tokenSeparatedCtx(chosenParser, separator, afterToken) || none
     } yield ()
   }, s"tokenSeparatedCtx($separator)")
 }

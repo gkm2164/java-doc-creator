@@ -107,7 +107,7 @@ package object syntax {
 
     def ||(x: CodeWriter[A]): CodeWriter[A] = orElse(x)
 
-    def ->(x: CodeWriter[A]): CodeWriter[Unit] = for {
+    def ~(x: CodeWriter[A]): CodeWriter[Unit] = for {
       _ <- thisWriter
       _ <- x
     } yield ()
