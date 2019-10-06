@@ -307,7 +307,7 @@ object JavaCode {
     def parseCodes(name: String): CodeState[Vector[JavaSToken]] = CodeState {
       case Nil => throw new TokenNotAcceptedException("nil list!")
       case JavaSToken(SEMICOLON, _) :: t => State.pure(Vector()).run(t).value
-      case (tk@JavaSToken(LBRACE, _)) :: t => (for {
+      case JavaSToken(LBRACE, _) :: t => (for {
         codes <- parseParenthesisSkipHead(LBRACE, RBRACE)
       } yield codes).run(t).value
       case JavaSToken(DEFAULT, _) :: t => (for {

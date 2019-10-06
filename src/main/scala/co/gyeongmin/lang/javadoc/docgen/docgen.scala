@@ -43,7 +43,7 @@ package object docgen {
               if (c.exampleCodes.nonEmpty) 'pre('code('class /= "java", exampleCodes(modifier)))
               else Empty,
               'div(publicDefinitions(definitions, indent)))
-          case JavaEnumClass(name, modifier, enumTokens, definitions, implements) =>
+          case JavaEnumClass(name, _, enumTokens, definitions, _) =>
             val publicDefinitions = definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indent.inc))
             'div('h4('class /= "java-def", name),
               'b("enum values"),
@@ -81,7 +81,5 @@ package object docgen {
     private def exampleCodes(modifier: JavaModifier): Node[Nothing] =
       modifier.commentMacros.filter(_.startsWith("//=")).map(_.drop(3)).mkString("\n")
 
-    private def putIf(cond: => Boolean, t: Node[T]): Node[T] = if (cond) t else Empty
   }
-
 }

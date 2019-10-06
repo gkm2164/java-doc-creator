@@ -39,7 +39,7 @@ object Main {
     case ("-i" | "--input") :: filename :: t => parseArg(t, set(doc, "baseDir", filename), option)
     case ("-o" | "--output") :: filename :: t => parseArg(t, set(doc, "outputFile", filename), option)
     case ("-v" | "--verbose") :: t => parseArg(t, doc, Some(DebugOption(stackTrace = true)))
-    case h :: t => throw new RuntimeException(s"unknown option $h")
+    case h :: _ => throw new RuntimeException(s"unknown option $h")
   }
 
   def main(args: Array[String]): Unit = {

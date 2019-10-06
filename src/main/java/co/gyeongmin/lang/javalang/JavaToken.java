@@ -45,6 +45,4 @@ public class JavaToken {
     public String getValue() {
         return this.value;
     }
-
-    public int getEndsAt() { return this.endsAt; }
 }

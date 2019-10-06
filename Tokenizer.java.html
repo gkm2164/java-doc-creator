@@ -5,16 +5,16 @@
 <span style="color: #D27428;">import </span>java.util.stream.Collectors;
 <span style="color: #D27428;">public </span><span style="color: #D27428;">class </span>Tokenizer {
     <span style="color: #D27428;">static </span><span style="color: #D27428;">class </span>Pair&lt;K, V&gt; {
-        K key;
-        V value;
+        <span style="color: #D27428;">final </span>K key;
+        <span style="color: #D27428;">final </span>V value;
         Pair(K key, V value) <a class="foldable-block"><span style="color: #00b800;">{</span>
             <span style="color: #D27428;">this</span>.key = key;
             <span style="color: #D27428;">this</span>.value = value;
         <span style="color: #00b800;">}</span></a>
-        <span style="color: #D27428;">public </span>K getKey() <a class="foldable-block"><span style="color: #00b800;">{</span>
+        K getKey() <a class="foldable-block"><span style="color: #00b800;">{</span>
             <span style="color: #D27428;">return </span>key;
         <span style="color: #00b800;">}</span></a>
-        <span style="color: #D27428;">public </span>V getValue() <a class="foldable-block"><span style="color: #00b800;">{</span>
+        V getValue() <a class="foldable-block"><span style="color: #00b800;">{</span>
             <span style="color: #D27428;">return </span>value;
         <span style="color: #00b800;">}</span></a>
     }

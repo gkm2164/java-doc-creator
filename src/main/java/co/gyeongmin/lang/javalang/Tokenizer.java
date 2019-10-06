@@ -7,19 +7,19 @@ import java.util.stream.Collectors;
 
 public class Tokenizer {
     static class Pair<K, V> {
-        K key;
-        V value;
+        final K key;
+        final V value;
 
         Pair(K key, V value) {
             this.key = key;
             this.value = value;
         }
 
-        public K getKey() {
+        K getKey() {
             return key;
         }
 
-        public V getValue() {
+        V getValue() {
             return value;
         }
     }
