@@ -80,7 +80,7 @@ object JavaCode {
           _ <- assertToken(LBRACE)
           _ <- parseClassInside("", Vector.empty)
         } yield ()
-        case _ => State.pure()
+        case _ => State.pure(())
       }
 
       def parseEnumBody(tokenName: String, acc: Vector[String]): CodeState[JavaEnumClass] = NextCodeState {

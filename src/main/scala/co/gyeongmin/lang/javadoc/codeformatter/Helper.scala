@@ -27,8 +27,8 @@ object Helper {
   def unrollingRightShift: CodeWriter[Unit] = tag(CodeWriter {
     case Nil => (Nil, Left(TokenListEmptyError()))
     case (JavaSToken(shiftType@(RIGHT_SHIFT | U_RIGHT_SHIFT), _), idx) :: t => shiftType match {
-      case RIGHT_SHIFT => ((JavaSToken(GT, ">"), idx) :: t, Right())
-      case U_RIGHT_SHIFT => ((JavaSToken(RIGHT_SHIFT, ">>"), idx) :: t, Right())
+      case RIGHT_SHIFT => ((JavaSToken(GT, ">"), idx) :: t, Right(()))
+      case U_RIGHT_SHIFT => ((JavaSToken(RIGHT_SHIFT, ">>"), idx) :: t, Right(()))
       case _ => (Nil, Left(ParseFailError("unexpected")))
     }
     case tokenList => (tokenList, Left(TokenNotAllowedError("token is not '>>'", tokenList)))
@@ -65,13 +65,13 @@ object Helper {
 
   def assertToken(enum: JavaTokenEnum): CodeWriter[Unit] = tag(CodeWriter {
     case Nil => (Nil, Left(TokenListEmptyError()))
-    case (JavaSToken(v, _), _) :: t if v == enum => (t, Right())
+    case (JavaSToken(v, _), _) :: t if v == enum => (t, Right(()))
     case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(TokenNotAllowedError(s"not allow $v, but $enum", tokenList)))
   }, s"assertToken($enum)")
 
   def assertTokens(enums: List[JavaTokenEnum]): CodeWriter[Unit] = tag(CodeWriter {
     case Nil => (Nil, Left(TokenListEmptyError()))
-    case (JavaSToken(v, _), _) :: t if enums.contains(v) => (t, Right())
+    case (JavaSToken(v, _), _) :: t if enums.contains(v) => (t, Right(()))
     case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList,
       Left(TokenNotAllowedError(s"not allow $v, but one of [${enums.mkString(", ")}]", tokenList)))
   }, s"assertTokens(${enums.mkString(" | ")})")

@@ -6,6 +6,8 @@ scalaVersion := "2.12.8"
 
 libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0-M1"
 
+scalacOptions ++= Seq("-deprecation")
+
 libraryDependencies ++= Seq(
   "com.github.fomkin" %% "levsha-core" % "0.7.2",
   "org.planet42" %% "laika-core" % "0.10.0",

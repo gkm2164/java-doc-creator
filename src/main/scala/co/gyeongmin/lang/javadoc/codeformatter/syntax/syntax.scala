@@ -52,9 +52,9 @@ package object syntax {
     }
 
     def foldable: CodeWriter[A] = for {
-      _ <- CodeWriter.pure().tell("""<a class="foldable-block">""")
+      _ <- CodeWriter.pure(()).tell("""<a class="foldable-block">""")
       res <- thisWriter
-      _ <- CodeWriter.pure().tell("</a>")
+      _ <- CodeWriter.pure(()).tell("</a>")
     } yield res
 
     def tell(lit: String): CodeWriter[A] = prevState => {
@@ -68,7 +68,7 @@ package object syntax {
     def print(fmt: A => String = x => x.toString): CodeWriter[Unit] = prevState => {
       val (nextState, v) = thisWriter(prevState)
       v match {
-        case Right(str) => (nextState.copy(stringBuilder = nextState.stringBuilder.append(fmt(str))), Right())
+        case Right(str) => (nextState.copy(stringBuilder = nextState.stringBuilder.append(fmt(str))), Right(()))
         case Left(e) => (nextState, Left(e))
       }
     }

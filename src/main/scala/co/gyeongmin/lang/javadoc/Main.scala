@@ -3,6 +3,8 @@ package co.gyeongmin.lang.javadoc
 import java.io._
 
 import co.gyeongmin.lang.javalang.Tokenizer
+import co.gyeongmin.lang.javadoc.codeformatter.monad._
+
 import com.typesafe.scalalogging.Logger
 import laika.api.Transform
 import laika.format._
@@ -26,16 +28,15 @@ object Main {
     case _ => throw new RuntimeException("unknown field in DocumentDescription")
   }
 
-  def set(desc: Option[DocumentDescription], field: String, value: String): Option[DocumentDescription] = desc match {
-    case None => Some(setField(DocumentDescription("", "", ""), field, value))
-    case Some(doc) => Some(setField(doc, field, value))
-  }
+  def set(desc: DocumentDescription,
+          field: String,
+          value: String): DocumentDescription = setField(desc, field, value)
 
   def defaultDoc: DocumentDescription = DocumentDescription(".", "sample.html", "Java doc creator test")
 
-  import co.gyeongmin.lang.javadoc.codeformatter.monad._
-  def parseArg(args: List[String], doc: Option[DocumentDescription], option: Option[DebugOption]): (DocumentDescription, Option[DebugOption]) = args match {
-    case Nil => (doc.getOrElse(defaultDoc), option)
+  @scala.annotation.tailrec
+  def parseArg(args: List[String], doc: DocumentDescription, option: Option[DebugOption]): (DocumentDescription, Option[DebugOption]) = args match {
+    case Nil => (doc, option)
     case ("-i" | "--input") :: filename :: t => parseArg(t, set(doc, "baseDir", filename), option)
     case ("-o" | "--output") :: filename :: t => parseArg(t, set(doc, "outputFile", filename), option)
     case ("-v" | "--verbose") :: t => parseArg(t, doc, Some(DebugOption(stackTrace = true)))
@@ -43,8 +44,10 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    val (doc, option) = parseArg(args.toList, None, None)
-    doc match { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, option) }
+    val (doc, option) = parseArg(args.toList, defaultDoc, None)
+    doc match {
+      case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, option)
+    }
   }
 
   def createDoc(baseDir: String, outFile: String, name: String, debugOption: Option[DebugOption]): Unit = {
@@ -83,7 +86,7 @@ object Main {
           'section(
             'aside('id /= "sidebar", 'class /= "sidebar-dark",
               'nav(
-                'h3("소스코드 트리"),
+                'h3("Source Code Tree"),
                 'ul(runLogging(node.buildNavTree, log.info("build nav tree")))
               )
             ),
@@ -97,7 +100,7 @@ object Main {
       ), TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
 
-    node.createHashMap.keys.foreach(println)
+//    node.createHashMap.keys.foreach(println)
   }
 
   def runLogging[T](buildNavTree: => T, f: => Unit): T = {
