@@ -1,7 +1,6 @@
 package co.gyeongmin.lang.javadoc.codeformatter
 
 import co.gyeongmin.lang.javadoc.JavaSToken
-import co.gyeongmin.lang.javadoc.codeformatter.JavaParser.{controlStatement, nonControlStatement}
 import co.gyeongmin.lang.javadoc.codeformatter.monad._
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._
@@ -10,8 +9,8 @@ import scala.language.postfixOps
 
 object JavaParser {
 
-  import co.gyeongmin.lang.javadoc.codeformatter.syntax._
   import Helper._
+  import co.gyeongmin.lang.javadoc.codeformatter.syntax._
 
   // LL(1) parser
   private val PrimitiveTypeTokens: List[JavaTokenEnum] =

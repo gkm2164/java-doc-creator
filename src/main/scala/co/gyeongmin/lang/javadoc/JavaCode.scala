@@ -1,12 +1,13 @@
 package co.gyeongmin.lang.javadoc
 
-import scala.language.{higherKinds, implicitConversions}
 import cats.data._
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._
 import co.gyeongmin.lang.javalang.exceptions.TokenNotAcceptedException
 import levsha.Document.Node
 import levsha.text.symbolDsl._
+
+import scala.language.{higherKinds, implicitConversions}
 
 
 final case class JavaCode(packageName: String,

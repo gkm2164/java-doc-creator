@@ -1,10 +1,10 @@
 package co.gyeongmin.lang
 
-import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import levsha.Document._
 import levsha.impl.TextPrettyPrintingConfig
 import levsha.text.symbolDsl._
+
 import scala.annotation.tailrec
 
 package object javadoc {

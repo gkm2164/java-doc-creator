@@ -2,7 +2,6 @@ package co.gyeongmin.lang.javadoc
 
 import java.io.PrintWriter
 
-import co.gyeongmin.lang.javadoc.Main.PrintOption
 import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter
 import com.typesafe.scalalogging.Logger
 import levsha.Document._

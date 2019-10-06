@@ -2,9 +2,8 @@ package co.gyeongmin.lang.javadoc
 
 import java.io._
 
-import co.gyeongmin.lang.javalang.Tokenizer
 import co.gyeongmin.lang.javadoc.codeformatter.monad._
-
+import co.gyeongmin.lang.javalang.Tokenizer
 import com.typesafe.scalalogging.Logger
 import laika.api.Transform
 import laika.format._
