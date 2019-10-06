@@ -19,15 +19,35 @@ object Main {
 
   case class DocumentDescription(baseDir: String, outputFile: String, description: String)
 
-  def main(args: Array[String]): Unit = {
-    List(
-      DocumentDescription(".", "sample.html", "JAVA Doc Creator Test"),
-//      DocumentDescription("/Users/gyeongmin/java/spring-framework/spring-web", "java-doc-spring-web.html", "Java Doc for Spring Framework"),
-//      DocumentDescription("/Users/gyeongmin/java/spring-framework/spring-tx", "java-doc-spring-tx.html", "Java Doc for Spring Framework transaction")
-    ).foreach { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name) }
+  def setField(doc: DocumentDescription, field: String, value: String): DocumentDescription = field match {
+    case "baseDir" => doc.copy(baseDir = value)
+    case "outputFile" => doc.copy(outputFile = value)
+    case "description" => doc.copy(description = value)
+    case _ => throw new RuntimeException("unknown field in DocumentDescription")
   }
 
-  def createDoc(baseDir: String, outFile: String, name: String): Unit = {
+  def set(desc: Option[DocumentDescription], field: String, value: String): Option[DocumentDescription] = desc match {
+    case None => Some(setField(DocumentDescription("", "", ""), field, value))
+    case Some(doc) => Some(setField(doc, field, value))
+  }
+
+  def defaultDoc: DocumentDescription = DocumentDescription(".", "sample.html", "Java doc creator test")
+
+  import co.gyeongmin.lang.javadoc.codeformatter.monad._
+  def parseArg(args: List[String], doc: Option[DocumentDescription], option: Option[DebugOption]): (DocumentDescription, Option[DebugOption]) = args match {
+    case Nil => (doc.getOrElse(defaultDoc), option)
+    case ("-i" | "--input") :: filename :: t => parseArg(t, set(doc, "baseDir", filename), option)
+    case ("-o" | "--output") :: filename :: t => parseArg(t, set(doc, "outputFile", filename), option)
+    case ("-v" | "--verbose") :: t => parseArg(t, doc, Some(DebugOption(stackTrace = true)))
+    case h :: t => throw new RuntimeException(s"unknown option $h")
+  }
+
+  def main(args: Array[String]): Unit = {
+    val (doc, option) = parseArg(args.toList, None, None)
+    doc match { case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, option) }
+  }
+
+  def createDoc(baseDir: String, outFile: String, name: String, debugOption: Option[DebugOption]): Unit = {
     import levsha.text.renderHtml
     import levsha.text.symbolDsl._
 
@@ -39,7 +59,7 @@ object Main {
       else ""
     }
 
-    val node = goThroughTree(new File(s"$baseDir/src/main/java"))
+    val node = goThroughTree(new File(s"$baseDir/src/main/java"), debugOption)
     val pw = new PrintWriter(outFile)
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
@@ -85,7 +105,7 @@ object Main {
     buildNavTree
   }
 
-  def goThroughTree(currentHandle: File, printOption: PrintOption = PrintOption(rawMethodBody = false)): CodeNonLeaf = {
+  def goThroughTree(currentHandle: File, debugOption: Option[DebugOption]): CodeNonLeaf = {
     def loop(currentHandle: File, pkgNameAcc: Seq[String]): CodeNode = {
       if (currentHandle.isFile) {
         val filename = currentHandle.getName
@@ -97,7 +117,7 @@ object Main {
         log.info(s"parse token - # of tokens ${tokens.length}")
 
         val scalaTokens = tokens.map(x => JavaSToken(x.getE, x.getValue))
-        CodeLeaf(filename, packageName, scalaTokens.toList, printOption)
+        CodeLeaf(filename, packageName, scalaTokens.toList, debugOption)
       } else {
         log.info(s"entered package ${(pkgNameAcc :+ currentHandle.getName).mkString(".")}")
         CodeNonLeaf(currentHandle.getName,

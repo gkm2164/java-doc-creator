@@ -1,16 +1,28 @@
 # Java Document Creator
 
-## 설명
-Scala + Java 언어로 개발된 Java 문서 생성기
+## Overview
+- Java parser written in Scala language
+- Export HTML document which describes your classes, enum classes, interfaces, annotation interfaces, methods, member fields.
+- LL(1) parser
+- Tokenizer written in Java
 
 ![example](img/screenshot.png)
 
-## 사용방법
-1. src/main/scala/co.gyeongmin.lang.javadoc.Main 오브젝트의 메인함수에서 만들어보고 싶은 자바 프로젝트 루트를 넣음
-1. SBT로 실행
-- ```$ sbt run```
-1. 
+## How to use?
+1. Build this project with sbt command 
+- ```$ sbt compile```
 
-## 사용기술
-- Scala 2.12.8, Java 1.8
+1. Run with SBT command
+- ```$ sbt run -i [base directory of your maven/sbt/gradle project] -o [output file name, html format] -v```
+- Options
+  - -i --input: set project directory
+  - -o --output: set output file name
+  - -v --verbose: debug option to see whole parsing mechanism
+
+## Used stack
+- Scala 2.12.8, Java 1.8, Cats library for Monad
 - HTML5, Bootstrap, JQuery
+
+## Etc.
+- Sorry for not pure functional for Tokenizer... Implementing a Aho-corasick algorithm is so hard in FP. But the Parser
+  is purely functional.(State + Writer + Either monads)

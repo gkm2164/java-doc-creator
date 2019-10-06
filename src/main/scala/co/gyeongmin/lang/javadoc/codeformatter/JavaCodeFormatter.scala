@@ -31,6 +31,6 @@ object JavaCodeFormatter {
       if (codeName == "postProcessBeanFactory") Some(DebugOption(stackTrace = true)) else None)
 
 
-  def printCode(codeName: String, tokens: Vector[JavaSToken]): String =
-    printCodeCommon(codeName, tokens, JavaParser.javaCode, Some(DebugOption(stackTrace = true)))
+  def printCode(codeName: String, tokens: Vector[JavaSToken], debugOption: Option[DebugOption]): String =
+    printCodeCommon(codeName, tokens, JavaParser.javaCode, debugOption)
 }

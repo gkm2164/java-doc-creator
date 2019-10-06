@@ -18,12 +18,14 @@ sealed trait CodeNode {
   def createHashMap: Map[String, List[JavaDefinition]]
 }
 
-final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], printOption: PrintOption) extends CodeNode {
+import co.gyeongmin.lang.javadoc.codeformatter.monad._
+
+final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], debugOption: Option[DebugOption]) extends CodeNode {
   val log: Logger = Logger("CodeLeaf")
   val code: JavaCode = JavaCode(tokens)
   val reformatPw: PrintWriter = new PrintWriter(s"./$name.html")
   reformatPw.write("""<!DOCTYPE html><html><body><pre style="background: black; color: #BCBCBC;">""")
-  reformatPw.write(JavaCodeFormatter.printCode(name, tokens.toVector))
+  reformatPw.write(JavaCodeFormatter.printCode(name, tokens.toVector, debugOption))
   reformatPw.write("</body></html></pre>")
   reformatPw.close()
 

@@ -11,3 +11,5 @@ libraryDependencies ++= Seq(
   "org.planet42" %% "laika-core" % "0.10.0",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2")
+
+mainClass in assembly := Some("co.gyeongmin.lang.javadoc.Main")

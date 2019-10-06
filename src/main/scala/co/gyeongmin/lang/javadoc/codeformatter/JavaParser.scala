@@ -724,16 +724,11 @@ object JavaParser {
   } yield (), "declaration")
 
   def declDetail: CodeWriter[Unit] = tag({
-    def loop: CodeWriter[Unit] = tag(for {
-      _ <- assertToken(COMMA).tell(",").enter()
-      _ <- declDetail
-    } yield (), "loop")
-
     for {
       _ <- typeUse.tell(" ")
       _ <- identifier
       _ <- variableInitialize.hint(SUBSTITUTE) || none
-      _ <- loop || none
+      _ <- assertToken(COMMA).tell(",").enter() ~ declDetail || none
     } yield ()
   }, "declDetail")
 
@@ -787,16 +782,10 @@ object JavaParser {
     case JavaSToken(_, v) => v
   }).print(), DOT), "identifier")
 
-  def tokenSeparatedCtx(chosenParser: CodeWriter[Unit], separator: JavaTokenEnum, afterToken: CodeWriter[Unit] = none): CodeWriter[Unit] = tag({
-    def loop: CodeWriter[Unit] = tag(for {
-      _ <- takeToken(separator).print()
-      _ <- afterToken
-      res <- tokenSeparatedCtx(chosenParser, separator, afterToken)
-    } yield res, "loop")
-
-    for {
-      _ <- chosenParser
-      _ <- takeToken(separator).print() ~ afterToken ~ tokenSeparatedCtx(chosenParser, separator, afterToken) || none
-    } yield ()
-  }, s"tokenSeparatedCtx($separator)")
+  def tokenSeparatedCtx(chosenParser: CodeWriter[Unit],
+                        separator: JavaTokenEnum,
+                        afterToken: CodeWriter[Unit] = none): CodeWriter[Unit] = tag(for {
+    _ <- chosenParser
+    _ <- takeToken(separator).print() ~ afterToken ~ tokenSeparatedCtx(chosenParser, separator, afterToken) || none
+  } yield (), s"tokenSeparatedCtx($separator)")
 }
