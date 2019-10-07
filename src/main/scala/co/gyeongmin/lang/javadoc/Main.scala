@@ -98,8 +98,6 @@ object Main {
         )
       ), TextPrettyPrintingConfig.noPrettyPrinting))
     pw.close()
-
-//    node.createHashMap.keys.foreach(println)
   }
 
   def runLogging[T](buildNavTree: => T, f: => Unit): T = {

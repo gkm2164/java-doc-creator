@@ -12,6 +12,8 @@ object JavaParser {
   import Helper._
   import co.gyeongmin.lang.javadoc.codeformatter.syntax._
 
+  val ModifierStartToken: List[JavaTokenEnum] =
+    List(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
   // LL(1) parser
   private val PrimitiveTypeTokens: List[JavaTokenEnum] =
     List(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG,
@@ -27,18 +29,16 @@ object JavaParser {
     List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
   private val ExpressionStartable =
     INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens ::: PrimitiveTypeTokens
-  val ModifierStartToken: List[JavaTokenEnum] =
-    List(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
 
   def javaCode: CodeWriter[Unit] = tag(for {
     _ <- packageDefinition
-    _ <- imports || none
-    _ <- symbolLoop(for {
+    _ <- enter ~ imports || none
+    _ <- enter ~ symbolLoop(for {
       _ <- modifiers || none
       _ <- classDefinition.hint(CLASS) ||
-           enumDefinition.hint(ENUM) ||
-           interfaceDefinition.hint(INTERFACE) ||
-           annotationInterfaceDefinition.hint(ANNOTATION_INTERFACE)
+        enumDefinition.hint(ENUM) ||
+        interfaceDefinition.hint(INTERFACE) ||
+        annotationInterfaceDefinition.hint(ANNOTATION_INTERFACE)
     } yield ()) || none
   } yield (), "javaCode")
 
@@ -68,7 +68,7 @@ object JavaParser {
   } yield (), "annotationInterfaceDefinition")
 
   def annotationBody: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(LBRACE).tell("{").enter().tab()
+    _ <- assertToken(LBRACE).tell(" {").enter().tab()
     _ <- symbolLoop(annotationBodyDetail) || none
     _ <- assertToken(RBRACE).untab().tell("}").enter()
   } yield (), "annotationBody")
@@ -94,7 +94,7 @@ object JavaParser {
   } yield (), "defaultValue")
 
   def superInterfaceExtends: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(EXTENDS).tell("implements ")
+    _ <- assertToken(EXTENDS).tell(keyword("implements "))
     _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "superInterface")
 
@@ -152,7 +152,7 @@ object JavaParser {
     } yield (), "enumBodyDetail")
 
     for {
-      _ <- assertToken(LBRACE).tell("{").enter().tab()
+      _ <- assertToken(LBRACE).tell(" {").enter().tab()
       _ <- enumBodyDetail || none
       _ <- assertToken(RBRACE).untab().tell("}")
     } yield ()
@@ -188,7 +188,7 @@ object JavaParser {
   def packageDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(PACKAGE).tell(keyword("package "))
     _ <- tokenSeparatedCtx(identifier, DOT)
-    _ <- assertToken(SEMICOLON).tell(";").enter().enter()
+    _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "packageDefinition")
 
   def imports: CodeWriter[Unit] = tag(symbolLoop(for {
@@ -321,12 +321,12 @@ object JavaParser {
   } yield (), "additionalBound")
 
   def superClass: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(EXTENDS).tell("extends ")
+    _ <- assertToken(EXTENDS).tell(keyword(" extends "))
     _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "superClass")
 
   def superInterface: CodeWriter[Unit] = tag(for {
-    _ <- assertToken(IMPLEMENTS).tell("implements ")
+    _ <- assertToken(IMPLEMENTS).tell(keyword(" implements "))
     _ <- tokenSeparatedCtx(typeUse, COMMA, space)
   } yield (), "superInterface")
 

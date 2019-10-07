@@ -23,7 +23,7 @@ final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaST
   val log: Logger = Logger("CodeLeaf")
   val code: JavaCode = JavaCode(tokens)
   val reformatPw: PrintWriter = new PrintWriter(s"./$name.html")
-  reformatPw.write("""<!DOCTYPE html><html><body><pre style="background: black; color: #BCBCBC;">""")
+  reformatPw.write("""<!DOCTYPE html><html><body><pre style="background: black; color: #BCBCBC; overflow-wrap: normal;">""")
   reformatPw.write(JavaCodeFormatter.printCode(name, tokens.toVector, debugOption))
   reformatPw.write("</body></html></pre>")
   reformatPw.close()
