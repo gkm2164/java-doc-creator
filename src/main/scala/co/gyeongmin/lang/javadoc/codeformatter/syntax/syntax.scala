@@ -1,5 +1,8 @@
 package co.gyeongmin.lang.javadoc.codeformatter
 
+import cats.syntax.functor._
+import cats.syntax.flatMap._
+
 import co.gyeongmin.lang.javadoc.JavaSToken
 import co.gyeongmin.lang.javadoc.codeformatter.exceptions._
 import co.gyeongmin.lang.javadoc.codeformatter.monad._

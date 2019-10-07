@@ -30,6 +30,10 @@ object JavaParser {
   private val ExpressionStartable =
     INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens ::: PrimitiveTypeTokens
 
+  import cats.syntax._
+  import flatMap._
+  import functor._
+
   def javaCode: CodeWriter[Unit] = tag(for {
     _ <- packageDefinition
     _ <- enter ~ imports || none

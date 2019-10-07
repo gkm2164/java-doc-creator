@@ -16,16 +16,16 @@ package object monad {
   case class CodeWriterConfig(debug: Option[DebugOption] = None)
 
   case class CodeWriterStackElem(idx: Int, token: JavaSToken, context: String) {
-    private def capWithDoubleQuote(str: String): String =
-      if (token.tokenType == JavaTokenEnum.STRING ||
-          token.tokenType == JavaTokenEnum.CHAR) str
-      else s""""$str""""
-
     override def toString: String = {
       val JavaSToken(enum, value) = token
 
       s"""$context:$idx:$enum(${capWithDoubleQuote(value)})"""
     }
+
+    private def capWithDoubleQuote(str: String): String =
+      if (token.tokenType == JavaTokenEnum.STRING ||
+        token.tokenType == JavaTokenEnum.CHAR) str
+      else s""""$str""""
   }
 
   case class CodeWriterState(tokens: List[(JavaSToken, Int)],
@@ -62,19 +62,10 @@ package object monad {
     override def tailRecM[A, B](a: A)(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
       case CodeWriterState(tokenList, stringBuilder, syntaxStack, config) =>
         f(a).run(tokenList, stringBuilder, syntaxStack, config) match {
-          case (nextState, Right(Right(done))) =>(nextState, Right(done))
+          case (nextState, Right(Right(done))) => (nextState, Right(done))
           case (nextState, Right(Left(nextA))) => tailRecM(nextA)(f)(nextState)
           case (nextState, Left(e)) => (nextState, Left(e))
         }
     }
   }
-
-  implicit class MonadSyntax[F[_] : Monad, A](ma: F[A]) {
-    private val monad = implicitly[Monad[F]]
-
-    def flatMap[B](f: A => F[B]): F[B] = monad.flatMap(ma)(f)
-
-    def map[B](f: A => B): F[B] = monad.map(ma)(f)
-  }
-
 }

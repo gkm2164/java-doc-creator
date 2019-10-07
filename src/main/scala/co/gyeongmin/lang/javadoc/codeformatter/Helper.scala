@@ -8,6 +8,8 @@ import co.gyeongmin.lang.javalang.JavaTokenEnum._
 
 object Helper {
   import syntax._
+  import cats.syntax.functor._
+  import cats.syntax.flatMap._
 
   def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(ParseFailError(reason))) }
 
