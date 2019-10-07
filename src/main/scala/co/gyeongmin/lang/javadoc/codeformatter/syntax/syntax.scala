@@ -115,6 +115,7 @@ package object syntax {
       _ <- x
     } yield ()
 
+    // either의 recoverWith을 쓸 수 있을까?
     def orElse(otherWriter: CodeWriter[A]): CodeWriter[A] = prevState => {
       val (nextState, ret) = thisWriter(prevState)
       ret match {
