@@ -51,15 +51,15 @@ object Helper {
     def |(elem: JavaTokenEnum): List[JavaTokenEnum] = thisTokens :+ elem
   }
 
-  def takeToken(enum: JavaTokenEnum, converter: JavaSToken => String = _.value ): CodeWriter[JavaSToken] = tag(CodeWriter {
+  def takeToken(enum: JavaTokenEnum): CodeWriter[String] = tag(CodeWriter {
     case Nil => (Nil, Left(TokenListEmptyError()))
-    case (JavaSToken(v, str), _) :: t if v == enum => (t, Right(JavaSToken(v, converter(str))))
+    case (JavaSToken(v, str), _) :: t if v == enum => (t, Right(str))
     case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(TokenNotAllowedError(s"not allow $v, but $enum", tokenList)))
   }, s"takeToken($enum)")
 
-  def takeTokens(enums: List[JavaTokenEnum], converter: JavaSToken => String = _.value): CodeWriter[JavaSToken] = tag(CodeWriter {
+  def takeTokens(enums: List[JavaTokenEnum], converter: JavaSToken => String = _.value): CodeWriter[String] = tag(CodeWriter {
     case Nil => (Nil, Left(TokenListEmptyError()))
-    case (JavaSToken(v, str), _) :: t if enums.contains(v) => (t, Right(JavaSToken(v, converter(str))))
+    case (token@JavaSToken(v, _), _) :: t if enums.contains(v) => (t, Right(converter(token)))
     case tokenList@(JavaSToken(v, _), _) :: _ => (tokenList, Left(TokenNotAllowedError(s"not allow $v, but should be one of ${enums.mkString(", ")}", tokenList)))
   }, s"takeTokens(${enums.mkString(" | ")})").hint(enums: _*)
 

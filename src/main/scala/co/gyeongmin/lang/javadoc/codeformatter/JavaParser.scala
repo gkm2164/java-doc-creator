@@ -282,7 +282,7 @@ object JavaParser {
 
   def annotation: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ANNOTATION).tell(color("@", "yellow"))
-    _ <- takeToken(TOKEN).print(token => color(token.value, "yellow"))
+    _ <- takeToken(TOKEN).print(color(_, "yellow"))
     _ <- annotationTail || none
   } yield (), "annotation")
 
@@ -386,7 +386,7 @@ object JavaParser {
 
     for {
       _ <- assertToken(NEW).tell(keyword("new "))
-      _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || tokenSeparatedCtx(takeToken(TOKEN).print(x => typeNameCss(x.value)), DOT)
+      _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
       _ <- generic.hint(LT) || none
       _ <- arrayInstance.hint(LBRACKET, LBRACE) || classInstance.hint(LEFT_PARENTHESIS)
       _ <- newInstanceReferable || none
@@ -440,7 +440,7 @@ object JavaParser {
     _ <- blockStmts.notHint(RBRACE) || none
   } yield (), "blockStmts")
 
-  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(x => keyword(x.value)), "primitiveTypes")
+  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(keyword), "primitiveTypes")
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(FINALLY).tell(keyword(" finally "))
@@ -789,6 +789,6 @@ object JavaParser {
                         separator: JavaTokenEnum,
                         afterToken: CodeWriter[Unit] = none): CodeWriter[Unit] = tag(for {
     _ <- chosenParser
-    _ <- takeToken(separator).print() ~ afterToken ~ tokenSeparatedCtx(chosenParser, separator, afterToken) || none
+    _ <- (takeToken(separator).print() ~ afterToken ~ tokenSeparatedCtx(chosenParser, separator, afterToken)) || none
   } yield (), s"tokenSeparatedCtx($separator)")
 }

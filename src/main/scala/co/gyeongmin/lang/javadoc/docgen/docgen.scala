@@ -1,6 +1,7 @@
 package co.gyeongmin.lang.javadoc
 
 import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter
+import co.gyeongmin.lang.javadoc.config.DebugOption
 import levsha.Document._
 import levsha.impl.TextPrettyPrintingConfig
 import levsha.text.renderHtml
@@ -11,7 +12,7 @@ package object docgen {
 
 
   trait StringWriter[T] {
-    def show(indent: Indent): T
+    def show(indent: Indent)(implicit debugOption: DebugOption): T
   }
 
   implicit class DefToNodeWriter[T](definition: JavaDefinition) extends StringWriter[Node[T]] {
@@ -27,7 +28,7 @@ package object docgen {
       }
     }
 
-    override def show(indent: Indent): Node[T] =
+    override def show(indent: Indent)(implicit debugOption: DebugOption): Node[T] =
       'div('id /= s"def-${definition.id}", 'class /= "definition-box", 'style /= s"margin-left: ${indent.ch()}px;",
         'a('id /= definition.id), definition match {
           case c@JavaClass(name, modifier, definitions, inheritClass, implementInterfaces) =>
@@ -65,7 +66,7 @@ package object docgen {
                 if (name == "" || name == returnType.show) "" else 'span('class /= "method-name", s" $name"), "(",
                 args.map(x => renderHtml(x.show, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "), ")"),
               'span(modifier.commentMacros.filter(_.startsWith("//!")).map(_.drop(3)).mkString("\n")),
-              'pre(JavaCodeFormatter.printCodeBlock(name, codes)),
+              'pre(JavaCodeFormatter.printCodeBlock(name, codes, debugOption)),
               if (m.exampleCode.nonEmpty) 'pre('code('class /= "java", exampleCodes(modifier))) else Empty)
 
           case JavaMember(modifier, name, memberType) =>
@@ -75,7 +76,7 @@ package object docgen {
           case _ => ""
         })
 
-    private def publicDefinitions(definitions: Vector[JavaDefinition], indent: Indent): Node[Nothing] =
+    private def publicDefinitions(definitions: Vector[JavaDefinition], indent: Indent)(implicit debugOption: DebugOption): Node[Nothing] =
       definitions.filter(_.modifier.access != PRIVATE).sortBy(_.name).map(x => x.show(indent.inc))
 
     private def exampleCodes(modifier: JavaModifier): Node[Nothing] =

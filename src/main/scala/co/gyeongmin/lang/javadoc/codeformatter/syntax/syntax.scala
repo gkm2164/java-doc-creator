@@ -13,6 +13,8 @@ import scala.language.implicitConversions
 package object syntax {
 
   implicit class CodeWriterExt[A](thisWriter: CodeWriter[A]) {
+    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
+
     private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
         case Nil => (prevState, Left(new TokenListEmptyError))
@@ -21,8 +23,6 @@ package object syntax {
           Left(TokenNotAllowedError(s"token $v is not allowed, but should be one of ${tokens.mkString("/")}", tokenList)))
       }
     }
-
-    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
 
     def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
 
@@ -33,24 +33,24 @@ package object syntax {
         val actualTag = CodeWriterStackElem(idx, token, tag)
         val sb: StringBuilder = StringBuilder.newBuilder
 
-        config.debug match {
-          case Some(debugOption) =>
-            sb ++= s"[${actualTag.toString}]"
-            if (debugOption.stackTrace) {
-              sb ++= s" <- [${prevStack.take(debugOption.maxStackSize).mkString(" / ")}]"
-              println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
-            }
-
-          case _ =>
+        sb ++= s"[${actualTag.toString}]"
+        if (config.debug.stackTrace) {
+          sb ++= s" <- [${prevStack.take(config.debug.maxStackSize).mkString(" / ")}]"
+          println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
         }
 
         val (CodeWriterState(nextTokenList, newSb, _, _), v) =
           thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
 
-        if (config.debug.isDefined) println(v match {
-          case Right(_) => f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}"
-          case Left(_) =>  f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}"
-        })
+        if (config.debug.stackTrace) {
+          v match {
+            case Right(_) =>
+              println(f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}")
+            case Left(_) =>
+              if (!config.debug.printOnlyAccepted)
+                println(f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}")
+          }
+        }
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
     }
 
@@ -110,11 +110,6 @@ package object syntax {
 
     def ||(x: CodeWriter[A]): CodeWriter[A] = orElse(x)
 
-    def ~(x: CodeWriter[A]): CodeWriter[Unit] = for {
-      _ <- thisWriter
-      _ <- x
-    } yield ()
-
     // either의 recoverWith을 쓸 수 있을까?
     def orElse(otherWriter: CodeWriter[A]): CodeWriter[A] = prevState => {
       val (nextState, ret) = thisWriter(prevState)
@@ -125,6 +120,11 @@ package object syntax {
         case _ => throw new RuntimeException()
       }
     }
+
+    def ~(x: CodeWriter[A]): CodeWriter[Unit] = for {
+      _ <- thisWriter
+      _ <- x
+    } yield ()
 
     def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): String = {
       val (CodeWriterState(_, sb, stack, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
@@ -140,4 +140,5 @@ package object syntax {
             config: CodeWriterConfig): CodeWriterValue[A] = thisWriter(CodeWriterState(state, stringBuilder, stack, config))
 
   }
+
 }

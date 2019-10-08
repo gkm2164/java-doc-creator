@@ -4,9 +4,24 @@ version := "0.1"
 
 scalaVersion := "2.12.8"
 
+resolvers += Resolver.sonatypeRepo("releases")
+
 libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0-M1"
 
-scalacOptions ++= Seq("-deprecation")
+scalacOptions ++= Seq("-deprecation", "-Ypartial-unification")
+
+addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
+
+// if your project uses multiple Scala versions, use this for cross building
+addCompilerPlugin("org.typelevel" % "kind-projector" % "0.11.0" cross CrossVersion.full)
+
+// if your project uses both 2.10 and polymorphic lambdas
+libraryDependencies ++= (scalaBinaryVersion.value match {
+  case "2.10" =>
+    compilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full) :: Nil
+  case _ =>
+    Nil
+})
 
 libraryDependencies ++= Seq(
   "com.github.fomkin" %% "levsha-core" % "0.7.2",

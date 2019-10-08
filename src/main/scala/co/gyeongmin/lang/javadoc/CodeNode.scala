@@ -3,6 +3,7 @@ package co.gyeongmin.lang.javadoc
 import java.io.PrintWriter
 
 import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter
+import co.gyeongmin.lang.javadoc.config.DebugOption
 import com.typesafe.scalalogging.Logger
 import levsha.Document._
 import levsha.text.symbolDsl._
@@ -17,9 +18,7 @@ sealed trait CodeNode {
   def createHashMap: Map[String, List[JavaDefinition]]
 }
 
-import co.gyeongmin.lang.javadoc.codeformatter.monad._
-
-final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], debugOption: Option[DebugOption]) extends CodeNode {
+final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], debugOption: DebugOption) extends CodeNode {
   val log: Logger = Logger("CodeLeaf")
   val code: JavaCode = JavaCode(tokens)
   val reformatPw: PrintWriter = new PrintWriter(s"./$name.html")
@@ -30,7 +29,7 @@ final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaST
 
   override def print[T]: Node[T] = 'div('class /= "panel",
     'hr(),
-    'div(code.show)
+    'div(code.show(debugOption))
   )
 
   override def buildNavTree[T]: Node[T] = {

@@ -1,6 +1,7 @@
 package co.gyeongmin.lang.javadoc
 
 import cats.data._
+import co.gyeongmin.lang.javadoc.config.DebugOption
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._
 import co.gyeongmin.lang.javalang.exceptions.TokenNotAcceptedException
@@ -26,7 +27,7 @@ final case class JavaCode(packageName: String,
 
   import docgen._
 
-  def show[T]: Node[T] = 'div(defs.sortBy(_.name).map(_.show(Indent(0))))
+  def show[T](implicit debugOption: DebugOption): Node[T] = 'div(defs.sortBy(_.name).map(_.show(Indent(0))))
 }
 
 object JavaCode {

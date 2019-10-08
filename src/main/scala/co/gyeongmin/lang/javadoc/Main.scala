@@ -3,6 +3,7 @@ package co.gyeongmin.lang.javadoc
 import java.io._
 
 import co.gyeongmin.lang.javadoc.codeformatter.monad._
+import co.gyeongmin.lang.javadoc.config.{DebugOption, DebugOptionBuilder, DocumentDescription, DocumentDescriptionBuilder}
 import co.gyeongmin.lang.javalang.Tokenizer
 import com.typesafe.scalalogging.Logger
 import laika.api.Transform
@@ -11,6 +12,7 @@ import levsha.impl.TextPrettyPrintingConfig
 
 import scala.collection.JavaConverters._
 import scala.io.Source
+import scala.util.Try
 
 object Main {
   val log = Logger("go-doc-creator")
@@ -18,38 +20,33 @@ object Main {
     dir.isDirectory || (dir.isFile && dir.getName.endsWith(".java"))
   }
 
-  case class DocumentDescription(baseDir: String, outputFile: String, description: String)
-
-  def setField(doc: DocumentDescription, field: String, value: String): DocumentDescription = field match {
-    case "baseDir" => doc.copy(baseDir = value)
-    case "outputFile" => doc.copy(outputFile = value)
-    case "description" => doc.copy(description = value)
-    case _ => throw new RuntimeException("unknown field in DocumentDescription")
-  }
-
-  def set(desc: DocumentDescription,
-          field: String,
-          value: String): DocumentDescription = setField(desc, field, value)
-
-  def defaultDoc: DocumentDescription = DocumentDescription(".", "sample.html", "Java doc creator test")
-
   @scala.annotation.tailrec
-  def parseArg(args: List[String], doc: DocumentDescription, option: Option[DebugOption]): (DocumentDescription, Option[DebugOption]) = args match {
-    case Nil => (doc, option)
-    case ("-i" | "--input") :: filename :: t => parseArg(t, set(doc, "baseDir", filename), option)
-    case ("-o" | "--output") :: filename :: t => parseArg(t, set(doc, "outputFile", filename), option)
-    case ("-v" | "--verbose") :: t => parseArg(t, doc, Some(DebugOption(stackTrace = true)))
+  def parseArg(args: List[String], doc: DocumentDescriptionBuilder, debug: DebugOptionBuilder): (DocumentDescription, DebugOption) = args match {
+    case Nil => (doc.realize, debug.realize)
+    case ("-i" | "--input") :: pathName :: t =>
+      parseArg(t, doc.set(_.baseDir := pathName), debug)
+    case ("-o" | "--output") :: pathName :: t =>
+      parseArg(t, doc.set(_.outputDir := pathName), debug)
+    case ("-d" | "--desc") :: desc :: t =>
+      parseArg(t, doc.set(_.description := desc), debug)
+    case ("-t" | "--stack-trace") :: t =>
+      parseArg(t, doc, debug.set(_.stackTrace := true))
+    case ("-m=" | "--max-stack-size=") :: num :: t =>
+      parseArg(t, doc, debug.set(_.maxStackSize := Try(num.toInt).getOrElse(1)))
+    case ("-a" | "--only-accept") :: t =>
+      parseArg(t, doc, debug.set(_.printOnlyAccepted := true))
     case h :: _ => throw new RuntimeException(s"unknown option $h")
   }
 
   def main(args: Array[String]): Unit = {
-    val (doc, option) = parseArg(args.toList, defaultDoc, None)
+    val (doc, debugOption) = parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder)
+    println(doc)
     doc match {
-      case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, option)
+      case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, debugOption)
     }
   }
 
-  def createDoc(baseDir: String, outFile: String, name: String, debugOption: Option[DebugOption]): Unit = {
+  def createDoc(baseDir: String, outFile: String, name: String, debugOption: DebugOption): Unit = {
     import levsha.text.renderHtml
     import levsha.text.symbolDsl._
 
@@ -105,7 +102,7 @@ object Main {
     buildNavTree
   }
 
-  def goThroughTree(currentHandle: File, debugOption: Option[DebugOption]): CodeNonLeaf = {
+  def goThroughTree(currentHandle: File, debugOption: DebugOption): CodeNonLeaf = {
     def loop(currentHandle: File, pkgNameAcc: Seq[String]): CodeNode = {
       if (currentHandle.isFile) {
         val filename = currentHandle.getName

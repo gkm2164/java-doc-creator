@@ -3,6 +3,7 @@ package co.gyeongmin.lang.javadoc.codeformatter
 import cats._
 import co.gyeongmin.lang.javadoc.JavaSToken
 import co.gyeongmin.lang.javadoc.codeformatter.exceptions.FormatterError
+import co.gyeongmin.lang.javadoc.config.DebugOption
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 
 import scala.language.{higherKinds, implicitConversions}
@@ -11,9 +12,7 @@ package object monad {
   type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
   type CodeWriterValue[A] = (CodeWriterState, Either[FormatterError, A])
 
-  case class DebugOption(stackTrace: Boolean, maxStackSize: Int = 1, onlySuccess: Boolean = true)
-
-  case class CodeWriterConfig(debug: Option[DebugOption] = None)
+  case class CodeWriterConfig(debug: DebugOption)
 
   case class CodeWriterStackElem(idx: Int, token: JavaSToken, context: String) {
     override def toString: String = {
