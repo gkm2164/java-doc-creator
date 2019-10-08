@@ -58,9 +58,9 @@ package object config {
     def combine: List[SettingKey[_, T]]
   }
 
-  trait DescriptorType
+  sealed trait DescriptorType
 
-  implicit class DescriptionBuilderClass[T <: DescriptorType](self: T) {
+  implicit class DescriptionBuilderClass[T <: BuilderType[DescriptorType]](self: T) {
     def set(f: T => Unit): T = {
       f(self)
       self
