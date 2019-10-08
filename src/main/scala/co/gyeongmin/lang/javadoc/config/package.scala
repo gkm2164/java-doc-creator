@@ -60,8 +60,8 @@ package object config {
 
   sealed trait DescriptorType
 
-  implicit class DescriptionBuilderClass[T <: BuilderType[DescriptorType]](self: T) {
-    def set(f: T => Unit): T = {
+  implicit class DescriptionBuilderClass[T <: DescriptorType, U <: BuilderType[T]](self: U) {
+    def set(f: U => Unit): U = {
       f(self)
       self
     }
