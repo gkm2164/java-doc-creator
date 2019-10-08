@@ -40,7 +40,6 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val (doc, debugOption) = parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder)
-    println(doc)
     doc match {
       case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, debugOption)
     }
@@ -125,8 +124,6 @@ object Main {
 
     CodeNonLeaf("", currentHandle.listFiles(onlyJavaAndDirFilter).map(x => x.getName -> loop(x, Nil)).toMap)
   }
-
-  def getType(currentHandle: File): String = if (currentHandle.isFile) "FILE" else if (currentHandle.isDirectory) "DIRECTORY" else "UNKNOWN"
 
   case class PrintOption(rawMethodBody: Boolean)
 

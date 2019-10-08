@@ -18,7 +18,6 @@ object JavaCodeFormatter {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
 
     if (reformatTokens.nonEmpty) {
-      println(debugOption)
       startFrom.enter()
         .collect(reformatTokens, CodeWriterConfig(debug = debugOption))
     }

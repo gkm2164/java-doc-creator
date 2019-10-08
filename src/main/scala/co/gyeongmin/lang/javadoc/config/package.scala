@@ -22,14 +22,14 @@ package object config {
   }
 
 
-  implicit def partialSettingKeyImplicit[Target]: Monad[SettingKey[_, Target]] = new Monad[SettingKey[*, Target]] {
+  implicit def partialSettingKeyImplicit[Target]: Monad[SettingKey[*, Target]] = new Monad[SettingKey[*, Target]] {
     override def flatMap[A, B](fa: SettingKey[A, Target])(f: A => SettingKey[B, Target]): SettingKey[B, Target] = new SettingKey[B, Target] {
-      private val thisValue = fa.getOrDefault
-      private val nextSetter = f(thisValue)
+      private val currentValue = fa.getOrDefault
+      private val nextSetter = f(currentValue)
 
       override def defaultValue: B = nextSetter.getOrDefault
 
-      override def binder(x: Target, v: B): Target = nextSetter.binder(fa.binder(x, thisValue), v)
+      override def binder(x: Target, v: B): Target = nextSetter.binder(fa.binder(x, currentValue), v)
     }
 
     @scala.annotation.tailrec
@@ -60,8 +60,8 @@ package object config {
 
   sealed trait DescriptorType
 
-  implicit class DescriptionBuilderClass[T <: DescriptorType, U <: BuilderType[T]](self: U) {
-    def set(f: U => Unit): U = {
+  implicit class DescriptionBuilderClass[T <: BuilderType[_]](self: T) {
+    def set(f: T => Unit): T = {
       f(self)
       self
     }
