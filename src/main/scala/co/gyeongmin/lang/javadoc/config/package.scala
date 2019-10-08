@@ -21,7 +21,6 @@ package object config {
     def getOrDefault: T = thisValue.getOrElse(defaultValue)
   }
 
-
   implicit def partialSettingKeyImplicit[Target]: Monad[SettingKey[*, Target]] = new Monad[SettingKey[*, Target]] {
     override def flatMap[A, B](fa: SettingKey[A, Target])(f: A => SettingKey[B, Target]): SettingKey[B, Target] = new SettingKey[B, Target] {
       private val currentValue = fa.getOrDefault
@@ -67,7 +66,9 @@ package object config {
     }
   }
 
-  case class DocumentDescription(baseDir: String, outputDir: String, description: String) extends DescriptorType
+  case class DocumentDescription(baseDir: String,
+                                 outputDir: String,
+                                 description: String) extends DescriptorType
 
   case class DebugOption(stackTrace: Boolean,
                          maxStackSize: Int,
