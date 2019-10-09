@@ -2,8 +2,7 @@ package co.gyeongmin.lang.javadoc
 
 import java.io._
 
-import co.gyeongmin.lang.javadoc.codeformatter.monad._
-import co.gyeongmin.lang.javadoc.config.{DebugOption, DebugOptionBuilder, DocumentDescription, DocumentDescriptionBuilder}
+import co.gyeongmin.lang.javadoc.config._
 import co.gyeongmin.lang.javalang.Tokenizer
 import com.typesafe.scalalogging.Logger
 import laika.api.Transform
@@ -22,8 +21,8 @@ object Main {
   }
 
   @scala.annotation.tailrec
-  def parseArg(args: List[String], doc: DocumentDescriptionBuilder, debug: DebugOptionBuilder): (DocumentDescription, DebugOption) = args match {
-    case Nil => (doc.realize, debug.realize)
+  def parseArg(args: List[String], doc: DocumentDescriptionBuilder, debug: DebugOptionBuilder): Either[ArgParserError, (DocumentDescription, DebugOption)] = args match {
+    case Nil => Right((doc.realize, debug.realize))
     case ("-i" | "--input") :: pathName :: t =>
       parseArg(t, doc.set(_.baseDir := pathName), debug)
     case ("-o" | "--output") :: pathName :: t =>
@@ -34,15 +33,21 @@ object Main {
       parseArg(t, doc, debug.set(_.stackTrace := true))
     case ("-m=" | "--max-stack-size=") :: num :: t =>
       parseArg(t, doc, debug.set(_.maxStackSize := Try(num.toInt).getOrElse(1)))
-    case ("-a" | "--only-accept") :: t =>
+    case ("-a" | "--only-accepted") :: t =>
       parseArg(t, doc, debug.set(_.printOnlyAccepted := true))
-    case h :: _ => throw new RuntimeException(s"unknown option $h")
+    case ("-h" | "--help") :: t => Left(HelpMessage)
+    case h :: _ => Left(UnableToIdentifyError(s"unknown parameter: $h"))
   }
 
+
   def main(args: Array[String]): Unit = {
-    val (doc, debugOption) = parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder)
-    doc match {
-      case DocumentDescription(basedir, outputDir, name) => createDoc(basedir, outputDir, name, debugOption)
+    parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder).map {
+      case (doc, debugOption) =>
+        val DocumentDescription(basedir, outputDir, name) = doc
+        createDoc(basedir, outputDir, name, debugOption)
+    }.left.foreach {
+      case h@HelpMessage => h.printMessage(log)
+      case UnableToIdentifyError(msg) => log.error(msg)
     }
   }
 
@@ -68,7 +73,7 @@ object Main {
   def copyResources(outputDir: String): Try[Unit] = for {
     _ <- copyResource("css", outputDir)
     _ <- copyResource("js", outputDir)
-  } yield()
+  } yield ()
 
   def createDoc(baseDir: String, outputDir: String, name: String, debugOption: DebugOption): Unit = {
     import levsha.text.renderHtml
@@ -162,7 +167,4 @@ object Main {
 
     CodeNonLeaf("", currentHandle.listFiles(onlyJavaAndDirFilter).map(x => x.getName -> loop(x, Nil)).toMap)
   }
-
-  case class PrintOption(rawMethodBody: Boolean)
-
 }

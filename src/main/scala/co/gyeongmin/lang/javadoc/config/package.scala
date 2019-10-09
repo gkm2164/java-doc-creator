@@ -1,6 +1,7 @@
 package co.gyeongmin.lang.javadoc
 
 import cats.Monad
+import com.typesafe.scalalogging.Logger
 
 package object config {
 
@@ -103,6 +104,18 @@ package object config {
       override def defaultValue: T = givenDefaultValue
 
       override def binder(x: Target, v: T): Target = givenBinder(x, v)
+    }
+  }
+
+  sealed trait ArgParserError
+  case class UnableToIdentifyError(msg: String) extends ArgParserError
+  case object HelpMessage extends ArgParserError {
+    def printMessage(log: Logger): Unit = {
+      log.info("print help message for java parser")
+      log.info("")
+      log.info("-i, --input\t[maven base project]")
+      log.info("-o, --output\t[output project]")
+      log.info("-t, --stack-trace\tprint stack trace")
     }
   }
 }
