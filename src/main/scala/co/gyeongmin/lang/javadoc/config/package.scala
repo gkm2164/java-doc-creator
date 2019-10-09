@@ -55,7 +55,7 @@ package object config {
 
     def empty: T
 
-    def combine: List[SettingKey[_, T]]
+    protected def combine: List[SettingKey[_, T]]
   }
 
   sealed trait DescriptorType
@@ -84,7 +84,7 @@ package object config {
       SettingKey((self, value) => self.copy(description = value), "default description")
     val empty = DocumentDescription("", "", "")
 
-    val combine: List[SettingKey[_, DocumentDescription]] = baseDir :: outputDir :: description :: Nil
+    protected val combine: List[SettingKey[_, DocumentDescription]] = baseDir :: outputDir :: description :: Nil
   }
 
   class DebugOptionBuilder extends BuilderType[DebugOption] {
@@ -96,7 +96,7 @@ package object config {
       SettingKey((self, value) => self.copy(printOnlyAccepted = value), false)
 
     val empty = DebugOption(stackTrace = false, 0, printOnlyAccepted = false)
-    val combine: List[SettingKey[_, DebugOption]] = stackTrace :: maxStackSize :: printOnlyAccepted :: Nil
+    protected val combine: List[SettingKey[_, DebugOption]] = stackTrace :: maxStackSize :: printOnlyAccepted :: Nil
   }
 
   object SettingKey {
