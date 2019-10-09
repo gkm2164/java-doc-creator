@@ -59,7 +59,7 @@ object JavaParser {
 
   def interfaceDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(INTERFACE).tell(keyword("interface "))
-    _ <- identifier
+    _ <- identifier || fail("expected identifier")
     _ <- typeParameters || none
     _ <- superInterfaceExtends || none
     _ <- interfaceBody
@@ -80,7 +80,11 @@ object JavaParser {
 
   def annotationBodyDetail: CodeWriter[Unit] = tag(for {
     _ <- modifiers || none
-    _ <- annotationTypeElementDeclaration || constantDeclaration || classDefinition || interfaceDefinition || annotationInterfaceDefinition
+    _ <- annotationTypeElementDeclaration ||
+      constantDeclaration ||
+      classDefinition ||
+      interfaceDefinition ||
+      annotationInterfaceDefinition
   } yield (), "annotationBodyDetail")
 
   def annotationTypeElementDeclaration: CodeWriter[Unit] = tag(for {
@@ -141,9 +145,9 @@ object JavaParser {
 
   def enumDefinition: CodeWriter[Unit] = tag(for {
     _ <- takeToken(ENUM).print(x => keyword(s"$x "))
-    _ <- identifier
+    _ <- identifier || fail("expected identifier")
     _ <- superInterface.hint(IMPLEMENTS) || none
-    _ <- enumBodyDefinition
+    _ <- enumBodyDefinition || fail("expected enum body definition")
     _ <- enter
   } yield (), "enumDefinition")
 
@@ -357,7 +361,7 @@ object JavaParser {
 
   def methodThrows: CodeWriter[Unit] = tag(for {
     _ <- assertToken(THROWS).tell(keyword("throws "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space) || fail("exception types should be given")
   } yield (), "methodThrows")
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
@@ -411,7 +415,7 @@ object JavaParser {
   def tryStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(TRY).tell(keyword("try "))
     _ <- tryDeclaration || none
-    _ <- blockStmt
+    _ <- blockStmt || fail("block statement expected")
     _ <- catchStmts || none
     _ <- finallyStmt || none
     _ <- enter
@@ -425,10 +429,10 @@ object JavaParser {
 
   def catchStmts: CodeWriter[Unit] = tag(for {
     _ <- assertToken(CATCH).tell(keyword(" catch "))
-    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(") || fail("( expected")
     _ <- catchDeclaration
-    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
-    _ <- blockStmt
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ") || fail(") expected")
+    _ <- blockStmt || fail("block expected")
     _ <- catchStmts || none
   } yield (), "catchStmt")
 
@@ -446,7 +450,7 @@ object JavaParser {
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(FINALLY).tell(keyword(" finally "))
-    _ <- blockStmt
+    _ <- blockStmt || fail("block expected")
   } yield (), "finallyStmt")
 
   def returnStmt: CodeWriter[Unit] = tag(for {
@@ -654,7 +658,7 @@ object JavaParser {
     _ <- tokenSeparatedCtx(primitiveTypesArrType || typeUse, DOT)
     _ <- assertToken(DOT).tell(".")
     _ <- assertToken(CLASS).tell(keyword("class"))
-  } yield(), "typeAsValue")
+  } yield (), "typeAsValue")
 
   def primitiveTypesArrType: CodeWriter[Unit] = tag(for {
     _ <- primitiveTypes
