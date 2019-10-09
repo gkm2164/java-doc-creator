@@ -13,12 +13,14 @@
 1. Build this project with sbt command 
 - ```$ sbt compile```
 1. Run with SBT command
-- ```$ sbt run -i [base directory of your maven/sbt/gradle project] -o [output file name, html format] -t```
+- ```$ sbt "run -i [base directory of your maven/sbt/gradle project] -o [output file name, html format] -t"```
 - for sample, simply, ```$ sbt run```, it will show the java code in this project.
 - Options
   - -i --input: set project directory
   - -o --output: set output directory
-  - -v --verbose: debug option to see whole parsing mechanism
+  - -t --stack-trace: debug option to see whole parsing mechanism
+  - ...
+  - to see more options, type ```$ sbt "run -help"```
 1. File will be saved as <output directory>/index.html
 
 ## Used stack
