@@ -168,6 +168,7 @@ object JavaParser {
   }, "enumBodyDefinition")
 
   def enumBody: CodeWriter[Unit] = tag(tokenSeparatedCtx(for {
+    _ <- symbolLoop(annotation) || none
     _ <- identifier
     _ <- enumParameters || none
     _ <- classBodyDefinition || none
@@ -181,7 +182,7 @@ object JavaParser {
 
   def definitionElements: CodeWriter[Unit] = tag(staticBlockStmt || (for {
     _ <- modifiers || none
-    _ <- classDefinition || constructorDef || classMemberDefinition
+    _ <- classDefinition || enumDefinition || constructorDef || classMemberDefinition
   } yield ()), "definitionElements")
 
   def classMemberDefinition: CodeWriter[Unit] = tag(for {
@@ -260,7 +261,7 @@ object JavaParser {
   def arrayRefs: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET).tell("[")
     _ <- expression
-    _ <- assertToken(RBRACKET).tell("]") || fail("expected ]")
+    _ <- assertToken(RBRACKET).tell("]")
     _ <- arrayRefs || none
   } yield (), "arrayRefs")
 
@@ -430,10 +431,10 @@ object JavaParser {
 
   def catchStmts: CodeWriter[Unit] = tag(for {
     _ <- assertToken(CATCH).tell(keyword(" catch "))
-    _ <- assertToken(LEFT_PARENTHESIS).tell("(") || fail("( expected")
+    _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- catchDeclaration
-    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ") || fail(") expected")
-    _ <- blockStmt || fail("block expected")
+    _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
+    _ <- blockStmt
     _ <- catchStmts || none
   } yield (), "catchStmt")
 
@@ -451,7 +452,7 @@ object JavaParser {
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(FINALLY).tell(keyword(" finally "))
-    _ <- blockStmt || fail("block expected")
+    _ <- blockStmt
   } yield (), "finallyStmt")
 
   def returnStmt: CodeWriter[Unit] = tag(for {
@@ -528,7 +529,7 @@ object JavaParser {
     _ <- blockStmt.tell(" ")
     _ <- assertToken(WHILE).tell(keyword("while "))
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- expressionStmt
+    _ <- assignment || expression.hint(ExpressionStartable)
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "doStmt")

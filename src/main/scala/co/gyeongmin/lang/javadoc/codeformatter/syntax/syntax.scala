@@ -116,7 +116,9 @@ package object syntax {
       ret match {
         case Right(_) => (nextState, ret)
         case Left(_: RecoverableError) => otherWriter(prevState)
-        case Left(e: UnrecoverableError) => throw e.asJavaException
+        case Left(e: UnrecoverableError) =>
+          prevState.config.printConsole()
+          throw e.asJavaException
         case _ => throw new RuntimeException()
       }
     }
