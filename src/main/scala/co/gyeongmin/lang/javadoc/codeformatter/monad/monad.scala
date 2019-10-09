@@ -12,7 +12,23 @@ package object monad {
   type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
   type CodeWriterValue[A] = (CodeWriterState, Either[FormatterError, A])
 
-  case class CodeWriterConfig(debug: DebugOption)
+  class CodeWriterLogger {
+    private val logPrinter: StringBuilder = StringBuilder.newBuilder
+
+    def print(str: => String): Unit = logPrinter.append(s"$str")
+
+    def println(str: => String): Unit = logPrinter.append(s"$str\n")
+
+    def printConsole(): Unit = Predef.println(logPrinter.toString)
+  }
+
+  case class CodeWriterConfig(debug: DebugOption, logger: Option[CodeWriterLogger]) {
+    def print(str: => String): Unit = logger.foreach(_.print(str))
+
+    def println(str: => String): Unit = logger.foreach(_.println(str))
+
+    def printConsole(): Unit = logger.foreach(_.printConsole())
+  }
 
   case class CodeWriterStackElem(idx: Int, token: JavaSToken, context: String) {
     override def toString: String = {

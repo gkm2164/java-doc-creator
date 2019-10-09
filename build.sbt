@@ -29,4 +29,6 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2")
 
+libraryDependencies += "commons-io" % "commons-io" % "2.6"
+
 mainClass in assembly := Some("co.gyeongmin.lang.javadoc.Main")

@@ -1,6 +1,6 @@
 package co.gyeongmin.lang.javadoc
 
-import java.io.PrintWriter
+import java.io.{File, PrintWriter}
 
 import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter
 import co.gyeongmin.lang.javadoc.config.DebugOption
@@ -18,10 +18,15 @@ sealed trait CodeNode {
   def createHashMap: Map[String, List[JavaDefinition]]
 }
 
-final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], debugOption: DebugOption) extends CodeNode {
-  val log: Logger = Logger("CodeLeaf")
-  val code: JavaCode = JavaCode(tokens)
-  val reformatPw: PrintWriter = new PrintWriter(s"./$name.html")
+final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], outputDir: String, debugOption: DebugOption) extends CodeNode {
+  private val log: Logger = Logger("CodeLeaf")
+  private val code: JavaCode = JavaCode(tokens)
+
+  private val relativePath = packageName.replaceAllLiterally(".", "/")
+
+  new File(s"$outputDir/$relativePath").mkdirs()
+
+  private val reformatPw: PrintWriter = new PrintWriter(s"$outputDir/$relativePath/$name.html")
   reformatPw.write("""<!DOCTYPE html><html><body><pre style="background: black; color: #BCBCBC; overflow-wrap: normal;">""")
   reformatPw.write(JavaCodeFormatter.printCode(name, tokens.toVector, debugOption))
   reformatPw.write("</body></html></pre>")

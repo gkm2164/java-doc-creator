@@ -9,10 +9,11 @@ import com.typesafe.scalalogging.Logger
 import laika.api.Transform
 import laika.format._
 import levsha.impl.TextPrettyPrintingConfig
+import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object Main {
   val log = Logger("go-doc-creator")
@@ -41,11 +42,35 @@ object Main {
   def main(args: Array[String]): Unit = {
     val (doc, debugOption) = parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder)
     doc match {
-      case DocumentDescription(basedir, outfile, name) => createDoc(basedir, outfile, name, debugOption)
+      case DocumentDescription(basedir, outputDir, name) => createDoc(basedir, outputDir, name, debugOption)
     }
   }
 
-  def createDoc(baseDir: String, outFile: String, name: String, debugOption: DebugOption): Unit = {
+  def removeFolderInside(files: Array[File]): Unit = {
+    Option(files).foreach(_.foreach { f =>
+      f match {
+        case dir if dir.isDirectory =>
+          removeFolderInside(dir.listFiles())
+        case _ =>
+      }
+
+      f.delete()
+    })
+  }
+
+  def copyResource(resourceName: String, base: String): Try[Unit] = {
+    val resourceFolder = new File(s"./$resourceName")
+    val targetResourceFolder = new File(s"./$base/$resourceName")
+    targetResourceFolder.mkdir()
+    Try(FileUtils.copyDirectory(resourceFolder, targetResourceFolder))
+  }
+
+  def copyResources(outputDir: String): Try[Unit] = for {
+    _ <- copyResource("css", outputDir)
+    _ <- copyResource("js", outputDir)
+  } yield()
+
+  def createDoc(baseDir: String, outputDir: String, name: String, debugOption: DebugOption): Unit = {
     import levsha.text.renderHtml
     import levsha.text.symbolDsl._
 
@@ -57,8 +82,21 @@ object Main {
       else ""
     }
 
-    val node = goThroughTree(new File(s"$baseDir/src/main/java"), debugOption)
-    val pw = new PrintWriter(outFile)
+    val outputDirHandle = new File(outputDir)
+    if (!outputDirHandle.mkdir()) {
+      removeFolderInside(outputDirHandle.listFiles())
+    }
+
+    val copyResourceResult = copyResources(outputDir)
+    if (copyResourceResult.isFailure) {
+      log.error("failed to copy resources[css, js]")
+    } else {
+      log.error("success to copy resources[css, js]")
+    }
+
+    val node = goThroughTree(new File(s"$baseDir/src/main/java"), outputDir, debugOption)
+
+    val pw = new PrintWriter(s"$outputDir/index.html")
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
       'html('lang /= "ko",
@@ -101,7 +139,7 @@ object Main {
     buildNavTree
   }
 
-  def goThroughTree(currentHandle: File, debugOption: DebugOption): CodeNonLeaf = {
+  def goThroughTree(currentHandle: File, outputDir: String, debugOption: DebugOption): CodeNonLeaf = {
     def loop(currentHandle: File, pkgNameAcc: Seq[String]): CodeNode = {
       if (currentHandle.isFile) {
         val filename = currentHandle.getName
@@ -113,7 +151,7 @@ object Main {
         log.info(s"parse token - # of tokens ${tokens.length}")
 
         val scalaTokens = tokens.map(x => JavaSToken(x.getE, x.getValue))
-        CodeLeaf(filename, packageName, scalaTokens.toList, debugOption)
+        CodeLeaf(filename, packageName, scalaTokens.toList, outputDir, debugOption)
       } else {
         log.info(s"entered package ${(pkgNameAcc :+ currentHandle.getName).mkString(".")}")
         CodeNonLeaf(currentHandle.getName,

@@ -38,22 +38,18 @@ package object syntax {
         val sb: StringBuilder = StringBuilder.newBuilder
 
         sb ++= s"[${actualTag.toString}]"
-        if (config.debug.stackTrace) {
-          sb ++= s" <- [${prevStack.take(config.debug.maxStackSize).mkString(" / ")}]"
-          println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
-        }
+        sb ++= s" <- [${prevStack.take(config.debug.maxStackSize).mkString(" / ")}]"
+        config.println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
 
         val (CodeWriterState(nextTokenList, newSb, _, _), v) =
           thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
 
-        if (config.debug.stackTrace) {
-          v match {
-            case Right(_) =>
-              println(f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}")
-            case Left(_) =>
-              if (!config.debug.printOnlyAccepted)
-                println(f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}")
-          }
+        v match {
+          case Right(_) =>
+            config.println(f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}")
+          case Left(_) =>
+            if (!config.debug.printOnlyAccepted)
+              config.println(f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}")
         }
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
     }
@@ -133,8 +129,12 @@ package object syntax {
     def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): String = {
       val (CodeWriterState(_, sb, stack, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
       v match {
-        case Right(_) => sb.toString
-        case Left(e) => s"Error occurred during parse code: $e, lastStack: ${stack.take(5)}"
+        case Right(_) =>
+          if (config.debug.stackTrace) config.printConsole()
+          sb.toString
+        case Left(e) =>
+          config.printConsole()
+          s"Error occurred during parse code: $e, lastStack: ${stack.take(5)}"
       }
     }
 

@@ -646,12 +646,12 @@ object JavaParser {
   } yield (), "unaryExpression").hint(ExpressionStartable)
 
   def referableValue: CodeWriter[Unit] = tag(for {
-    _ <- parenthesisExpression || reference || valueTypes || typeAsValue
+    _ <- parenthesisExpression || typeAsValue || reference || valueTypes
     _ <- arrayRefs || none
   } yield (), "valueReferable")
 
   def typeAsValue: CodeWriter[Unit] = tag(for {
-    _ <- primitiveTypesArrType || typeUse
+    _ <- tokenSeparatedCtx(primitiveTypesArrType || typeUse, DOT)
     _ <- assertToken(DOT).tell(".")
     _ <- assertToken(CLASS).tell(keyword("class"))
   } yield(), "typeAsValue")

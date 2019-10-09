@@ -13,13 +13,13 @@ object JavaCodeFormatter {
   private val CommentTokens: Set[JavaTokenEnum] =
     Set(COMMENT_BLOCK, COMMENT, COMMENT_MACRO_EXPLAIN, COMMENT_MACRO_CODE, COMMENT_MACRO_NAME)
 
-
   private def printCodeCommon[A](codeName: String, tokens: Vector[JavaSToken], startFrom: CodeWriter[A], debugOption: DebugOption): String = {
     val reformatTokens = tokens.filterNot(x => CommentTokens.contains(x.tokenType)).zipWithIndex.toList
 
     if (reformatTokens.nonEmpty) {
       startFrom.enter()
-        .collect(reformatTokens, CodeWriterConfig(debug = debugOption))
+        .collect(reformatTokens,
+          CodeWriterConfig(debug = debugOption, logger = Some(new CodeWriterLogger)))
     }
     else {
       println("there's no code here")
