@@ -13,7 +13,8 @@
 1. Build this project with sbt command 
 - ```$ sbt compile```
 1. Run with SBT command
-- ```$ sbt run -i [base directory of your maven/sbt/gradle project] -o [output file name, html format] -v```
+- ```$ sbt run -i [base directory of your maven/sbt/gradle project] -o [output file name, html format] -t```
+- for sample, simply, ```$ sbt run```, it will show the java code in this project.
 - Options
   - -i --input: set project directory
   - -o --output: set output directory
