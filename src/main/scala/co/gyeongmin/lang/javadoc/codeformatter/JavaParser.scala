@@ -195,7 +195,7 @@ object JavaParser {
   } yield (), "constructorDef")
 
   def packageDefinition: CodeWriter[Unit] = tag(for {
-    _ <- symbolLoop(annotation)
+    _ <- symbolLoop(annotation) || none
     _ <- assertToken(PACKAGE).tell(keyword("package "))
     _ <- tokenSeparatedCtx(identifier, DOT)
     _ <- assertToken(SEMICOLON).tell(";").enter()
