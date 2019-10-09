@@ -78,7 +78,7 @@ package object config {
     val baseDir: SettingKey[String, DocumentDescription] =
       SettingKey((self, value) => self.copy(baseDir = value), ".")
     val outputDir: SettingKey[String, DocumentDescription] =
-      SettingKey((self, value) => self.copy(outputDir = value), "./output")
+      SettingKey((self, value) => self.copy(outputDir = value), "output.html")
     val description: SettingKey[String, DocumentDescription] =
       SettingKey((self, value) => self.copy(description = value), "default description")
     val empty = DocumentDescription("", "", "")

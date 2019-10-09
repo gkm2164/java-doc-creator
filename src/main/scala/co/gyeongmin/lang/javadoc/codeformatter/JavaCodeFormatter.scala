@@ -10,8 +10,8 @@ object JavaCodeFormatter {
 
   import syntax._
 
-  private val CommentTokens: Seq[JavaTokenEnum] =
-    Seq(COMMENT_BLOCK, COMMENT, COMMENT_MACRO_EXPLAIN, COMMENT_MACRO_CODE, COMMENT_MACRO_NAME)
+  private val CommentTokens: Set[JavaTokenEnum] =
+    Set(COMMENT_BLOCK, COMMENT, COMMENT_MACRO_EXPLAIN, COMMENT_MACRO_CODE, COMMENT_MACRO_NAME)
 
 
   private def printCodeCommon[A](codeName: String, tokens: Vector[JavaSToken], startFrom: CodeWriter[A], debugOption: DebugOption): String = {

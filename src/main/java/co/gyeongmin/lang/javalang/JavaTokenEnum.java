@@ -15,6 +15,7 @@ public enum JavaTokenEnum {
     IMPORT("import", true),
     FINAL("final", true),
     EXTENDS("extends", true),
+    THIS("this", true),
     SUPER("super", true),
     IMPLEMENTS("implements", true),
     DEFAULT("default", true),

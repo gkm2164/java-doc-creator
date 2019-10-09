@@ -13,9 +13,7 @@ import scala.language.implicitConversions
 package object syntax {
 
   implicit class CodeWriterExt[A](thisWriter: CodeWriter[A]) {
-    def hint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
-
-    private def commonHint(tokens: Seq[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
+    private def commonHint(tokens: Set[JavaTokenEnum], pred: JavaTokenEnum => Boolean): CodeWriter[A] = prevState => {
       prevState.tokens match {
         case Nil => (prevState, Left(new TokenListEmptyError))
         case (JavaSToken(v, _), _) :: _ if pred(v) => thisWriter(prevState)
@@ -24,7 +22,13 @@ package object syntax {
       }
     }
 
-    def notHint(tokens: JavaTokenEnum*): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
+    def hint(tokens: Set[JavaTokenEnum]): CodeWriter[A] = commonHint(tokens, x => tokens.contains(x))
+
+    def hint(token: JavaTokenEnum): CodeWriter[A] = hint(Set(token))
+
+    def notHint(tokens: Set[JavaTokenEnum]): CodeWriter[A] = commonHint(tokens, x => !tokens.contains(x))
+
+    def notHint(token: JavaTokenEnum): CodeWriter[A] = notHint(Set(token))
 
     def pushTag(tag: String): CodeWriter[A] = {
       case state@CodeWriterState(Nil, _, _, _) => (state, Left(TokenListEmptyError()))

@@ -12,23 +12,24 @@ object JavaParser {
   import Helper._
   import co.gyeongmin.lang.javadoc.codeformatter.syntax._
 
-  val ModifierStartToken: List[JavaTokenEnum] =
-    List(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
+  val ModifierStartToken: Set[JavaTokenEnum] =
+    Set(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
   // LL(1) parser
-  private val PrimitiveTypeTokens: List[JavaTokenEnum] =
-    List(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG,
+  private val PrimitiveTypeTokens: Set[JavaTokenEnum] =
+    Set(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG,
       PRIMITIVE_INT, PRIMITIVE_FLOAT, PRIMITIVE_DOUBLE, PRIMITIVE_BOOLEAN)
-  private val ControlStatementBeginTokens: List[JavaTokenEnum] =
-    List(LBRACE, SEMICOLON, SWITCH, DO, BREAK, CONTINUE, RETURN, FOR, IF,
+  private val ControlStatementBeginTokens: Set[JavaTokenEnum] =
+    Set(LBRACE, SEMICOLON, SWITCH, DO, BREAK, CONTINUE, RETURN, FOR, IF,
       WHILE, SYNCHRONIZED, THROW, TRY)
-  private val JavaValueTypeTokens: List[JavaTokenEnum] =
-    List(STRING, NUMBER, CHAR, TRUE, FALSE, NULL)
-  private val IdentifiableTokens: List[JavaTokenEnum] =
-    List(TOKEN, SUPER, CLASS)
-  private val UnaryStartable: List[JavaTokenEnum] =
-    List(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
+  private val JavaValueTypeTokens: Set[JavaTokenEnum] =
+    Set(STRING, NUMBER, CHAR, TRUE, FALSE, NULL)
+  private val JavaReferableTokens: Set[JavaTokenEnum] = THIS | SUPER
+  private val IdentifiableTokens: Set[JavaTokenEnum] = Set(TOKEN)
+  private val UnaryStartable: Set[JavaTokenEnum] =
+    Set(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
   private val ExpressionStartable =
-    INC :: DEC :: NEW :: LEFT_PARENTHESIS :: UnaryStartable ::: IdentifiableTokens ::: JavaValueTypeTokens ::: PrimitiveTypeTokens
+    IdentifiableTokens ++ JavaValueTypeTokens ++ JavaReferableTokens ++
+      PrimitiveTypeTokens ++ UnaryStartable + (INC, DEC, NEW, LEFT_PARENTHESIS)
 
   import cats.syntax._
   import flatMap._
@@ -48,7 +49,7 @@ object JavaParser {
 
   def classDefinition: CodeWriter[Unit] = tag(for {
     _ <- takeToken(CLASS).print(x => keyword(s"$x "))
-    _ <- identifier
+    _ <- identifier || fail("identifier should be come after class")
     _ <- typeParameters.hint(LT) || none
     _ <- superClass.hint(EXTENDS) || none
     _ <- superInterface.hint(IMPLEMENTS) || none
@@ -213,8 +214,8 @@ object JavaParser {
     _ <- statements || none
   } yield ()) || none, "statements")
 
-  def statement: CodeWriter[Unit] = tag(controlStatement.hint(ControlStatementBeginTokens: _*) ||
-    nonControlStatement.notHint(ControlStatementBeginTokens: _*), "statement")
+  def statement: CodeWriter[Unit] = tag(controlStatement.hint(ControlStatementBeginTokens) ||
+    nonControlStatement.notHint(ControlStatementBeginTokens), "statement")
 
   def controlStatement: CodeWriter[Unit] = tag(
     blockStmt.hint(LBRACE) ||
@@ -239,32 +240,33 @@ object JavaParser {
   } yield (), s"unaryStmt($token)")
 
   def expressionStmt: CodeWriter[Unit] = tag(for {
-    _ <- assignment || expression.hint(ExpressionStartable: _*)
+    _ <- assignment || expression.hint(ExpressionStartable)
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "expressionStmt")
 
+  private val SubstitutionTokens: Set[JavaTokenEnum] = SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC
+
   def assignment: CodeWriter[Unit] = tag(for {
-    _ <- identifier
-    _ <- arrayRefs || none
-    _ <- takeTokens(SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC).print(x => s" $x ")
+    _ <- tokenSeparatedCtx(reference.notHint(SubstitutionTokens), DOT)
+    _ <- takeToken(SubstitutionTokens).print(x => s" $x ")
     _ <- expression
-  } yield (), "assignment").hint(TOKEN, SUPER)
+  } yield (), "assignment").hint(TOKEN | SUPER | THIS)
 
   def arrayRefs: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACKET).tell("[")
     _ <- expression
-    _ <- assertToken(RBRACKET).tell("]")
+    _ <- assertToken(RBRACKET).tell("]") || fail("expected ]")
     _ <- arrayRefs || none
   } yield (), "arrayRefs")
 
   def preExpression: CodeWriter[Unit] = tag(for {
-    _ <- takeTokens(INC | DEC).print()
+    _ <- takeToken(INC | DEC).print()
     _ <- identifier
   } yield (), "preExpression")
 
   def postExpression: CodeWriter[Unit] = tag(for {
     _ <- identifier
-    _ <- takeTokens(INC | DEC).print()
+    _ <- takeToken(INC | DEC).print()
   } yield (), "postExpression")
 
   def parameters: CodeWriter[Unit] = tag(for {
@@ -276,9 +278,9 @@ object JavaParser {
 
   def modifiers: CodeWriter[Unit] = tag(for {
     _ <- annotation.enter() ||
-      takeTokens(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x "))
+      takeToken(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x "))
     _ <- modifiers || none
-  } yield (), "modifiers").hint(ModifierStartToken: _*)
+  } yield (), "modifiers").hint(ModifierStartToken)
 
   def annotation: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ANNOTATION).tell(color("@", "yellow"))
@@ -326,12 +328,12 @@ object JavaParser {
 
   def superClass: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell(keyword(" extends "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space) || fail("type should be come after extends keyword")
   } yield (), "superClass")
 
   def superInterface: CodeWriter[Unit] = tag(for {
     _ <- assertToken(IMPLEMENTS).tell(keyword(" implements "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
+    _ <- tokenSeparatedCtx(typeUse, COMMA, space) || fail("type should be come after implements keyword")
   } yield (), "superInterface")
 
   def memberDefinition: CodeWriter[Unit] = tag(for {
@@ -386,9 +388,9 @@ object JavaParser {
 
     for {
       _ <- assertToken(NEW).tell(keyword("new "))
-      _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
+      _ <- primitiveTypes.hint(PrimitiveTypeTokens) || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
       _ <- generic.hint(LT) || none
-      _ <- arrayInstance.hint(LBRACKET, LBRACE) || classInstance.hint(LEFT_PARENTHESIS)
+      _ <- arrayInstance.hint(Set(LBRACKET, LBRACE)) || classInstance.hint(LEFT_PARENTHESIS)
       _ <- newInstanceReferable || none
     } yield ()
   }, "classInstanceCreation")
@@ -440,7 +442,7 @@ object JavaParser {
     _ <- blockStmts.notHint(RBRACE) || none
   } yield (), "blockStmts")
 
-  def primitiveTypes: CodeWriter[Unit] = tag(takeTokens(PrimitiveTypeTokens).print(keyword), "primitiveTypes")
+  def primitiveTypes: CodeWriter[Unit] = tag(takeToken(PrimitiveTypeTokens).print(keyword), "primitiveTypes")
 
   def finallyStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(FINALLY).tell(keyword(" finally "))
@@ -573,7 +575,7 @@ object JavaParser {
       _ <- conditionalOrExpression
       _ <- conditionalExpressionDetail || none
     } yield ()
-  }, "conditionalExpression").hint(ExpressionStartable: _*)
+  }, "conditionalExpression").hint(ExpressionStartable)
 
   def infixOperator(operator: JavaTokenEnum, next: CodeWriter[Unit]): CodeWriter[Unit] = tag({
     def infixOperatorDetail: CodeWriter[Unit] = tag(for {
@@ -588,9 +590,9 @@ object JavaParser {
   }, s"infixOperator($operator)")
 
 
-  def infixOperators(operators: List[JavaTokenEnum], next: CodeWriter[Unit]): CodeWriter[Unit] = tag({
+  def infixOperators(operators: Set[JavaTokenEnum], next: CodeWriter[Unit]): CodeWriter[Unit] = tag({
     def infixOperatorsDetail: CodeWriter[Unit] = tag(for {
-      _ <- takeTokens(operators).print(x => s" $x ")
+      _ <- takeToken(operators).print(x => s" $x ")
       _ <- infixOperators(operators, next)
     } yield (), "infixOperatorsDetail")
 
@@ -618,7 +620,7 @@ object JavaParser {
   } yield (), "relationalExpression")
 
   def shiftTail: CodeWriter[Unit] = tag(for {
-    _ <- takeTokens(LT | GT | LTE | GTE).print(x => s" $x ")
+    _ <- takeToken(LT | GT | LTE | GTE).print(x => s" $x ")
     _ <- relationalExpression
   } yield (), "shiftTail")
 
@@ -637,14 +639,22 @@ object JavaParser {
     tag(infixOperators(MULTIPLY | DIVIDE | MODULAR, unaryExpression), "multiplicativeExpression")
 
   def unaryExpression: CodeWriter[Unit] = tag(for {
-    _ <- preExpression.hint(INC, DEC) || postExpression.hint(IdentifiableTokens: _*) || unaryExpWith(UnaryStartable) ||
-      classInstanceCreation.hint(NEW) || tokenSeparatedCtx(referableValue, DOT).hint(LEFT_PARENTHESIS :: PrimitiveTypeTokens ::: IdentifiableTokens ::: JavaValueTypeTokens: _*)
-  } yield (), "unaryExpression").hint(ExpressionStartable: _*)
+    _ <- preExpression.hint(INC | DEC) ||
+      postExpression.hint(IdentifiableTokens) || unaryExpWith(UnaryStartable) ||
+      classInstanceCreation.hint(NEW) ||
+      tokenSeparatedCtx(referableValue, DOT).hint(PrimitiveTypeTokens ++ IdentifiableTokens ++ JavaValueTypeTokens ++ JavaReferableTokens + LEFT_PARENTHESIS)
+  } yield (), "unaryExpression").hint(ExpressionStartable)
 
   def referableValue: CodeWriter[Unit] = tag(for {
-    _ <- parenthesisExpression || reference || valueTypes || primitiveTypesArrType
+    _ <- parenthesisExpression || reference || valueTypes || typeAsValue
     _ <- arrayRefs || none
   } yield (), "valueReferable")
+
+  def typeAsValue: CodeWriter[Unit] = tag(for {
+    _ <- primitiveTypesArrType || typeUse
+    _ <- assertToken(DOT).tell(".")
+    _ <- assertToken(CLASS).tell(keyword("class"))
+  } yield(), "typeAsValue")
 
   def primitiveTypesArrType: CodeWriter[Unit] = tag(for {
     _ <- primitiveTypes
@@ -657,14 +667,14 @@ object JavaParser {
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield (), "parenthesisExpression")
 
-  def valueTypes: CodeWriter[Unit] = tag(takeTokens(JavaValueTypeTokens, {
+  def valueTypes: CodeWriter[Unit] = tag(takeToken(JavaValueTypeTokens, {
     case JavaSToken(enum, v) => enum match {
       case TRUE | FALSE | NULL => keyword(v)
       case NUMBER => color(v, "#3986AF")
       case STRING | CHAR => color(v, "#477944")
       case _ => v
     }
-  }).print(), "valueTypes").hint(JavaValueTypeTokens: _*)
+  }).print(), "valueTypes").hint(JavaValueTypeTokens)
 
   def castExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
@@ -673,15 +683,19 @@ object JavaParser {
     _ <- lambda || unaryExpression
   } yield (), "castExpression").hint(LEFT_PARENTHESIS)
 
-  def unaryExpWith(enums: List[JavaTokenEnum]): CodeWriter[Unit] = tag(for {
-    _ <- takeTokens(enums).print()
+  def unaryExpWith(enums: Set[JavaTokenEnum]): CodeWriter[Unit] = tag(for {
+    _ <- takeToken(enums).print()
     _ <- unaryExpression
-  } yield (), s"unaryExpWith($enums)").hint(enums: _*)
+  } yield (), s"unaryExpWith($enums)").hint(enums)
+
+  def customReference: CodeWriter[Unit] = tag((for {
+    _ <- identifier
+    _ <- arrayRefs || none
+  } yield ()) || takeToken(THIS | SUPER).print(keyword), "customReference")
 
   def reference: CodeWriter[Unit] = tag(for {
     _ <- generic || none
-    _ <- identifier
-    _ <- arrayRefs || none
+    _ <- customReference
     _ <- parameters || none
   } yield (), "reference")
 
@@ -705,7 +719,7 @@ object JavaParser {
     } yield (), "shortenLambda")
 
     originLambda || shortenLambda
-  }, "lambda").hint(LEFT_PARENTHESIS, TOKEN)
+  }, "lambda").hint(LEFT_PARENTHESIS | TOKEN)
 
   def synchronizedStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(SYNCHRONIZED).tell("synchronized")
@@ -736,7 +750,7 @@ object JavaParser {
   }, "declDetail")
 
   def typeUse: CodeWriter[Unit] = tag(for {
-    _ <- primitiveTypes.hint(PrimitiveTypeTokens: _*) || customDecl
+    _ <- primitiveTypes.hint(PrimitiveTypeTokens) || customDecl
     _ <- arrayUse || none
   } yield (), "typeUse")
 
@@ -768,7 +782,7 @@ object JavaParser {
   } yield (), "genericExtends")
 
   def genericTypeBound: CodeWriter[Unit] = tag(for {
-    _ <- takeTokens(EXTENDS | SUPER).print(x => keyword(s" $x "))
+    _ <- takeToken(EXTENDS | SUPER).print(x => keyword(s" $x "))
     _ <- typeUse
   } yield (), "genericTypeBound")
 
@@ -779,11 +793,7 @@ object JavaParser {
 
   def arrayUse: CodeWriter[Unit] = tag(symbolLoop(emptyArrayBoxes), "arrayUse")
 
-  def identifier: CodeWriter[Unit] = tag(tokenSeparatedCtx(takeTokens(IdentifiableTokens, {
-    case JavaSToken(TOKEN, "this") => keyword("this")
-    case JavaSToken(SUPER | CLASS, v) => keyword(v)
-    case JavaSToken(_, v) => v
-  }).print(), DOT), "identifier")
+  def identifier: CodeWriter[Unit] = tag(takeToken(TOKEN).print(), "identifier")
 
   def tokenSeparatedCtx(chosenParser: CodeWriter[Unit],
                         separator: JavaTokenEnum,

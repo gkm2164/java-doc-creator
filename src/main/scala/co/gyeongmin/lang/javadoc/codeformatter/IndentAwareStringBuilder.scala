@@ -60,7 +60,9 @@ case class IndentAwareStringBuilder(initialIndent: Int,
         this
       }
 
-    thisStringBuilder.committedLines.takeRight(last).map { case Line(indent, line) => s"${defaultTabString * indent}$line" }.mkString("\n")
+    thisStringBuilder.committedLines.takeRight(last).map {
+      case Line(indent, line) => s"${defaultTabString * indent}$line"
+    }.mkString("\n")
   }
 
   override def toString: String = {
@@ -71,7 +73,9 @@ case class IndentAwareStringBuilder(initialIndent: Int,
         this
       }
 
-    thisStringBuilder.committedLines.map { case Line(indent, line) => s"${defaultTabString * indent}$line" }.mkString("\n")
+    thisStringBuilder.committedLines.map {
+      case Line(indent, line) => s"${defaultTabString * indent}$line"
+    }.mkString("\n")
   }
 }
 
