@@ -16,8 +16,9 @@
 - ```$ sbt run -i [base directory of your maven/sbt/gradle project] -o [output file name, html format] -v```
 - Options
   - -i --input: set project directory
-  - -o --output: set output file name
+  - -o --output: set output directory
   - -v --verbose: debug option to see whole parsing mechanism
+1. File will be saved as <output directory>/index.html
 
 ## Used stack
 - Scala 2.12.8, Java 1.8, Cats library for Monad
