@@ -12,7 +12,7 @@ import org.apache.commons.io.FileUtils
 
 import scala.collection.JavaConverters._
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 object Main {
   val log = Logger("go-doc-creator")
@@ -31,7 +31,7 @@ object Main {
       parseArg(t, doc.set(_.description := desc), debug)
     case ("-t" | "--stack-trace") :: t =>
       parseArg(t, doc, debug.set(_.stackTrace := true))
-    case ("-m=" | "--max-stack-size=") :: num :: t =>
+    case ("-m" | "--max-stack-size") :: num :: t =>
       parseArg(t, doc, debug.set(_.maxStackSize := Try(num.toInt).getOrElse(1)))
     case ("-a" | "--only-accepted") :: t =>
       parseArg(t, doc, debug.set(_.printOnlyAccepted := true))
@@ -40,16 +40,14 @@ object Main {
   }
 
 
-  def main(args: Array[String]): Unit = {
-    parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder).map {
-      case (doc, debugOption) =>
+  def main(args: Array[String]): Unit =
+    parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder) match {
+      case Right((doc, debugOption)) =>
         val DocumentDescription(basedir, outputDir, name) = doc
         createDoc(basedir, outputDir, name, debugOption)
-    }.left.foreach {
-      case h@HelpMessage => h.printMessage(log)
-      case UnableToIdentifyError(msg) => log.error(msg)
+      case Left(h@HelpMessage) => h.printMessage(log)
+      case Left(UnableToIdentifyError(msg)) => log.error(msg)
     }
-  }
 
   def removeFolderInside(files: Array[File]): Unit = {
     Option(files).foreach(_.foreach { f =>

@@ -18,8 +18,10 @@ sealed trait CodeNode {
   def createHashMap: Map[String, List[JavaDefinition]]
 }
 
-final case class CodeLeaf(name: String, packageName: String, tokens: List[JavaSToken], outputDir: String, debugOption: DebugOption) extends CodeNode {
-  private val log: Logger = Logger("CodeLeaf")
+final case class CodeLeaf(name: String, packageName: String,
+                          tokens: List[JavaSToken], outputDir: String,
+                          debugOption: DebugOption) extends CodeNode {
+  private implicit val log: Logger = Logger("CodeLeaf")
   private val code: JavaCode = JavaCode(tokens)
 
   private val relativePath = packageName.replaceAllLiterally(".", "/")

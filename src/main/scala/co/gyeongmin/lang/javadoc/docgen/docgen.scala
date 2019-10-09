@@ -2,23 +2,23 @@ package co.gyeongmin.lang.javadoc
 
 import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter
 import co.gyeongmin.lang.javadoc.config.DebugOption
+import com.typesafe.scalalogging.Logger
 import levsha.Document._
 import levsha.impl.TextPrettyPrintingConfig
 import levsha.text.renderHtml
 
 package object docgen {
-
   val lineBuf: StringBuilder = StringBuilder.newBuilder
-
 
   trait StringWriter[T] {
     def show(indent: Indent)(implicit debugOption: DebugOption): T
   }
 
   implicit class DefToNodeWriter[T](definition: JavaDefinition) extends StringWriter[Node[T]] {
-
     import co.gyeongmin.lang.javalang.JavaTokenEnum._
     import levsha.text.symbolDsl._
+
+    implicit val log: Logger = Logger("docgen")
 
     def attachTo(x: String): String = {
       x.split("\\.").last match {
