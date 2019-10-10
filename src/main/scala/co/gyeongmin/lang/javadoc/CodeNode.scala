@@ -30,7 +30,10 @@ final case class CodeLeaf(name: String, packageName: String,
 
   private val reformatPw: PrintWriter = new PrintWriter(s"$outputDir/$relativePath/$name.html")
   reformatPw.write("""<!DOCTYPE html><html><body><pre style="background: black; color: #BCBCBC; overflow-wrap: normal;">""")
-  reformatPw.write(JavaCodeFormatter.printCode(name, tokens.toVector, debugOption))
+  reformatPw.write(JavaCodeFormatter.printCode(name, tokens.toVector, debugOption) match {
+    case Right(code) => code
+    case Left(error) => error.message
+  })
   reformatPw.write("</body></html></pre>")
   reformatPw.close()
 
@@ -89,12 +92,11 @@ final case class CodeNonLeaf(name: String, codeNodes: Map[String, CodeNode]) ext
 
   def drawNav[T](n: String): Node[T] = 'li(
     if (n != "") 'a('class /= "package-name", 'href /= "#", n) else Empty,
-    'ul(codeNodes.toList.sortBy(_._1).map { case (_, node) =>
-      node match {
-        case _: CodeNonLeaf => node.buildNavTree
-        case _: CodeLeaf => node.buildNavTree
-      }
-    }))
+    'ul(codeNodes.par.mapValues {
+      case nonLeaf: CodeNonLeaf => nonLeaf.buildNavTree
+      case leaf: CodeLeaf => leaf.buildNavTree
+    }.seq.toList.sortBy(_._1).map(_._2))
+  )
 
   def buildNavTreeAcc[T](prefix: String): Node[T] = {
     if (codeNodes.size == 1 && codeNodes.values.head.isInstanceOf[CodeNonLeaf])

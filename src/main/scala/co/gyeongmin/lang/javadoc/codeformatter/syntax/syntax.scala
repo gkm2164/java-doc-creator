@@ -2,8 +2,8 @@ package co.gyeongmin.lang.javadoc.codeformatter
 
 import cats.syntax.functor._
 import cats.syntax.flatMap._
-
 import co.gyeongmin.lang.javadoc.JavaSToken
+import co.gyeongmin.lang.javadoc.codeformatter.JavaCodeFormatter.{ErrorMessage, ParseError}
 import co.gyeongmin.lang.javadoc.codeformatter.exceptions._
 import co.gyeongmin.lang.javadoc.codeformatter.monad._
 import co.gyeongmin.lang.javalang.JavaTokenEnum
@@ -118,7 +118,7 @@ package object syntax {
         case Left(_: RecoverableError) => otherWriter(prevState)
         case Left(e: UnrecoverableError) =>
           prevState.config.printConsole()
-          throw e.asJavaException
+          (prevState, Left(e))
         case _ => throw new RuntimeException()
       }
     }
@@ -128,15 +128,15 @@ package object syntax {
       _ <- x
     } yield ()
 
-    def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): String = {
+    def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): Either[ParseError, String] = {
       val (CodeWriterState(_, sb, stack, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
       v match {
         case Right(_) =>
           if (config.debug.stackTrace) config.printConsole()
-          sb.toString
+          Right(sb.toString)
         case Left(e) =>
-          config.printConsole()
-          s"Error occurred during parse code: $e, lastStack: ${stack.take(5)}"
+          val errMessage = s"Error occurred during parse code: $e, lastStack: ${stack.take(5)}"
+          Left(ErrorMessage(errMessage, config.printStacktraceString()))
       }
     }
 

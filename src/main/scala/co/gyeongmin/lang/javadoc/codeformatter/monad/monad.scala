@@ -17,12 +17,14 @@ package object monad {
     def print(str: => String): Unit = logPrinter.append(s"$str")
     def println(str: => String): Unit = logPrinter.append(s"$str\n")
     def printConsole(): Unit = Predef.println(logPrinter.toString)
+    def printString(): String = logPrinter.toString
   }
 
   case class CodeWriterConfig(debug: DebugOption, logger: Option[CodeWriterLogger] = None) {
     def print(str: => String): Unit = logger.foreach(_.print(str))
     def println(str: => String): Unit = logger.foreach(_.println(str))
     def printConsole(): Unit = logger.foreach(_.printConsole())
+    def printStacktraceString(): String = logger.map(_.printString()).getOrElse("")
   }
 
   case class CodeWriterStackElem(idx: Int, token: JavaSToken, context: String) {

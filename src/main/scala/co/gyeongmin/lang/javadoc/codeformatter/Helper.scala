@@ -13,6 +13,14 @@ object Helper {
 
   def fail[T](reason: String): CodeWriter[T] = CodeWriter { tks => (tks, Left(ParseFailError(reason))) }
 
+  def empty: CodeWriter[Unit] = prevState => {
+    if (prevState.tokens.isEmpty) {
+      (prevState, Right(()))
+    } else {
+      (prevState, Left(TokenListIsNotEmptyError))
+    }
+  }
+
   def none: CodeWriter[Unit] = CodeWriter.pure(())
 
   def enter: CodeWriter[Unit] = none.enter()

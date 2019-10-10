@@ -23,7 +23,7 @@ object JavaParser {
       WHILE, SYNCHRONIZED, THROW, TRY)
   private val JavaValueTypeTokens: Set[JavaTokenEnum] =
     Set(STRING, NUMBER, CHAR, TRUE, FALSE, NULL)
-  private val JavaReferableTokens: Set[JavaTokenEnum] = THIS | SUPER
+  private val JavaReferableTokens: Set[JavaTokenEnum] = TOKEN | THIS | SUPER
   private val IdentifiableTokens: Set[JavaTokenEnum] = Set(TOKEN)
   private val UnaryStartable: Set[JavaTokenEnum] =
     Set(PLUS, MINUS, NEGATE, EXCLAMATION_MARK)
@@ -35,16 +35,20 @@ object JavaParser {
   import flatMap._
   import functor._
 
+  private val SubstitutionTokens: Set[JavaTokenEnum] = SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC
+
   def javaCode: CodeWriter[Unit] = tag(for {
-    _ <- packageDefinition.hint(PACKAGE)
-    _ <- enter ~ imports.hint(IMPORT) || none
-    _ <- enter ~ symbolLoop(for {
-      _ <- modifiers || none
-      _ <- classDefinition.hint(CLASS) ||
-        enumDefinition.hint(ENUM) ||
-        interfaceDefinition.hint(INTERFACE) ||
-        annotationInterfaceDefinition.hint(ANNOTATION_INTERFACE)
-    } yield ()) || none
+    _ <- packageDefinition.hint(PACKAGE | ANNOTATION)
+    _ <- empty || (for {
+      _ <- enter ~ imports.hint(IMPORT) || none
+      _ <- enter ~ symbolLoop(for {
+        _ <- modifiers || none
+        _ <- classDefinition.hint(CLASS) ||
+          enumDefinition.hint(ENUM) ||
+          interfaceDefinition.hint(INTERFACE) ||
+          annotationInterfaceDefinition.hint(ANNOTATION_INTERFACE)
+      } yield ())
+    } yield ())
   } yield (), "javaCode")
 
   def classDefinition: CodeWriter[Unit] = tag(for {
@@ -104,7 +108,7 @@ object JavaParser {
 
   def superInterfaceExtends: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell(keyword("implements "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space)
+    _ <- tokenSeparatedLoop(typeUse, COMMA, space)
   } yield (), "superInterface")
 
   def interfaceBody: CodeWriter[Unit] = tag(for {
@@ -167,7 +171,7 @@ object JavaParser {
     } yield ()
   }, "enumBodyDefinition")
 
-  def enumBody: CodeWriter[Unit] = tag(tokenSeparatedCtx(for {
+  def enumBody: CodeWriter[Unit] = tag(tokenSeparatedLoop(for {
     _ <- symbolLoop(annotation) || none
     _ <- identifier
     _ <- enumParameters || none
@@ -176,7 +180,7 @@ object JavaParser {
 
   def enumParameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- tokenSeparatedCtx(tokenSeparatedCtx(referableValue, DOT), COMMA, space)
+    _ <- tokenSeparatedLoop(tokenSeparatedLoop(referableValue, DOT), COMMA, space)
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield (), "enumParameters")
 
@@ -198,13 +202,13 @@ object JavaParser {
   def packageDefinition: CodeWriter[Unit] = tag(for {
     _ <- symbolLoop(annotation) || none
     _ <- assertToken(PACKAGE).tell(keyword("package "))
-    _ <- tokenSeparatedCtx(identifier, DOT)
+    _ <- tokenSeparatedLoop(identifier, DOT)
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "packageDefinition")
 
   def imports: CodeWriter[Unit] = tag(symbolLoop(for {
     _ <- assertToken(IMPORT).tell(keyword("import "))
-    _ <- tokenSeparatedCtx(identifier, DOT)
+    _ <- tokenSeparatedLoop(identifier, DOT)
     _ <- (assertToken(DOT) ~ assertToken(MULTIPLY).tell("*")) || none
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield ()), "symbolLoop")
@@ -250,10 +254,8 @@ object JavaParser {
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "expressionStmt")
 
-  private val SubstitutionTokens: Set[JavaTokenEnum] = SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC
-
   def assignment: CodeWriter[Unit] = tag(for {
-    _ <- tokenSeparatedCtx(reference.notHint(SubstitutionTokens), DOT)
+    _ <- tokenSeparatedLoop(reference.notHint(SubstitutionTokens), DOT)
     _ <- takeToken(SubstitutionTokens).print(x => s" $x ")
     _ <- expression
   } yield (), "assignment").hint(TOKEN | SUPER | THIS)
@@ -267,17 +269,17 @@ object JavaParser {
 
   def preExpression: CodeWriter[Unit] = tag(for {
     _ <- takeToken(INC | DEC).print()
-    _ <- identifier
+    _ <- tokenSeparatedLoop(reference, DOT)
   } yield (), "preExpression")
 
   def postExpression: CodeWriter[Unit] = tag(for {
-    _ <- identifier
+    _ <- tokenSeparatedLoop(reference, DOT)
     _ <- takeToken(INC | DEC).print()
   } yield (), "postExpression")
 
   def parameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- tokenSeparatedCtx(expression, COMMA, space) || none
+    _ <- tokenSeparatedLoop(expression, COMMA, space) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     _ <- classBodyDefinition || none
   } yield (), "parameters")
@@ -296,7 +298,7 @@ object JavaParser {
 
   def annotationTail: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- annotationSingleValue || tokenSeparatedCtx(annotationValuePairs, COMMA, space) || none
+    _ <- annotationSingleValue || tokenSeparatedLoop(annotationValuePairs, COMMA, space) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield (), "annotationTail")
 
@@ -311,7 +313,7 @@ object JavaParser {
 
   def typeParameters: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
-    _ <- tokenSeparatedCtx(typeVariable, COMMA, space)
+    _ <- tokenSeparatedLoop(typeVariable, COMMA, space)
     _ <- assertToken(GT).tell(">") || unrollingRightShift.tell(">")
   } yield (), "typeParameters")
 
@@ -334,12 +336,12 @@ object JavaParser {
 
   def superClass: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell(keyword(" extends "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space) || fail("type should be come after extends keyword")
+    _ <- tokenSeparatedLoop(typeUse, COMMA, space) || fail("type should be come after extends keyword")
   } yield (), "superClass")
 
   def superInterface: CodeWriter[Unit] = tag(for {
     _ <- assertToken(IMPLEMENTS).tell(keyword(" implements "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space) || fail("type should be come after implements keyword")
+    _ <- tokenSeparatedLoop(typeUse, COMMA, space) || fail("type should be come after implements keyword")
   } yield (), "superInterface")
 
   def memberDefinition: CodeWriter[Unit] = tag(for {
@@ -355,7 +357,7 @@ object JavaParser {
 
   def methodDefinition: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- tokenSeparatedCtx(methodArgDef, COMMA, space) || none
+    _ <- tokenSeparatedLoop(methodArgDef, COMMA, space) || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(") ")
     _ <- methodThrows || none
     _ <- blockStmt || assertToken(SEMICOLON).tell(";").enter()
@@ -363,7 +365,7 @@ object JavaParser {
 
   def methodThrows: CodeWriter[Unit] = tag(for {
     _ <- assertToken(THROWS).tell(keyword("throws "))
-    _ <- tokenSeparatedCtx(typeUse, COMMA, space) || fail("exception types should be given")
+    _ <- tokenSeparatedLoop(typeUse, COMMA, space) || fail("exception types should be given")
   } yield (), "methodThrows")
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
@@ -389,12 +391,12 @@ object JavaParser {
 
     def newInstanceReferable: CodeWriter[Unit] = tag(for {
       _ <- assertToken(DOT).tell(".")
-      _ <- tokenSeparatedCtx(reference, DOT)
+      _ <- tokenSeparatedLoop(reference, DOT)
     } yield (), "newInstanceReferable")
 
     for {
       _ <- assertToken(NEW).tell(keyword("new "))
-      _ <- primitiveTypes.hint(PrimitiveTypeTokens) || tokenSeparatedCtx(takeToken(TOKEN).print(typeNameCss), DOT)
+      _ <- primitiveTypes.hint(PrimitiveTypeTokens) || tokenSeparatedLoop(takeToken(TOKEN).print(typeNameCss), DOT)
       _ <- generic.hint(LT) || none
       _ <- arrayInstance.hint(Set(LBRACKET, LBRACE)) || classInstance.hint(LEFT_PARENTHESIS)
       _ <- newInstanceReferable || none
@@ -646,18 +648,18 @@ object JavaParser {
 
   def unaryExpression: CodeWriter[Unit] = tag(for {
     _ <- preExpression.hint(INC | DEC) ||
-      postExpression.hint(IdentifiableTokens) || unaryExpWith(UnaryStartable) ||
+      postExpression.hint(JavaReferableTokens) || unaryExpWith(UnaryStartable) ||
       classInstanceCreation.hint(NEW) ||
-      tokenSeparatedCtx(referableValue, DOT).hint(PrimitiveTypeTokens ++ IdentifiableTokens ++ JavaValueTypeTokens ++ JavaReferableTokens + LEFT_PARENTHESIS)
+      tokenSeparatedLoop(referableValue, DOT).hint(PrimitiveTypeTokens ++ IdentifiableTokens ++ JavaValueTypeTokens ++ JavaReferableTokens + LEFT_PARENTHESIS)
   } yield (), "unaryExpression").hint(ExpressionStartable)
 
   def referableValue: CodeWriter[Unit] = tag(for {
     _ <- parenthesisExpression || typeAsValue || reference || valueTypes
     _ <- arrayRefs || none
-  } yield (), "valueReferable")
+  } yield (), "referableValue")
 
   def typeAsValue: CodeWriter[Unit] = tag(for {
-    _ <- tokenSeparatedCtx(primitiveTypesArrType || typeUse, DOT)
+    _ <- tokenSeparatedLoop(primitiveTypesArrType || typeUse, DOT)
     _ <- assertToken(DOT).tell(".")
     _ <- assertToken(CLASS).tell(keyword("class"))
   } yield (), "typeAsValue")
@@ -708,7 +710,7 @@ object JavaParser {
   def lambda: CodeWriter[Unit] = tag({
     def lambdaDecl: CodeWriter[Unit] = tag(for {
       _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-      _ <- tokenSeparatedCtx(declaration || takeToken(TOKEN).print(x => s"$x"), COMMA, space) || none
+      _ <- tokenSeparatedLoop(declaration || takeToken(TOKEN).print(x => s"$x"), COMMA, space) || none
       _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
     } yield (), "lambdaDecl")
 
@@ -719,13 +721,14 @@ object JavaParser {
     } yield (), "originLambda")
 
     def shortenLambda: CodeWriter[Unit] = tag(for {
-      _ <- tokenSeparatedCtx(typeUse || reference, DOT)
+      _ <- tokenSeparatedLoop(referableValue, DOT, none, "typeUse") ||
+        tokenSeparatedLoop(typeUse, DOT, none, "referableValue")
       _ <- assertToken(NAMESPACE).tell("::")
-      _ <- identifier || assertToken(NEW).tell(keyword("new"))
+      _ <- assertToken(NEW).tell(keyword("new")) || identifier
     } yield (), "shortenLambda")
 
-    originLambda || shortenLambda
-  }, "lambda").hint(LEFT_PARENTHESIS | TOKEN)
+    shortenLambda || originLambda
+  }, "lambda").hint(LEFT_PARENTHESIS | TOKEN | THIS | SUPER)
 
   def synchronizedStmt: CodeWriter[Unit] = tag(for {
     _ <- assertToken(SYNCHRONIZED).tell("synchronized")
@@ -761,7 +764,7 @@ object JavaParser {
   } yield (), "typeUse")
 
   def customDecl: CodeWriter[Unit] = tag(for {
-    _ <- tokenSeparatedCtx(takeToken(TOKEN).print(), DOT)
+    _ <- tokenSeparatedLoop(takeToken(TOKEN).print(), DOT)
     _ <- generic || none
   } yield (), "customDecl")
 
@@ -772,13 +775,13 @@ object JavaParser {
 
   def arrayInitializer: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{")
-    _ <- tokenSeparatedCtx(arrayInitializer || expression, COMMA, space) || none
+    _ <- tokenSeparatedLoop(arrayInitializer || expression, COMMA, space) || none
     _ <- assertToken(RBRACE).tell("}")
   } yield (), "arrayInitializer").foldable
 
   def generic: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LT).tell("<")
-    _ <- tokenSeparatedCtx(genericTypeUse, COMMA, space) || none
+    _ <- tokenSeparatedLoop(genericTypeUse, COMMA, space) || none
     _ <- (assertToken(GT) || unrollingRightShift).tell(">")
   } yield (), "generic")
 
@@ -801,10 +804,10 @@ object JavaParser {
 
   def identifier: CodeWriter[Unit] = tag(takeToken(TOKEN).print(), "identifier")
 
-  def tokenSeparatedCtx(chosenParser: CodeWriter[Unit],
-                        separator: JavaTokenEnum,
-                        afterToken: CodeWriter[Unit] = none): CodeWriter[Unit] = tag(for {
+  def tokenSeparatedLoop(chosenParser: CodeWriter[Unit],
+                         separator: JavaTokenEnum,
+                         afterToken: CodeWriter[Unit] = none, name: String = ""): CodeWriter[Unit] = tag(for {
     _ <- chosenParser
-    _ <- (takeToken(separator).print() ~ afterToken ~ tokenSeparatedCtx(chosenParser, separator, afterToken)) || none
-  } yield (), s"tokenSeparatedCtx($separator)")
+    _ <- (takeToken(separator).print() ~ afterToken ~ tokenSeparatedLoop(chosenParser, separator, afterToken)) || none
+  } yield (), s"tokenSeparatedLoop(${if (name.nonEmpty) s"$name, " else ""}$separator)")
 }

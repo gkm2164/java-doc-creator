@@ -66,7 +66,10 @@ package object docgen {
                 if (name == "" || name == returnType.show) "" else 'span('class /= "method-name", s" $name"), "(",
                 args.map(x => renderHtml(x.show, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "), ")"),
               'span(modifier.commentMacros.filter(_.startsWith("//!")).map(_.drop(3)).mkString("\n")),
-              'pre(JavaCodeFormatter.printCodeBlock(name, codes, debugOption)),
+              'pre(JavaCodeFormatter.printCodeBlock(name, codes, debugOption) match {
+                case Right(code) => code
+                case Left(error) => error.shortMessage
+              }),
               if (m.exampleCode.nonEmpty) 'pre('code('class /= "java", exampleCodes(modifier))) else Empty)
 
           case JavaMember(modifier, name, memberType) =>
