@@ -767,6 +767,7 @@ object JavaParser {
   def typeUse: CodeWriter[Unit] = tag(for {
     _ <- primitiveTypes.hint(PrimitiveTypeTokens) || customDecl
     _ <- arrayUse || none
+    _ <- assertToken(ETC_ARRAY).tell("...") || none
   } yield (), "typeUse")
 
   def customDecl: CodeWriter[Unit] = tag(for {
