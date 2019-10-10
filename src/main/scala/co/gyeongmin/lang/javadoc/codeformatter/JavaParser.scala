@@ -13,7 +13,7 @@ object JavaParser {
   import co.gyeongmin.lang.javadoc.codeformatter.syntax._
 
   val ModifierTokens: Set[JavaTokenEnum] =
-    Set(VOLATILE, TRANSIENT, PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, DEFAULT)
+    Set(VOLATILE, TRANSIENT, PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, DEFAULT, SYNCHRONIZED)
 
   val ModifierStartToken: Set[JavaTokenEnum] =
     ModifierTokens + ANNOTATION
@@ -97,16 +97,16 @@ object JavaParser {
   def annotationTypeElementDeclaration: CodeWriter[Unit] = tag(for {
     _ <- typeUse
     _ <- identifier
+    _ <- symbolLoop(emptyArrayBoxes) || none
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
-    _ <- symbolLoop(emptyArrayBoxes) || none
     _ <- defaultValue || none
     _ <- assertToken(SEMICOLON).tell(";").enter()
   } yield (), "annotationTypeElementDeclaration")
 
   def defaultValue: CodeWriter[Unit] = tag(for {
     _ <- assertToken(DEFAULT).tell(keyword("default "))
-    _ <- valueTypes
+    _ <- tokenSeparatedLoop(referableValue, DOT) || arrayInitializer
   } yield (), "defaultValue")
 
   def superInterfaceExtends: CodeWriter[Unit] = tag(for {
@@ -191,7 +191,7 @@ object JavaParser {
 
   def definitionElements: CodeWriter[Unit] = tag(staticBlockStmt || (for {
     _ <- modifiers || none
-    _ <- classDefinition || enumDefinition || constructorDef || classMemberDefinition
+    _ <- classDefinition || enumDefinition || constructorDef || classMemberDefinition || interfaceDefinition
   } yield ()), "definitionElements")
 
   def classMemberDefinition: CodeWriter[Unit] = tag(for {
@@ -291,19 +291,19 @@ object JavaParser {
 
   def modifiers: CodeWriter[Unit] = tag(for {
     _ <- annotation.enter() ||
-      takeToken(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC | TRANSIENT | VOLATILE | DEFAULT).print(x => keyword(s"$x "))
+      takeToken(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC | TRANSIENT | VOLATILE | DEFAULT | SYNCHRONIZED).print(x => keyword(s"$x "))
     _ <- modifiers || none
   } yield (), "modifiers").hint(ModifierStartToken)
 
   def annotation: CodeWriter[Unit] = tag(for {
     _ <- assertToken(ANNOTATION).tell(color("@", "yellow"))
-    _ <- takeToken(TOKEN).print(color(_, "yellow"))
+    _ <- tokenSeparatedLoop(takeToken(TOKEN).print(color(_, "yellow")), DOT)
     _ <- annotationTail || none
   } yield (), "annotation")
 
   def annotationTail: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
-    _ <- annotationSingleValue || tokenSeparatedLoop(annotationValuePairs, COMMA, space) || none
+    _ <- tokenSeparatedLoop(annotationValuePairs, COMMA, space) || annotationSingleValue || none
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield (), "annotationTail")
 
@@ -475,7 +475,7 @@ object JavaParser {
         _ <- assertToken(SEMICOLON).tell("; ")
         _ <- conditionalExpression
         _ <- assertToken(SEMICOLON).tell("; ")
-        _ <- expression || none
+        _ <- tokenSeparatedLoop(expression, COMMA, space) || none
       } yield (), "triExpressions")
 
       def simpleTypes: CodeWriter[Unit] = tag(for {
