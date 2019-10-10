@@ -12,8 +12,11 @@ object JavaParser {
   import Helper._
   import co.gyeongmin.lang.javadoc.codeformatter.syntax._
 
+  val ModifierTokens: Set[JavaTokenEnum] =
+    Set(VOLATILE, TRANSIENT, PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, DEFAULT)
+
   val ModifierStartToken: Set[JavaTokenEnum] =
-    Set(PUBLIC, PRIVATE, PROTECTED, STRICTFP, FINAL, ABSTRACT, STATIC, ANNOTATION)
+    ModifierTokens + ANNOTATION
   // LL(1) parser
   private val PrimitiveTypeTokens: Set[JavaTokenEnum] =
     Set(PRIMITIVE_BYTE, PRIMITIVE_CHAR, PRIMITIVE_SHORT, PRIMITIVE_LONG,
@@ -119,14 +122,16 @@ object JavaParser {
 
   def interfaceBodyDeclaration: CodeWriter[Unit] = tag(for {
     _ <- modifiers || none
-    _ <- interfaceMethodDeclaration || constantDeclaration || classDefinition || interfaceDefinition
+    _ <- interfaceMethodDeclaration ||
+      constantDeclaration ||
+      classDefinition || interfaceDefinition
   } yield (), "interfaceDeclaration")
 
-  def constantDeclaration: CodeWriter[Unit] = tag(declDetail, "constantDeclaration")
+  def constantDeclaration: CodeWriter[Unit] = tag(declDetail ~ assertToken(SEMICOLON).tell(";"), "constantDeclaration")
 
   def interfaceMethodDeclaration: CodeWriter[Unit] = tag(for {
+    _ <- generic || none
     _ <- methodHeader
-    _ <- blockStmt || assertToken(SEMICOLON).tell(";")
     _ <- enter
   } yield (), "interfaceMethodDeclaration")
 
@@ -286,7 +291,7 @@ object JavaParser {
 
   def modifiers: CodeWriter[Unit] = tag(for {
     _ <- annotation.enter() ||
-      takeToken(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC).print(x => keyword(s"$x "))
+      takeToken(PUBLIC | PRIVATE | PROTECTED | STRICTFP | FINAL | ABSTRACT | STATIC | TRANSIENT | VOLATILE | DEFAULT).print(x => keyword(s"$x "))
     _ <- modifiers || none
   } yield (), "modifiers").hint(ModifierStartToken)
 
@@ -370,6 +375,7 @@ object JavaParser {
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
     _ <- annotation.hint(ANNOTATION) || none
+    _ <- assertToken(FINAL).tell(keyword("final ")).hint(FINAL) || none
     _ <- typeUse
     _ <- space
     _ <- identifier
@@ -754,7 +760,7 @@ object JavaParser {
       _ <- typeUse.tell(" ")
       _ <- identifier
       _ <- variableInitialize.hint(SUBSTITUTE) || none
-      _ <- assertToken(COMMA).tell(",").enter() ~ declDetail || none
+      _ <- (assertToken(COMMA).tell(",").enter() ~ declDetail) || none
     } yield ()
   }, "declDetail")
 
