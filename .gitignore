@@ -4,3 +4,4 @@ temp/
 *.txt
 *.html
 output/
+.DS_Store
