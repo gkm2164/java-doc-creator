@@ -119,7 +119,7 @@ object JavaParser {
 
   def interfaceBodyDeclaration: CodeWriter[Unit] = tag(for {
     _ <- modifiers || none
-    _ <- constantDeclaration || interfaceMethodDeclaration || classDefinition || interfaceDefinition
+    _ <- interfaceMethodDeclaration || constantDeclaration || classDefinition || interfaceDefinition
   } yield (), "interfaceDeclaration")
 
   def constantDeclaration: CodeWriter[Unit] = tag(declDetail, "constantDeclaration")
