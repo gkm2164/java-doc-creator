@@ -37,19 +37,23 @@ package object syntax {
         val actualTag = CodeWriterStackElem(idx, token, tag)
         val sb: StringBuilder = StringBuilder.newBuilder
 
-        sb ++= s"[${actualTag.toString}]"
-        sb ++= s" <- [${prevStack.take(config.debug.maxStackSize).mkString(" / ")}]"
-        config.println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
+        if (config.debug.stackTrace) {
+          sb ++= s"[${actualTag.toString}]"
+          sb ++= s" <- [${prevStack.take(config.debug.maxStackSize).mkString(" / ")}]"
+          config.println(f"${" " * prevStack.length}RUN    ${prevStack.length + 1}%3d ${sb.toString}")
+        }
 
         val (CodeWriterState(nextTokenList, newSb, _, _), v) =
           thisWriter.run(prevTokenList, prevSb, actualTag :: prevStack, config)
 
-        v match {
-          case Right(_) =>
-            config.println(f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}")
-          case Left(_) =>
-            if (!config.debug.printOnlyAccepted)
-              config.println(f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}")
+        if (config.debug.stackTrace) {
+          v match {
+            case Right(_) =>
+              config.println(f"${" " * prevStack.length}ACCEPT ${prevStack.length + 1}%3d ${sb.toString}")
+            case Left(_) =>
+              if (!config.debug.printOnlyAccepted)
+                config.println(f"${" " * prevStack.length}REJECT ${prevStack.length + 1}%3d ${sb.toString}")
+          }
         }
         (CodeWriterState(nextTokenList, newSb, prevStack, config), v)
     }
@@ -129,13 +133,20 @@ package object syntax {
     } yield ()
 
     def collect(tokens: List[(JavaSToken, Int)], config: CodeWriterConfig): Either[ParseError, String] = {
-      val (CodeWriterState(_, sb, stack, _), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
+      val (CodeWriterState(_, sb, stack, cfg), v) = thisWriter.run(tokens, IndentAwareStringBuilder(0), Nil, config)
       v match {
         case Right(_) =>
           if (config.debug.stackTrace) config.printConsole()
           Right(sb.toString)
         case Left(e) =>
           val errMessage = s"Error occurred during parse code: $e, lastStack: ${stack.take(5)}"
+
+          if (!config.debug.stackTrace) {
+            val tmpState = CodeWriterState(tokens, IndentAwareStringBuilder(0), Nil, cfg.copy(debug = cfg.debug.copy(stackTrace = true)))
+            val (s, _) = thisWriter(tmpState)
+            s.config.printConsole()
+          }
+
           Left(ErrorMessage(errMessage, config.printStacktraceString()))
       }
     }

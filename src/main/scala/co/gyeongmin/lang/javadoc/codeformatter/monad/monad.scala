@@ -1,5 +1,7 @@
 package co.gyeongmin.lang.javadoc.codeformatter
 
+import java.io.Writer
+
 import cats._
 import co.gyeongmin.lang.javadoc.JavaSToken
 import co.gyeongmin.lang.javadoc.codeformatter.exceptions.FormatterError

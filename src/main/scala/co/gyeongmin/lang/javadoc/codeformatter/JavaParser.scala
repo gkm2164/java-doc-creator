@@ -39,8 +39,8 @@ object JavaParser {
 
   def javaCode: CodeWriter[Unit] = tag(for {
     _ <- packageDefinition.hint(PACKAGE | ANNOTATION)
+    _ <- enter ~ imports.hint(IMPORT) || none
     _ <- empty || (for {
-      _ <- enter ~ imports.hint(IMPORT) || none
       _ <- enter ~ symbolLoop(for {
         _ <- modifiers || none
         _ <- classDefinition.hint(CLASS) ||
@@ -113,7 +113,7 @@ object JavaParser {
 
   def interfaceBody: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LBRACE).tell("{").enter().tab()
-    _ <- symbolLoop(interfaceBodyDeclaration.enter())
+    _ <- symbolLoop(interfaceBodyDeclaration.enter()).notHint(RBRACE) || none
     _ <- assertToken(RBRACE).untab().tell("}").enter()
   } yield (), "interfaceBody")
 
@@ -126,7 +126,7 @@ object JavaParser {
 
   def interfaceMethodDeclaration: CodeWriter[Unit] = tag(for {
     _ <- methodHeader
-    _ <- blockStmt || assertToken(SEMICOLON)
+    _ <- blockStmt || assertToken(SEMICOLON).tell(";")
     _ <- enter
   } yield (), "interfaceMethodDeclaration")
 
@@ -365,7 +365,7 @@ object JavaParser {
 
   def methodThrows: CodeWriter[Unit] = tag(for {
     _ <- assertToken(THROWS).tell(keyword("throws "))
-    _ <- tokenSeparatedLoop(typeUse, COMMA, space) || fail("exception types should be given")
+    _ <- tokenSeparatedLoop(typeUse, COMMA, space)
   } yield (), "methodThrows")
 
   def methodArgDef: CodeWriter[Unit] = tag(for {
@@ -564,7 +564,7 @@ object JavaParser {
 
   def caseStmtDetail: CodeWriter[Unit] = tag(for {
     _ <- assertToken(CASE).tell(keyword("case "))
-    _ <- valueTypes || identifier
+    _ <- valueTypes || tokenSeparatedLoop(identifier, DOT)
     _ <- assertToken(COLON).tell(":").enter().tab()
     _ <- statements.untab()
   } yield (), "caseStmtDetail")

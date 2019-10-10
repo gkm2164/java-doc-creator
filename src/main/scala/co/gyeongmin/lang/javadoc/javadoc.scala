@@ -148,8 +148,6 @@ package object javadoc {
 
   final case class JavaMethod(modifier: JavaModifier, name: String, returnType: JavaTypeUse, args: Vector[JavaArgument], codes: Vector[JavaSToken]) extends JavaMembers {
     lazy val exampleCode: Vector[String] = modifier.commentMacros.filter(_.startsWith("//="))
-
-//    println(JavaCodeFormatter.printCode(name, codes))
   }
 
   final case class JavaTypeDesignate(name: String, extend: Option[(String, JavaTypeDesignate)], generics: Vector[JavaTypeDesignate], arrayNotation: String) {
