@@ -38,7 +38,7 @@ object JavaParser {
   import flatMap._
   import functor._
 
-  private val SubstitutionTokens: Set[JavaTokenEnum] = SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC
+  private val SubstitutionTokens: Set[JavaTokenEnum] = SUBSTITUTE | PLUS_ACC | MINUS_ACC | MULTIPLY_ACC | DIVIDE_ACC | BIT_OR_ACC | BIT_AND_ACC | BIT_XOR_ACC
 
   def javaCode: CodeWriter[Unit] = tag(for {
     _ <- packageDefinition.hint(PACKAGE | ANNOTATION)
@@ -213,6 +213,7 @@ object JavaParser {
 
   def imports: CodeWriter[Unit] = tag(symbolLoop(for {
     _ <- assertToken(IMPORT).tell(keyword("import "))
+    _ <- assertToken(STATIC).tell(keyword("static ")) || none
     _ <- tokenSeparatedLoop(identifier, DOT)
     _ <- (assertToken(DOT) ~ assertToken(MULTIPLY).tell("*")) || none
     _ <- assertToken(SEMICOLON).tell(";").enter()
@@ -330,7 +331,7 @@ object JavaParser {
 
   def typeBound: CodeWriter[Unit] = tag(for {
     _ <- assertToken(EXTENDS).tell("extends ")
-    _ <- identifier
+    _ <- typeUse
     _ <- additionalBound || none
   } yield (), "typeBound")
 
@@ -575,7 +576,7 @@ object JavaParser {
     _ <- statements.untab()
   } yield (), "caseStmtDetail")
 
-  def expression: CodeWriter[Unit] = tag(lambda || castExpression || assignment || conditionalExpression, "expression")
+  def expression: CodeWriter[Unit] = tag(lambda || assignment || conditionalExpression, "expression")
 
   def conditionalExpression: CodeWriter[Unit] = tag({
     def conditionalExpressionDetail: CodeWriter[Unit] = tag(for {
@@ -653,7 +654,8 @@ object JavaParser {
     tag(infixOperators(MULTIPLY | DIVIDE | MODULAR, unaryExpression), "multiplicativeExpression")
 
   def unaryExpression: CodeWriter[Unit] = tag(for {
-    _ <- preExpression.hint(INC | DEC) ||
+    _ <- castExpression ||
+      preExpression.hint(INC | DEC) ||
       postExpression.hint(JavaReferableTokens) || unaryExpWith(UnaryStartable) ||
       classInstanceCreation.hint(NEW) ||
       tokenSeparatedLoop(referableValue, DOT).hint(PrimitiveTypeTokens ++ IdentifiableTokens ++ JavaValueTypeTokens ++ JavaReferableTokens + LEFT_PARENTHESIS)
@@ -681,14 +683,13 @@ object JavaParser {
     _ <- assertToken(RIGHT_PARENTHESIS).tell(")")
   } yield (), "parenthesisExpression")
 
-  def valueTypes: CodeWriter[Unit] = tag(takeToken(JavaValueTypeTokens, {
-    case JavaSToken(enum, v) => enum match {
-      case TRUE | FALSE | NULL => keyword(v)
-      case NUMBER => color(v, "#3986AF")
-      case STRING | CHAR => color(v, "#477944")
-      case _ => v
-    }
-  }).print(), "valueTypes").hint(JavaValueTypeTokens)
+  def valueTypes: CodeWriter[Unit] = tag(
+    takeToken(TRUE | FALSE | NULL).print(keyword) ||
+    takeToken(STRING | CHAR).print(color(_, "#477944")) || (for {
+      _ <- assertToken(MINUS).tell("-") || none
+      _ <- takeToken(NUMBER).print(color(_, "#3986AF"))
+    } yield ())
+    , "valueTypes")
 
   def castExpression: CodeWriter[Unit] = tag(for {
     _ <- assertToken(LEFT_PARENTHESIS).tell("(")
@@ -756,11 +757,15 @@ object JavaParser {
   } yield (), "declaration")
 
   def declDetail: CodeWriter[Unit] = tag({
-    for {
-      _ <- typeUse.tell(" ")
+    def declDetailLoop: CodeWriter[Unit] = tag(for {
       _ <- identifier
       _ <- variableInitialize.hint(SUBSTITUTE) || none
-      _ <- (assertToken(COMMA).tell(",").enter() ~ declDetail) || none
+      _ <- (assertToken(COMMA).tell(",").enter() ~ declDetailLoop) || none
+    } yield(), "declDetailLoop")
+
+    for {
+      _ <- typeUse.tell(" ")
+      _ <- declDetailLoop
     } yield ()
   }, "declDetail")
 
