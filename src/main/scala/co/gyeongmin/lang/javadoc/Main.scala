@@ -16,7 +16,7 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.Try
 
 object Main {
-  val log = Logger("go-doc-creator")
+  val log: Logger = Logger("go-doc-creator")
   val onlyJavaAndDirFilter: FilenameFilter = (dir: File, _: String) => {
     dir.isDirectory || (dir.isFile && dir.getName.endsWith(".java"))
   }
@@ -36,7 +36,7 @@ object Main {
       parseArg(t, doc, debug.set(_.maxStackSize := Try(num.toInt).getOrElse(1)))
     case ("-a" | "--only-accepted") :: t =>
       parseArg(t, doc, debug.set(_.printOnlyAccepted := true))
-    case ("-h" | "--help") :: t => Left(HelpMessage())
+    case ("-h" | "--help") :: _ => Left(HelpMessage())
     case h :: _ => Left(UnableToIdentifyError(s"unknown parameter: $h"))
   }
 
@@ -45,7 +45,7 @@ object Main {
     parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder) match {
       case Right((doc, debugOption)) =>
         val DocumentDescription(basedir, outputDir, name) = doc
-        createDoc(basedir, outputDir, name, debugOption)
+        createDoc(basedir, outputDir, debugOption)
       case Left(h:HelpMessage) => h.printMessage(log)
       case Left(UnableToIdentifyError(msg)) => log.error(msg)
     }
@@ -74,7 +74,7 @@ object Main {
     _ <- copyResource("js", outputDir)
   } yield ()
 
-  def createDoc(baseDir: String, outputDir: String, name: String, debugOption: DebugOption): Unit = {
+  def createDoc(baseDir: String, outputDir: String, debugOption: DebugOption): Unit = {
     import levsha.text.renderHtml
     import levsha.text.symbolDsl._
 
@@ -82,7 +82,7 @@ object Main {
     val introString = {
       val file = new File(s"$baseDir/INTRODUCTION.md")
       if (file.exists() && file.length() > 0)
-        Transformer.from(Markdown).to(HTML).build.transform(s"$baseDir/INTRODUCTION.md").toString()
+        Transformer.from(Markdown).to(HTML).build.transform(s"$baseDir/INTRODUCTION.md").toString
       else ""
     }
 
@@ -127,7 +127,7 @@ object Main {
                 ul(runLogging(node.buildNavTree, log.info("build nav tree")))
               )
             ),
-            div(id := "split-bar", br(`class` := "clearfix")),
+            div(id := "split-bar", span(`class` := "clearfix")),
             article(id := "main", `class` := "contents",
               div(introString),
               node.print
