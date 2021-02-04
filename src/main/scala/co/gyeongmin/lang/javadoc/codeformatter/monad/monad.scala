@@ -1,14 +1,12 @@
 package co.gyeongmin.lang.javadoc.codeformatter
 
-import java.io.Writer
-
 import cats._
 import co.gyeongmin.lang.javadoc.JavaSToken
 import co.gyeongmin.lang.javadoc.codeformatter.exceptions.FormatterError
 import co.gyeongmin.lang.javadoc.config.DebugOption
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 
-import scala.language.{higherKinds, implicitConversions}
+import scala.language.implicitConversions
 
 package object monad {
   type CodeWriter[A] = CodeWriterState => CodeWriterValue[A]
@@ -70,8 +68,6 @@ package object monad {
     }
 
     override def pure[A](x: A): CodeWriter[A] = CodeWriter.pure(x)
-
-    import syntax._
 
     override def tailRecM[A, B](a: A)(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
       case CodeWriterState(tokenList, stringBuilder, syntaxStack, config) =>

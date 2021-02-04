@@ -1,6 +1,5 @@
 package co.gyeongmin.lang.javadoc.codeformatter
 
-import co.gyeongmin.lang.javadoc.JavaSToken
 import co.gyeongmin.lang.javadoc.codeformatter.monad._
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._

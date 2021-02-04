@@ -97,11 +97,11 @@ package object javadoc {
 
     def setGeneric(generic: Vector[JavaTypeDesignate]): JavaModifier = this.copy(generic = generic)
 
-    def setStatic: JavaModifier = this.copy(isStatic = true)
+    def setStatic(): JavaModifier = this.copy(isStatic = true)
 
-    def setFinal: JavaModifier = this.copy(isFinal = true)
+    def setFinal(): JavaModifier = this.copy(isFinal = true)
 
-    def setAbstract: JavaModifier = this.copy(isAbstract = true)
+    def setAbstract(): JavaModifier = this.copy(isAbstract = true)
 
     def setPath(path: String): JavaModifier = this.copy(fullPath = fullPath + path)
   }
@@ -186,7 +186,7 @@ package object javadoc {
   }
 
   final case class JavaArgument(annotations: Vector[JavaAnnotationCall], isFinal: Boolean, name: String, argumentType: JavaTypeUse) {
-    def setFinal: JavaArgument = copy(isFinal = true)
+    def setFinal(): JavaArgument = copy(isFinal = true)
 
     def appendAnnotation(annotation: JavaAnnotationCall): JavaArgument = copy(annotations = annotations :+ annotation)
 

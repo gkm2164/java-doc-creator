@@ -40,11 +40,10 @@ object Main {
     case h :: _ => Left(UnableToIdentifyError(s"unknown parameter: $h"))
   }
 
-
   def main(args: Array[String]): Unit =
     parseArg(args.toList, new DocumentDescriptionBuilder, new DebugOptionBuilder) match {
       case Right((doc, debugOption)) =>
-        val DocumentDescription(basedir, outputDir, name) = doc
+        val DocumentDescription(basedir, outputDir, _) = doc
         createDoc(basedir, outputDir, debugOption)
       case Left(h:HelpMessage) => h.printMessage(log)
       case Left(UnableToIdentifyError(msg)) => log.error(msg)

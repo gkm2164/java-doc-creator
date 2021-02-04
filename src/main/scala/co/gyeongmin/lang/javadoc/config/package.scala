@@ -82,7 +82,7 @@ package object config {
       SettingKey((self, value) => self.copy(outputDir = value), "./output")
     val description: SettingKey[String, DocumentDescription] =
       SettingKey((self, value) => self.copy(description = value), "default description")
-    val empty = DocumentDescription("", "", "")
+    val empty: DocumentDescription = DocumentDescription("", "", "")
 
     protected val combine: List[SettingKey[_, DocumentDescription]] = baseDir :: outputDir :: description :: Nil
   }
@@ -95,7 +95,7 @@ package object config {
     val printOnlyAccepted: SettingKey[Boolean, DebugOption] =
       SettingKey((self, value) => self.copy(printOnlyAccepted = value), false)
 
-    val empty = DebugOption(stackTrace = false, 0, printOnlyAccepted = false)
+    val empty: DebugOption = DebugOption(stackTrace = false, 0, printOnlyAccepted = false)
     protected val combine: List[SettingKey[_, DebugOption]] = stackTrace :: maxStackSize :: printOnlyAccepted :: Nil
   }
 
