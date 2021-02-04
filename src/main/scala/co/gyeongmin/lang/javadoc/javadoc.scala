@@ -2,8 +2,9 @@ package co.gyeongmin.lang
 
 import co.gyeongmin.lang.javalang.JavaTokenEnum
 import levsha.Document._
+import levsha.dsl._
+import html._
 import levsha.impl.TextPrettyPrintingConfig
-import levsha.text.symbolDsl._
 
 import scala.annotation.tailrec
 
@@ -27,9 +28,9 @@ package object javadoc {
 
   sealed trait JavaDefinition {
     def representName: String = modifier.commentMacros
-      .find(_.startsWith("//name"))
-      .map(_.replace("//name", ""))
-      .getOrElse(name)
+                                        .find(_.startsWith("//name"))
+                                        .map(_.replace("//name", ""))
+                                        .getOrElse(name)
 
     final def id: String = {
       val ret = s"${modifier.fullPath.toLowerCase.replace(".", "-")}-${name.toLowerCase}"
@@ -77,18 +78,20 @@ package object javadoc {
                                 isAbstract: Boolean,
                                 fullPath: String) {
 
-    def show[T]: Node[T] = 'span(
-      if (generic.nonEmpty) 'span('span('class /= "generic-symbol", "&lt;"), generic.map(_.showNode), 'span('class /= "generic-symbol", "&gt;")) else Empty,
-      annotations.map(x => 'span('class /= "annotation-use", s"@${x.name}${x.parameters} ")),
-      'span('class /= "reserved-keyword", s"${access.value} "), Empty,
-      if (isStatic) 'span('class /= "reserved-keyword", "static ") else Empty,
-      if (isFinal) 'span('class /= "reserved-keyword", "final ") else Empty,
-      if (isAbstract) 'span('class /= "reserved-keyword", "abstract ") else Empty
+    def show[T]: Node[T] = span(
+      if (generic.nonEmpty) span(span(`class` := "generic-symbol", "&lt;"), generic
+        .map(_.showNode), span(`class` := "generic-symbol", "&gt;")) else Empty,
+      annotations.map(x => span(`class` := "annotation-use", s"@${x.name}${x.parameters} ")),
+      span(`class` := "reserved-keyword", s"${access.value} "), Empty,
+      if (isStatic) span(`class` := "reserved-keyword", "static ") else Empty,
+      if (isFinal) span(`class` := "reserved-keyword", "final ") else Empty,
+      if (isAbstract) span(`class` := "reserved-keyword", "abstract ") else Empty
     )
 
     def appendMacro(v: String): JavaModifier = this.copy(commentMacros = commentMacros :+ v)
 
-    def appendAnnotation(annotation: JavaAnnotationCall): JavaModifier = this.copy(annotations = annotations :+ annotation)
+    def appendAnnotation(annotation: JavaAnnotationCall): JavaModifier = this
+      .copy(annotations = annotations :+ annotation)
 
     def setAccess(access: JavaTokenEnum): JavaModifier = this.copy(access = access)
 
@@ -133,7 +136,12 @@ package object javadoc {
                                            definitions: Vector[JavaDefinition],
                                            inheritClass: Vector[JavaTypeUse]) extends JavaTypeDef {
     val annotationMeta: Map[String, Vector[String]] =
-      modifier.annotations.groupBy(_.name).mapValues(_.map(_.parameters.replace("(", "").replace(")", "")))
+      modifier.annotations
+              .groupBy(_.name)
+              .view
+              .mapValues(_.map(_.parameters.replace("(", "")
+                                .replace(")", "")))
+              .toMap
     val decideTarget: Option[String] = annotationMeta.get("Target").map(_.headOption.getOrElse(""))
 
     override def implementInterfaces: Vector[JavaTypeUse] = Vector.empty
@@ -156,16 +164,18 @@ package object javadoc {
 
     def show: String = renderHtml(showNode, TextPrettyPrintingConfig.noPrettyPrinting)
 
-    def genericSymbol[T](word: String): Node[T] = 'span('class /= "generic-symbol", word)
+    def genericSymbol[T](word: String): Node[T] = span(`class` := "generic-symbol", word)
 
-    def describeGenerics[T]: Node[T] = 'span(
+    def describeGenerics[T]: Node[T] = span(
       genericSymbol("&lt;"),
       generics.map(x => renderHtml(x.showNode, TextPrettyPrintingConfig.noPrettyPrinting)).mkString(", "),
       genericSymbol("&gt;"))
 
     def showNode[T]: Node[T] = {
-      if (Vector("boolean", "void", "int", "double", "short", "char").contains(name)) Seq('span('class /= "reserved-keyword", name + arrayNotation))
-      else Seq('span('class /= "type-keyword", name), if (generics.nonEmpty) describeGenerics else Empty, 'span(arrayNotation))
+      if (Vector("boolean", "void", "int", "double", "short", "char")
+        .contains(name)) Seq(span(`class` := "reserved-keyword", name + arrayNotation))
+      else Seq(span(`class` := "type-keyword", name), if (generics
+        .nonEmpty) describeGenerics else Empty, span(arrayNotation))
     }
   }
 
@@ -180,10 +190,11 @@ package object javadoc {
 
     def appendAnnotation(annotation: JavaAnnotationCall): JavaArgument = copy(annotations = annotations :+ annotation)
 
-    def show[T]: Node[T] = 'span(
-      if (annotations.nonEmpty) annotations.map(x => 'span('class /= "annotation-def", s"@${x.name}${x.parameters} ")) else Empty,
-      if (isFinal) 'span('class /= "reserved-keyword", "final ") else Empty,
-      'span(s"${argumentType.show} "), name
+    def show[T]: Node[T] = span(
+      if (annotations.nonEmpty) annotations
+        .map(x => span(`class` := "annotation-def", s"@${x.name}${x.parameters} ")) else Empty,
+      if (isFinal) span(`class` := "reserved-keyword", "final ") else Empty,
+      span(s"${argumentType.show} ", name)
     )
   }
 
@@ -205,7 +216,8 @@ package object javadoc {
 
   object JavaModifier {
     def empty(path: String, annotationsBuf: Vector[JavaAnnotationCall] = Vector.empty): JavaModifier =
-      JavaModifier(Vector.empty, annotationsBuf, PRIVATE, Vector.empty, isStatic = false, isFinal = false, isAbstract = false, path)
+      JavaModifier(Vector.empty, annotationsBuf, PRIVATE, Vector
+        .empty, isStatic = false, isFinal = false, isAbstract = false, path)
   }
 
   object VectorImplicit {

@@ -125,7 +125,7 @@ public class Tokenizer {
         if (j < codes.length && untilChar.length > 1 || !WHITESPACES.contains(untilChar[0])) {
             buf.append(untilChar);
         }
-        final JavaToken ret = new JavaToken(elem.tokenEnum.saveTo, buf.toString(), j);
+        final JavaToken ret = new JavaToken(elem.tokenEnum.saveTo, buf.toString());
         return new Pair<>(ret, j + untilChar.length - 1);
     }
 
@@ -139,7 +139,7 @@ public class Tokenizer {
             if (elem.next.containsKey(ch)) {
                 elem = elem.next.get(ch);
                 if (elem.flush && sb.length() > 0) {
-                    ret.add(JavaToken.newToken(sb.toString(), i));
+                    ret.add(JavaToken.newToken(sb.toString()));
                     sb = new StringBuilder();
                 }
                 sb.append(ch);
@@ -161,14 +161,14 @@ public class Tokenizer {
                         sb = new StringBuilder();
                         continue;
                     } else {
-                        ret.add(new JavaToken(elem.tokenEnum, elem.prefix, i));
+                        ret.add(new JavaToken(elem.tokenEnum, elem.prefix));
                     }
                     sb = new StringBuilder();
                 }
 
                 if (WHITESPACES.contains(ch)) {
                     if (sb.length() > 0) {
-                        ret.add(JavaToken.newToken(sb.toString(), i));
+                        ret.add(JavaToken.newToken(sb.toString()));
 
                     }
                     sb = new StringBuilder();
@@ -191,7 +191,7 @@ public class Tokenizer {
         }
 
         if (sb.length() > 0) {
-            ret.add(JavaToken.newToken(sb.toString(), codes.length));
+            ret.add(JavaToken.newToken(sb.toString()));
         }
 
         return ret;

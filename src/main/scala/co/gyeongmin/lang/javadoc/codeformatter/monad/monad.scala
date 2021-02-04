@@ -15,7 +15,7 @@ package object monad {
   type CodeWriterValue[A] = (CodeWriterState, Either[FormatterError, A])
 
   class CodeWriterLogger {
-    private val logPrinter: StringBuilder = StringBuilder.newBuilder
+    private val logPrinter: StringBuilder = new StringBuilder()
     def print(str: => String): Unit = logPrinter.append(s"$str")
     def println(str: => String): Unit = logPrinter.append(s"$str\n")
     def printConsole(): Unit = Predef.println(logPrinter.toString)
@@ -75,7 +75,7 @@ package object monad {
 
     override def tailRecM[A, B](a: A)(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
       case CodeWriterState(tokenList, stringBuilder, syntaxStack, config) =>
-        f(a).run(tokenList, stringBuilder, syntaxStack, config) match {
+        f(a)(CodeWriterState(tokenList, stringBuilder, syntaxStack, config)) match {
           case (nextState, Right(Right(done))) => (nextState, Right(done))
           case (nextState, Right(Left(nextA))) => tailRecM(nextA)(f)(nextState)
           case (nextState, Left(e)) => (nextState, Left(e))

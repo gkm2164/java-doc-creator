@@ -146,8 +146,8 @@ public enum JavaTokenEnum {
 
     public final String value;
     public final boolean isKeyword;
-    boolean takeUntil = false;
-    String until;
-    JavaTokenEnum saveTo;
+    public boolean takeUntil = false;
+    public String until;
+    public JavaTokenEnum saveTo;
     public boolean allowEscape = true;
 }

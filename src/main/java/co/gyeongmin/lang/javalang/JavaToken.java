@@ -6,7 +6,6 @@ import java.util.Map;
 public class JavaToken {
     private final JavaTokenEnum e;
     private final String value;
-    private final int endsAt;
 
     private static final Map<String, JavaTokenEnum> token;
 
@@ -19,23 +18,22 @@ public class JavaToken {
         }
     }
 
-    public JavaToken(JavaTokenEnum e, String value, int endsAt) {
+    public JavaToken(JavaTokenEnum e, String value) {
         this.e = e;
         this.value = value;
-        this.endsAt = endsAt;
     }
 
-    static <T> JavaToken newToken(T t, int endsAt) {
+    public static <T> JavaToken newToken(T t) {
         String str = t.toString();
         if (token.containsKey(str)) {
             JavaTokenEnum e = token.get(str);
-            return new JavaToken(e, e.value, endsAt);
+            return new JavaToken(e, e.value);
         }
 
         if (str.matches("^[-+]?\\d+(\\.\\d+)?$")) {
-            return new JavaToken(JavaTokenEnum.NUMBER, str, endsAt);
+            return new JavaToken(JavaTokenEnum.NUMBER, str);
         }
-        return new JavaToken(JavaTokenEnum.TOKEN, str, endsAt);
+        return new JavaToken(JavaTokenEnum.TOKEN, str);
     }
 
     public JavaTokenEnum getE() {

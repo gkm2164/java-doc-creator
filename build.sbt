@@ -2,13 +2,13 @@ name := "java-doc-creator"
 
 version := "0.1"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 
 resolvers += Resolver.sonatypeRepo("releases")
 
-libraryDependencies += "org.typelevel" %% "cats-core" % "2.0.0-M1"
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.2.0"
 
-scalacOptions ++= Seq("-deprecation", "-Ypartial-unification")
+scalacOptions ++= Seq("-deprecation")
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
 
@@ -24,8 +24,8 @@ libraryDependencies ++= (scalaBinaryVersion.value match {
 })
 
 libraryDependencies ++= Seq(
-  "com.github.fomkin" %% "levsha-core" % "0.7.2",
-  "org.planet42" %% "laika-core" % "0.10.0",
+  "com.github.fomkin" %% "levsha-core" % "0.10.0",
+  "org.planet42" %% "laika-core" % "0.17.0",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2")
 

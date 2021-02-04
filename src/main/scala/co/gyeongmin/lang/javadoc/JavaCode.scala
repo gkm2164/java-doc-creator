@@ -6,10 +6,10 @@ import co.gyeongmin.lang.javalang.JavaTokenEnum
 import co.gyeongmin.lang.javalang.JavaTokenEnum._
 import co.gyeongmin.lang.javalang.exceptions.TokenNotAcceptedException
 import levsha.Document.Node
-import levsha.text.symbolDsl._
+import levsha.dsl._
+import html._
 
-import scala.language.{higherKinds, implicitConversions}
-
+import scala.language.implicitConversions
 
 final case class JavaCode(packageName: String,
                           imports: Vector[String],
@@ -27,7 +27,7 @@ final case class JavaCode(packageName: String,
 
   import docgen._
 
-  def show[T](implicit debugOption: DebugOption): Node[T] = 'div(defs.sortBy(_.name).map(_.show(Indent(0))))
+  def show[T](implicit debugOption: DebugOption): Node[T] = div(defs.sortBy(_.name).map(_.show(Indent(0))))
 }
 
 object JavaCode {

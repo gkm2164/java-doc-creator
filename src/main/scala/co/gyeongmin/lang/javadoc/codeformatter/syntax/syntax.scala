@@ -35,7 +35,7 @@ package object syntax {
       case CodeWriterState(prevTokenList, prevSb, prevStack, config) =>
         val (token, idx) = prevTokenList.head
         val actualTag = CodeWriterStackElem(idx, token, tag)
-        val sb: StringBuilder = StringBuilder.newBuilder
+        val sb: StringBuilder = new StringBuilder()
 
         if (config.debug.stackTrace) {
           sb ++= s"[${actualTag.toString}]"

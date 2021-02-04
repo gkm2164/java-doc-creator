@@ -108,8 +108,8 @@ package object config {
   }
 
   sealed trait ArgParserError
-  case class UnableToIdentifyError(msg: String) extends ArgParserError
-  case object HelpMessage extends ArgParserError {
+  final case class UnableToIdentifyError(msg: String) extends ArgParserError
+  final case class HelpMessage() extends ArgParserError {
     def printMessage(log: Logger): Unit = {
       log.info("print help message for java parser")
       log.info("")

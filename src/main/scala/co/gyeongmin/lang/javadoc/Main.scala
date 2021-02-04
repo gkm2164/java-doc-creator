@@ -1,17 +1,18 @@
 package co.gyeongmin.lang.javadoc
 
 import java.io._
-
 import co.gyeongmin.lang.javadoc.config._
 import co.gyeongmin.lang.javalang.Tokenizer
 import com.typesafe.scalalogging.Logger
-import laika.api.Transform
+import laika.api.Transformer
 import laika.format._
+import levsha.dsl._
+import html._
 import levsha.impl.TextPrettyPrintingConfig
 import org.apache.commons.io.FileUtils
 
-import scala.collection.JavaConverters._
 import scala.io.Source
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.Try
 
 object Main {
@@ -35,7 +36,7 @@ object Main {
       parseArg(t, doc, debug.set(_.maxStackSize := Try(num.toInt).getOrElse(1)))
     case ("-a" | "--only-accepted") :: t =>
       parseArg(t, doc, debug.set(_.printOnlyAccepted := true))
-    case ("-h" | "--help") :: t => Left(HelpMessage)
+    case ("-h" | "--help") :: t => Left(HelpMessage())
     case h :: _ => Left(UnableToIdentifyError(s"unknown parameter: $h"))
   }
 
@@ -45,7 +46,7 @@ object Main {
       case Right((doc, debugOption)) =>
         val DocumentDescription(basedir, outputDir, name) = doc
         createDoc(basedir, outputDir, name, debugOption)
-      case Left(h@HelpMessage) => h.printMessage(log)
+      case Left(h:HelpMessage) => h.printMessage(log)
       case Left(UnableToIdentifyError(msg)) => log.error(msg)
     }
 
@@ -81,7 +82,7 @@ object Main {
     val introString = {
       val file = new File(s"$baseDir/INTRODUCTION.md")
       if (file.exists() && file.length() > 0)
-        Transform.from(Markdown).to(HTML).fromFile(s"$baseDir/INTRODUCTION.md").toString()
+        Transformer.from(Markdown).to(HTML).build.transform(s"$baseDir/INTRODUCTION.md").toString()
       else ""
     }
 
@@ -102,33 +103,33 @@ object Main {
     val pw = new PrintWriter(s"$outputDir/index.html")
     pw.write("<!DOCTYPE html>")
     pw.write(renderHtml(
-      'html('lang /= "ko",
-        'head(
-          'meta('charset /= "utf-8"),
-          'title("document"),
-          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/animation.css"),
-          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/style.css"),
-          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "css/bootstrap.css"),
-          'link('type /= "text/css", 'rel /= "stylesheet", 'href /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
+      Html(lang := "ko",
+        head(
+          meta(charset := "utf-8"),
+          title("document"),
+          link(`type` := "text/css", rel := "stylesheet", href := "css/animation.css"),
+          link(`type` := "text/css", rel := "stylesheet", href := "css/style.css"),
+          link(`type` := "text/css", rel := "stylesheet", href := "css/bootstrap.css"),
+          link(`type` := "text/css", rel := "stylesheet", href := "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/styles/vs2015.min.css"),
 
-          'script('src /= "js/jquery.js"),
-          'script('src /= "js/bootstrap.js"),
-          'script('src /= "js/main.js"),
-          'script('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"),
-          'script('src /= "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/java.min.js"),
-          'script("hljs.initHighlightingOnLoad();")
+          script(src := "js/jquery.js"),
+          script(src := "js/bootstrap.js"),
+          script(src := "js/main.js"),
+          script(src := "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.8/highlight.min.js"),
+          script(src := "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/java.min.js"),
+          script("hljs.initHighlightingOnLoad();")
         ),
-        'body(
-          'section(
-            'aside('id /= "sidebar", 'class /= "sidebar-dark",
-              'nav(
-                'h3("Source Code Tree"),
-                'ul(runLogging(node.buildNavTree, log.info("build nav tree")))
+        body(
+          section(
+            aside(id := "sidebar", `class` := "sidebar-dark",
+              nav(
+                h3("Source Code Tree"),
+                ul(runLogging(node.buildNavTree, log.info("build nav tree")))
               )
             ),
-            'div('id /= "split-bar", 'br('class /= "clearfix")),
-            'article('id /= "main", 'class /= "contents",
-              'div(introString),
+            div(id := "split-bar", br(`class` := "clearfix")),
+            article(id := "main", `class` := "contents",
+              div(introString),
               node.print
             )
           ),
@@ -151,7 +152,7 @@ object Main {
         val src = Source.fromFile(currentHandle.getAbsolutePath)
         val sources = src.mkString("")
         val tokens = Tokenizer.tokenize(sources).asScala
-        log.info(s"parse token - # of tokens ${tokens.length}")
+        log.info(s"parse token - # of tokens ${tokens.size}")
 
         val scalaTokens = tokens.map(x => JavaSToken(x.getE, x.getValue))
         CodeLeaf(filename, packageName, scalaTokens.toList, outputDir, debugOption)
