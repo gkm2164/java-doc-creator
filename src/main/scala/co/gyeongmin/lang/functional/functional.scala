@@ -1,5 +1,3 @@
 package co.gyeongmin.lang
 
-package object functional {
-}
-
+package object functional {}

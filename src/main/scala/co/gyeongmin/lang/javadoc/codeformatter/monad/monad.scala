@@ -20,11 +20,15 @@ package object monad {
     def printString(): String = logPrinter.toString
   }
 
-  case class CodeWriterConfig(debug: DebugOption, logger: Option[CodeWriterLogger] = None) {
+  case class CodeWriterConfig(
+      debug: DebugOption,
+      logger: Option[CodeWriterLogger] = None
+  ) {
     def print(str: => String): Unit = logger.foreach(_.print(str))
     def println(str: => String): Unit = logger.foreach(_.println(str))
     def printConsole(): Unit = logger.foreach(_.printConsole())
-    def printStacktraceString(): String = logger.map(_.printString()).getOrElse("")
+    def printStacktraceString(): String =
+      logger.map(_.printString()).getOrElse("")
   }
 
   case class CodeWriterStackElem(idx: Int, token: JavaSToken, context: String) {
@@ -35,15 +39,19 @@ package object monad {
     }
 
     private def capWithDoubleQuote(str: String): String =
-      if (token.tokenType == JavaTokenEnum.STRING ||
-        token.tokenType == JavaTokenEnum.CHAR) str
+      if (
+        token.tokenType == JavaTokenEnum.STRING ||
+        token.tokenType == JavaTokenEnum.CHAR
+      ) str
       else s""""$str""""
   }
 
-  case class CodeWriterState(tokens: List[(JavaSToken, Int)],
-                             stringBuilder: IndentAwareStringBuilder,
-                             stack: List[CodeWriterStackElem],
-                             config: CodeWriterConfig)
+  case class CodeWriterState(
+      tokens: List[(JavaSToken, Int)],
+      stringBuilder: IndentAwareStringBuilder,
+      stack: List[CodeWriterStackElem],
+      config: CodeWriterConfig
+  )
 
   object CodeWriter {
 
@@ -51,30 +59,40 @@ package object monad {
       (state, Right(value))
     }
 
-    def apply[A](f: List[(JavaSToken, Int)] => (List[(JavaSToken, Int)], Either[FormatterError, A])): CodeWriter[A] = {
-      case CodeWriterState(tokenList, sb, stack, config) =>
-        val (nextList, value) = f(tokenList)
-        (CodeWriterState(nextList, sb, stack, config), value)
+    def apply[A](
+      f: List[(JavaSToken, Int)] => (
+        List[(JavaSToken, Int)],
+        Either[FormatterError, A]
+      )
+    ): CodeWriter[A] = { case CodeWriterState(tokenList, sb, stack, config) =>
+      val (nextList, value) = f(tokenList)
+      (CodeWriterState(nextList, sb, stack, config), value)
     }
   }
 
   implicit val codeWriterMonad: Monad[CodeWriter] = new Monad[CodeWriter] {
-    override def flatMap[A, B](ma: CodeWriter[A])(f: A => CodeWriter[B]): CodeWriter[B] = prevState => {
+    override def flatMap[A, B](
+      ma: CodeWriter[A]
+    )(f: A => CodeWriter[B]): CodeWriter[B] = prevState => {
       val (newState, value) = ma(prevState)
       value match {
         case Right(v) => f(v)(newState)
-        case Left(e) => (newState, Left(e))
+        case Left(e)  => (newState, Left(e))
       }
     }
 
     override def pure[A](x: A): CodeWriter[A] = CodeWriter.pure(x)
 
-    override def tailRecM[A, B](a: A)(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
+    override def tailRecM[A, B](
+      a: A
+    )(f: A => CodeWriter[Either[A, B]]): CodeWriter[B] = {
       case CodeWriterState(tokenList, stringBuilder, syntaxStack, config) =>
-        f(a)(CodeWriterState(tokenList, stringBuilder, syntaxStack, config)) match {
+        f(a)(
+          CodeWriterState(tokenList, stringBuilder, syntaxStack, config)
+        ) match {
           case (nextState, Right(Right(done))) => (nextState, Right(done))
           case (nextState, Right(Left(nextA))) => tailRecM(nextA)(f)(nextState)
-          case (nextState, Left(e)) => (nextState, Left(e))
+          case (nextState, Left(e))            => (nextState, Left(e))
         }
     }
   }

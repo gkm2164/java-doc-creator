@@ -9,10 +9,12 @@ package object javaentities {
   }
 
   case class AnnotationCall()
-  case class Modifier(access: Accessibility = Accessibility.PRIVATE,
-                      annotations: List[AnnotationCall] = Nil,
-                      isStatic: Boolean = false,
-                      isFinal: Boolean = false)
+  case class Modifier(
+      access: Accessibility = Accessibility.PRIVATE,
+      annotations: List[AnnotationCall] = Nil,
+      isStatic: Boolean = false,
+      isFinal: Boolean = false
+  )
   trait TypeBound
 
   case class TypeBoundExtends(name: String) extends TypeBound
@@ -22,12 +24,20 @@ package object javaentities {
 
   trait JavaType
 
-  case class JavaClass(modifier: Modifier, name: String, typeParams: List[TypeParam],
-                       superClass: JavaClass,
-                       superInterfaces: List[JavaInterface]) extends JavaType
+  case class JavaClass(
+      modifier: Modifier,
+      name: String,
+      typeParams: List[TypeParam],
+      superClass: JavaClass,
+      superInterfaces: List[JavaInterface]
+  ) extends JavaType
 
-  case class JavaInterface(modifier: Modifier, name: String, typeParams: List[TypeParam],
-                           superInterfaces: List[JavaInterface]) extends JavaType
+  case class JavaInterface(
+      modifier: Modifier,
+      name: String,
+      typeParams: List[TypeParam],
+      superInterfaces: List[JavaInterface]
+  ) extends JavaType
 
   case class JavaAnnotationInterface(modifier: Modifier, name: String)
 
